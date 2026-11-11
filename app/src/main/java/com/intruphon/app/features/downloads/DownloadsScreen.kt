@@ -2,6 +2,17 @@ package com.intruphon.app.features.downloads
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import java.util.Locale
+import kotlinx.coroutines.withContext
+import com.intruphon.app.data.download.MediaPreview
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.produceState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,57 +93,90 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> Unit, onRetry: () -> Unit) {
+    val context = LocalContext.current
     val record = item.record
     val status = item.status
-    val inProgress = status.state == DownloadState.RUNNING || status.state == DownloadState.WAITING
-    val percent = if (status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
+    val inProgress = status.state.active
+    val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
 
-    Column(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(record.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
-        val kind = stringResource(if (record.kind == Kind.AUDIO) R.string.download_section_audio else R.string.download_section_video)
-        Text(
-            listOf(kind, record.extension.uppercase(), record.quality).filter { it.isNotEmpty() }.joinToString(" · "),
-            style = MaterialTheme.typography.bodySmall,
-        )
-        if (inProgress) {
-            if (percent != null) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
-            else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    // Length and picture come from the saved file itself, read once off the main thread.
+    val preview by produceState<MediaPreview?>(null, record.uri, status.state) {
+        value = if (status.state == DownloadState.DONE && record.uri != null) {
+            withContext(Dispatchers.IO) { MediaPreview.load(context, record.uri, record.kind) }
+        } else null
+    }
+
+    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(
+            Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            val thumbnail = preview?.thumbnail
+            if (thumbnail != null) {
+                Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            } else {
+                Text(record.extension.uppercase(), style = MaterialTheme.typography.labelMedium)
+            }
         }
-        Text(
-            text = when (status.state) {
-                DownloadState.WAITING -> stringResource(R.string.downloads_status_waiting)
-                DownloadState.RUNNING ->
-                    if (percent != null) stringResource(R.string.downloads_status_running, percent)
-                    else stringResource(R.string.downloads_status_running_unknown)
-                DownloadState.DONE -> stringResource(R.string.downloads_status_done)
-                DownloadState.MISSING -> stringResource(R.string.downloads_status_missing)
-                DownloadState.FAILED -> when {
-                    status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
-                    status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
-                    status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
-                    else -> stringResource(R.string.downloads_status_failed, status.reason)
-                }
-            },
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        if (status.state == DownloadState.DONE && record.tags != null) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(record.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+            val kind = stringResource(if (record.kind == Kind.AUDIO) R.string.download_section_audio else R.string.download_section_video)
+            val details = listOf(kind, record.extension.uppercase(), record.quality).filter { it.isNotEmpty() }.joinToString(" · ")
+            val facts = if (status.state == DownloadState.DONE) {
+                listOfNotNull(preview?.durationMs?.takeIf { it > 0 }?.let(::formatDuration), formatSize(status.totalBytes).takeIf { status.totalBytes > 0 })
+            } else emptyList()
+            Text((listOf(details) + facts).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+            if (inProgress) {
+                if (percent != null) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
+                else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
             Text(
-                stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
-                style = MaterialTheme.typography.bodySmall,
+                text = when (status.state) {
+                    DownloadState.WAITING -> stringResource(R.string.downloads_status_waiting)
+                    DownloadState.RUNNING ->
+                        if (percent != null) stringResource(R.string.downloads_status_running, percent)
+                        else stringResource(R.string.downloads_status_running_unknown)
+                    DownloadState.PROCESSING -> stringResource(R.string.downloads_status_processing)
+                    DownloadState.DONE -> stringResource(R.string.downloads_status_done)
+                    DownloadState.MISSING -> stringResource(R.string.downloads_status_missing)
+                    DownloadState.FAILED -> when {
+                        status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
+                        status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
+                        status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
+                        else -> stringResource(R.string.downloads_status_failed, status.reason)
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
             )
-        }
-        Row {
-            when (status.state) {
-                DownloadState.DONE -> {
-                    TextButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
-                    TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_delete)) }
+            if (status.state == DownloadState.DONE && record.tags != null) {
+                Text(
+                    stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Row {
+                when (status.state) {
+                    DownloadState.DONE -> {
+                        TextButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
+                        TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_delete)) }
+                    }
+                    DownloadState.FAILED, DownloadState.MISSING -> {
+                        TextButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
+                        TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_remove)) }
+                    }
+                    else -> TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_cancel)) }
                 }
-                DownloadState.FAILED, DownloadState.MISSING -> {
-                    TextButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
-                    TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_remove)) }
-                }
-                else -> TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_cancel)) }
             }
         }
     }
 }
+
+private fun formatDuration(ms: Long): String {
+    val total = ms / 1000
+    val h = total / 3600
+    val m = (total % 3600) / 60
+    val s = total % 60
+    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s) else String.format(Locale.US, "%02d:%02d", m, s)
+}
+
+private fun formatSize(bytes: Long): String = String.format(Locale.US, "%.1f MB", bytes / 1_048_576.0)

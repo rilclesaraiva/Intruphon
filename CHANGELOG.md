@@ -16,6 +16,8 @@
 - Audio list: one M4A entry per bitrate the source really has.
 - Tags in audio files: title, artist, album, year, source link and square cover art (from the channel name, the video description and the thumbnail). Video MP4 files get title, artist, year and source link.
 - The Downloads tab shows whether tags and cover were written into each file.
+- MP3 downloads: pick a constant bitrate (64 to 320 kbps, never above the bitrate the source really has). The app decodes the audio with Android's own decoder and encodes it with a bundled Java port of LAME (`third_party/java-lame`, LGPL); the MP3 gets an ID3v2.3 tag with title, artist, album, year, source link and cover.
+- Downloads tab: each item shows its cover (or a video frame) and its length, read from the saved file; a "Processing" state is shown while a file is being joined, converted or tagged.
 ### Changed
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
@@ -23,6 +25,6 @@
 - Tags and cover art were not written: files made by the system muxer keep their index before the media data, which the tag writer did not handle (it now shifts the offsets).
 - Opening a downloaded file that was deleted outside the app no longer crashes; the entry is marked "This file is no longer on the device" and can be removed or downloaded again.
 ### Known issues
-- Joining video and audio, M4A tagging and cover art are only compiled by the CI so far; they have not been tested on a real device.
-- No MP3 conversion yet: audio is saved as M4A (or the site's own format when it has no M4A).
+- Joining video and audio, M4A/MP3 tagging, cover art and the new Downloads thumbnails are only compiled by the CI so far; they have not been tested on a real device.
+- MP3 conversion runs on the phone, so a long track takes a while; it has only been compiled by the CI, not tested on a real device.
 - Not tested on a real device yet: YouTube changes often and some links may fail to read or download.

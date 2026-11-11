@@ -17,7 +17,7 @@ internal class SavedFile(val uri: Uri, val tagged: Boolean?)
 
 /** Carries out a [Plan]: a direct save, or download + join (+ tags) in the app cache and then save. */
 internal object MediaDownloader {
-    suspend fun download(context: Context, info: MediaInfo, option: DownloadOption, onProgress: (Long, Long) -> Unit): SavedFile {
+    suspend fun download(context: Context, info: MediaInfo, option: DownloadOption, onProgress: (Long, Long) -> Unit, onProcessing: () -> Unit): SavedFile {
         var tagged: Boolean? = null
         val name = sanitizeFileName(if (option.kind == Kind.AUDIO) info.metadata.title else info.title) + "." + option.extension
         return when (val plan = option.plan) {
@@ -31,11 +31,22 @@ internal object MediaDownloader {
                 val raw = File(work, "audio.src")
                 fetchTo(raw, plan.url, 0, option.sizeBytes ?: -1, onProgress)
                 currentCoroutineContext().ensureActive()
+                onProcessing()
                 val clean = File(work, "audio.m4a")
                 MediaMuxing.join(listOf(raw), clean, Container.MP4)
                 // Tags are a bonus: if they cannot be written the plain file is still saved.
                 tagged = runCatching { Mp4Tags.write(clean, info.metadata, CoverArt.fetch(info.metadata.coverUrl)) }.isSuccess
                 clean
+            }, tagged = { tagged })
+            is Plan.AudioMp3 -> processed(context, name, option, produce = { work ->
+                val raw = File(work, "audio.src")
+                fetchTo(raw, plan.url, 0, option.sizeBytes ?: -1, onProgress)
+                onProcessing()
+                val id3 = runCatching { Id3v2.build(info.metadata, CoverArt.fetch(info.metadata.coverUrl)) }.getOrNull()
+                tagged = id3 != null
+                val mp3 = File(work, "audio.mp3")
+                Mp3Encoder.convert(raw, mp3, plan.kbps, id3)
+                mp3
             }, tagged = { tagged })
             is Plan.Mux -> processed(context, name, option, produce = { work ->
                 val video = File(work, "video.src")
@@ -43,6 +54,7 @@ internal object MediaDownloader {
                 val audio = File(work, "audio.src")
                 fetchTo(audio, plan.audioUrl, video.length(), option.sizeBytes ?: -1, onProgress)
                 currentCoroutineContext().ensureActive()
+                onProcessing()
                 val joined = File(work, "joined." + option.extension)
                 MediaMuxing.join(listOf(video, audio), joined, plan.container)
                 if (plan.container == Container.MP4) {

@@ -26,7 +26,7 @@ class DownloadService : Service() {
         startForeground(NOTIFICATION_ID, DownloadNotifications.progress(this, activeItems()), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         scope.launch {
             DownloadEngine.items.collect { items ->
-                val active = items.filter { it.status.state == DownloadState.WAITING || it.status.state == DownloadState.RUNNING }
+                val active = items.filter { it.status.state.active }
                 if (active.isEmpty()) {
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
@@ -49,7 +49,7 @@ class DownloadService : Service() {
     }
 
     private fun activeItems() =
-        DownloadEngine.items.value.filter { it.status.state == DownloadState.WAITING || it.status.state == DownloadState.RUNNING }
+        DownloadEngine.items.value.filter { it.status.state.active }
 
     companion object {
         const val ACTION_CANCEL_ALL = "com.intruphon.app.CANCEL_ALL"

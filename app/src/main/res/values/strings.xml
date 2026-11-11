@@ -25,6 +25,7 @@
     <string name="downloads_status_waiting">Waiting…</string>
     <string name="downloads_status_running">Downloading… %1$d%%</string>
     <string name="downloads_status_running_unknown">Downloading…</string>
+    <string name="downloads_status_processing">Processing: joining, converting and tagging…</string>
     <string name="downloads_status_done">Done. Saved in Download/Intruphon.</string>
     <string name="downloads_status_failed_http">Failed (HTTP %1$d)</string>
     <string name="downloads_status_failed">Failed (error %1$d)</string>

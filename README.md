@@ -7,10 +7,14 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 - Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
 - Or paste a link on the home screen and press Download.
 - Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by the app itself (no storage permission needed), with a progress notification.
-- A Downloads tab shows progress and status, and lets you open, cancel, delete or retry each download.
+- Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
+- Audio files get title, artist, album, year and cover art; video files get title, artist and year.
+- A Downloads tab shows progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.
 - Material 3 interface with dynamic colors on Android 12+.
 
 Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
+
+MP3 encoding uses a bundled Java port of the LAME encoder ([java-lame](https://github.com/nwaldispuehl/java-lame), LGPL; see `third_party/java-lame`).
 
 ## Privacy and permissions
 

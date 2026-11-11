@@ -14,6 +14,9 @@ sealed interface Plan {
 
     /** Audio saved as a clean M4A file with tags and cover. */
     data class AudioM4a(val url: String) : Plan
+
+    /** Audio decoded and encoded again as a constant-bitrate MP3 with tags and cover. */
+    data class AudioMp3(val url: String, val kbps: Int) : Plan
 }
 
 /** One thing the user can pick. [format] and [quality] are short labels such as "M4A" and "128 kbps". */

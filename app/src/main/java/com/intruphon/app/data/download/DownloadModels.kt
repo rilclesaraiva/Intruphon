@@ -15,8 +15,12 @@ data class DownloadRecord(
     val tags: Boolean? = null,
 )
 
-/** MISSING: the file was finished once but is no longer on the device. */
-enum class DownloadState { WAITING, RUNNING, DONE, FAILED, MISSING }
+/** PROCESSING: downloaded, now being joined, converted or tagged. MISSING: finished once but no longer on the device. */
+enum class DownloadState {
+    WAITING, RUNNING, PROCESSING, DONE, FAILED, MISSING;
+
+    val active get() = this == WAITING || this == RUNNING || this == PROCESSING
+}
 
 /**
  * [reason] is meaningful when [state] is FAILED: an HTTP status code (for example 403),

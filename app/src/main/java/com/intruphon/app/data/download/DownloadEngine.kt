@@ -34,7 +34,7 @@ object DownloadEngine {
     fun init(context: Context) {
         appContext = context.applicationContext
         val loaded = DownloadStore.load(appContext).map {
-            if (it.status.state == DownloadState.WAITING || it.status.state == DownloadState.RUNNING) {
+            if (it.status.state.active) {
                 it.copy(status = it.status.copy(state = DownloadState.FAILED, reason = REASON_INTERRUPTED))
             } else it
         }
@@ -63,7 +63,7 @@ object DownloadEngine {
 
     fun cancelAll() {
         state.value
-            .filter { it.status.state == DownloadState.WAITING || it.status.state == DownloadState.RUNNING }
+            .filter { it.status.state.active }
             .forEach { remove(it.record.id) }
     }
 
@@ -113,7 +113,7 @@ object DownloadEngine {
         edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }
         var lastEmit = 0L
         try {
-            val saved = MediaDownloader.download(appContext, info, option) { done, total ->
+            val saved = MediaDownloader.download(appContext, info, option, onProgress = { done, total ->
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastEmit >= 750) {
                     lastEmit = now
@@ -121,9 +121,12 @@ object DownloadEngine {
                         it.copy(status = it.status.copy(downloadedBytes = done, totalBytes = if (total > 0) total else it.status.totalBytes))
                     }
                 }
-            }
+            }, onProcessing = {
+                edit(id, save = false) { it.copy(status = it.status.copy(state = DownloadState.PROCESSING)) }
+            })
+            val fileSize = runCatching { appContext.contentResolver.openFileDescriptor(saved.uri, "r")?.use { it.statSize } }.getOrNull()
             finish(id) { item ->
-                val size = item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
+                val size = fileSize?.takeIf { it > 0 } ?: item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
                 item.copy(
                     record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged),
                     status = DownloadStatus(DownloadState.DONE, size, size, 0),

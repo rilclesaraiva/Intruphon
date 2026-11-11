@@ -34,7 +34,7 @@ object MediaRepository {
             ensureInit()
             val info = StreamInfo.getInfo(link)
             val audio = usableAudio(info.audioStreams)
-            val options = audioOptions(audio) + videoOptions(info.videoStreams, info.videoOnlyStreams, audio)
+            val options = audioOptions(audio) + mp3Options(audio, info.duration) + videoOptions(info.videoStreams, info.videoOnlyStreams, audio)
             val metadata = buildTrackMetadata(
                 rawTitle = info.name,
                 uploader = info.uploaderName,
@@ -91,6 +91,22 @@ object MediaRepository {
                     extension = "m4a", mimeType = "audio/mp4", sizeBytes = audioSize(s), plan = Plan.AudioM4a(s.content),
                 )
             }
+    }
+
+    // MP3 is made from the best audio the site has, and no MP3 bitrate is offered above that source's own bitrate.
+    private fun mp3Options(audio: List<AudioStream>, durationSeconds: Long): List<DownloadOption> {
+        val source = audio.filter { it.format!!.suffix == "m4a" }.maxByOrNull { it.averageBitrate }
+            ?: audio.maxByOrNull { it.averageBitrate }
+            ?: return emptyList()
+        val cap = if (source.averageBitrate > 0) source.averageBitrate else 128
+        val steps = listOf(64, 96, 128, 160, 192, 256, 320).filter { it <= cap }.ifEmpty { listOf(32) }
+        return steps.sortedDescending().map { kbps ->
+            DownloadOption(
+                id = "mp3-$kbps", kind = Kind.AUDIO, format = "MP3", quality = "$kbps kbps", extension = "mp3",
+                mimeType = "audio/mpeg", sizeBytes = durationSeconds.takeIf { it > 0 }?.let { it * kbps * 125 },
+                plan = Plan.AudioMp3(source.content, kbps),
+            )
+        }
     }
 
     private fun bitrateLabel(kbps: Int) = if (kbps > 0) "$kbps kbps" else ""
