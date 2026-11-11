@@ -15,11 +15,16 @@ import java.io.File
 /** The saved file and whether its tags were written (null when no tagging was tried). */
 internal class SavedFile(val uri: Uri, val tagged: Boolean?)
 
+/** The tag put in the file name, for example `M4A_128K` or `MP4_720p`. */
+internal fun qualityTag(format: String, quality: String): String =
+    listOf(format, quality.replace(" kbps", "K").replace(" ", "")).filter { it.isNotEmpty() }.joinToString("_")
+
 /** Carries out a [Plan]: a direct save, or download + join (+ tags) in the app cache and then save. */
 internal object MediaDownloader {
     suspend fun download(context: Context, info: MediaInfo, option: DownloadOption, onProgress: (Long, Long) -> Unit, onProcessing: () -> Unit): SavedFile {
         var tagged: Boolean? = null
-        val name = sanitizeFileName(if (option.kind == Kind.AUDIO) info.metadata.title else info.title) + "." + option.extension
+        val name = sanitizeFileName(if (option.kind == Kind.AUDIO) info.metadata.title else info.title) +
+            " (" + qualityTag(option.format, option.quality) + ")." + option.extension
         return when (val plan = option.plan) {
             is Plan.Direct -> SavedFile(
                 HttpFileDownloader.save(context, name, option.mimeType, option.kind) { out ->

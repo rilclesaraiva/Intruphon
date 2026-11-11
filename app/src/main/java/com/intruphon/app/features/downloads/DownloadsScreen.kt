@@ -45,6 +45,7 @@ import com.intruphon.app.data.download.DownloadState
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.REASON_INTERRUPTED
 import com.intruphon.app.data.download.REASON_IO
+import com.intruphon.app.data.download.REASON_NEEDS_WIFI
 import com.intruphon.app.data.media.Kind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -142,6 +143,7 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
                     DownloadState.FAILED -> when {
                         status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
                         status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
+                        status.reason == REASON_NEEDS_WIFI -> stringResource(R.string.downloads_status_needs_wifi)
                         status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
                         else -> stringResource(R.string.downloads_status_failed, status.reason)
                     }

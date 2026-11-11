@@ -15,7 +15,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import com.intruphon.app.data.media.Plan
+import com.intruphon.app.data.net.NetworkKind
+import com.intruphon.app.data.settings.AppSettings
+import com.intruphon.app.data.stats.SpeedEntry
+import com.intruphon.app.data.stats.SpeedLog
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
@@ -27,6 +35,7 @@ object DownloadEngine {
     private val jobs = ConcurrentHashMap<Long, Job>()
     private val state = MutableStateFlow<List<DownloadItem>>(emptyList())
     private var lastId = 0L
+    private val gate = Mutex()
 
     val items: StateFlow<List<DownloadItem>> = state.asStateFlow()
 
@@ -110,10 +119,38 @@ object DownloadEngine {
     }
 
     private suspend fun run(id: Long, info: MediaInfo, option: DownloadOption) {
-        edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }
+        // Downloads start one by one, in order, while fewer than the chosen number are running.
+        gate.withLock {
+            while (state.value.count { it.status.state == DownloadState.RUNNING || it.status.state == DownloadState.PROCESSING } >= AppSettings.maxParallel(appContext)) {
+                delay(500)
+            }
+            edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }
+        }
+        if (AppSettings.wifiOnly(appContext) && !NetworkKind.isWifiOrEthernet(appContext)) {
+            fail(id, REASON_NEEDS_WIFI)
+            jobs.remove(id)
+            return
+        }
+        val network = NetworkKind.current(appContext)
+        val startedAt = SystemClock.elapsedRealtime()
+        var processingAt = 0L
+        var fetched = 0L
+        fun log(ok: Boolean, reason: Int) {
+            val end = SystemClock.elapsedRealtime()
+            val downloadMs = (if (processingAt > 0) processingAt else end) - startedAt
+            val processMs = if (processingAt > 0) end - processingAt else 0L
+            val plan = when (option.plan) {
+                is Plan.Direct -> "direct"
+                is Plan.AudioM4a -> "m4a"
+                is Plan.AudioMp3 -> "mp3"
+                is Plan.Mux -> "mux"
+            }
+            SpeedLog.add(appContext, SpeedEntry(System.currentTimeMillis(), option.kind.name, option.format, option.quality, plan, network, fetched, downloadMs, processMs, ok, reason))
+        }
         var lastEmit = 0L
         try {
             val saved = MediaDownloader.download(appContext, info, option, onProgress = { done, total ->
+                fetched = done
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastEmit >= 750) {
                     lastEmit = now
@@ -122,9 +159,11 @@ object DownloadEngine {
                     }
                 }
             }, onProcessing = {
+                if (processingAt == 0L) processingAt = SystemClock.elapsedRealtime()
                 edit(id, save = false) { it.copy(status = it.status.copy(state = DownloadState.PROCESSING)) }
             })
             val fileSize = runCatching { appContext.contentResolver.openFileDescriptor(saved.uri, "r")?.use { it.statSize } }.getOrNull()
+            log(true, 0)
             finish(id) { item ->
                 val size = fileSize?.takeIf { it > 0 } ?: item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
                 item.copy(
@@ -135,10 +174,13 @@ object DownloadEngine {
         } catch (e: CancellationException) {
             throw e
         } catch (e: HttpStatusException) {
+            log(false, e.code)
             fail(id, e.code)
         } catch (e: java.io.IOException) {
+            log(false, REASON_IO)
             fail(id, REASON_IO)
         } catch (e: Exception) {
+            log(false, 0)
             fail(id, 0)
         } finally {
             jobs.remove(id)

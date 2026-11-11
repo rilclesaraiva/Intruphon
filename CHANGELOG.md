@@ -18,7 +18,10 @@
 - The Downloads tab shows whether tags and cover were written into each file.
 - MP3 downloads: pick a constant bitrate (64 to 320 kbps, never above the bitrate the source really has). The app decodes the audio with Android's own decoder and encodes it with a bundled Java port of LAME (`third_party/java-lame`, LGPL); the MP3 gets an ID3v2.3 tag with title, artist, album, year, source link and cover.
 - Downloads tab: each item shows its cover (or a video frame) and its length, read from the saved file; a "Processing" state is shown while a file is being joined, converted or tagged.
+- Settings tab: download only on Wi-Fi (adds the `ACCESS_NETWORK_STATE` permission) and the number of simultaneous downloads (1 to 5, the rest wait their turn).
+- Speed log: every download records format, quality, connection type, bytes, download time, processing time and result in a file on the device and in logcat (tag `IntruphonSpeed`); Settings shows the average speed per format and quality and can share the log as CSV or clear it.
 ### Changed
+- File names now carry the quality, for example `Title (M4A_128K).m4a` and `Title (MP4_720p).mp4`.
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed

@@ -23,6 +23,7 @@ import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
+import com.intruphon.app.features.settings.SettingsScreen
 
 // Entry point: registers the routes. Features never import each other.
 class MainActivity : ComponentActivity() {
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
-        val tabs = listOf(R.string.tab_home, R.string.tab_downloads, R.string.menu_about)
+        val tabs = listOf(R.string.tab_home, R.string.tab_downloads, R.string.tab_settings, R.string.menu_about)
         setContent {
             IntruphonTheme {
                 var tab by rememberSaveable { mutableStateOf(0) }
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
                     when (tab) {
                         0 -> HomeScreen(onDownload = { sheetLink = it }, modifier = m)
                         1 -> DownloadsScreen(onRetry = { sheetLink = it }, modifier = m)
+                        2 -> SettingsScreen(modifier = m)
                         else -> AboutScreen(versionName, m)
                     }
                 }

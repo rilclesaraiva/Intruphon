@@ -10,6 +10,9 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 - Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
 - Audio files get title, artist, album, year and cover art; video files get title, artist and year.
 - A Downloads tab shows progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.
+- Settings: download only on Wi-Fi, and how many downloads run at the same time.
+- A local speed log (format, quality, connection type, bytes, speed) that stays on the device and can be shared as CSV from Settings.
+- File names carry the quality, for example `Title (M4A_128K).m4a`.
 - Material 3 interface with dynamic colors on Android 12+.
 
 Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
@@ -18,7 +21,7 @@ MP3 encoding uses a bundled Java port of the LAME encoder ([java-lame](https://g
 
 ## Privacy and permissions
 
-Intruphon declares only the `INTERNET`, notification (`POST_NOTIFICATIONS`) and foreground-service permissions (the last two for download progress), includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
+Intruphon declares only the `INTERNET`, network-state (`ACCESS_NETWORK_STATE`, for the Wi-Fi only option), notification (`POST_NOTIFICATIONS`) and foreground-service permissions (the last two for download progress), includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
 
 ## 🤖 Built with AI ("vibe coding")
 

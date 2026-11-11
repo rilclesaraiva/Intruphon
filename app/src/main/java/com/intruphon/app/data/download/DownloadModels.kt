@@ -32,3 +32,5 @@ data class DownloadItem(val record: DownloadRecord, val status: DownloadStatus)
 
 const val REASON_INTERRUPTED = -1
 const val REASON_IO = -2
+/** "Wi-Fi only" is on and the phone is not on Wi-Fi. */
+const val REASON_NEEDS_WIFI = -3
