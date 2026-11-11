@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,12 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.intruphon.app.R
+import com.intruphon.app.core.LinkExtractor
 
+/** Home: paste a link and press Download. [onDownload] is wired by the entry point. */
 @Composable
-fun HomeScreen(sharedText: String?, modifier: Modifier = Modifier) {
+fun HomeScreen(onDownload: (String) -> Unit, modifier: Modifier = Modifier) {
     var link by rememberSaveable { mutableStateOf("") }
-    // A link shared from another app fills the field.
-    LaunchedEffect(sharedText) { LinkExtractor.firstUrl(sharedText)?.let { link = it } }
+    val url = LinkExtractor.firstUrl(link)
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -36,11 +36,13 @@ fun HomeScreen(sharedText: String?, modifier: Modifier = Modifier) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.home_download))
-        }
+        Button(
+            onClick = { url?.let(onDownload) },
+            enabled = url != null,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(stringResource(R.string.home_download)) }
         Text(
-            text = stringResource(R.string.home_soon),
+            text = stringResource(R.string.home_hint),
             style = MaterialTheme.typography.bodyMedium,
         )
     }

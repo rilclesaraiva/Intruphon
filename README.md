@@ -4,13 +4,16 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 
 ## Features
 
-- Share a link from any app to Intruphon (it appears in the Android share sheet) and it opens with the link filled in.
-- Or paste a link on the home screen (downloads are not available yet: this is the first skeleton).
+- Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
+- Or paste a link on the home screen and press Download.
+- Files are saved in `Music/Intruphon` (audio) or `Movies/Intruphon` (video), downloaded by Android's own download manager, with progress in the notification.
 - Material 3 interface with dynamic colors on Android 12+.
+
+Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
 
 ## Privacy and permissions
 
-Version 0.1.0 declares no Android permissions, includes no analytics, ads or third-party SDKs, and makes no network requests. This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
+Intruphon declares only the `INTERNET` permission, includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
 
 ## 🤖 Built with AI ("vibe coding")
 
@@ -35,7 +38,7 @@ read every line. Found something careless? Please [open an issue](../../issues).
 
 ## Installation
 
-Download the latest APK from the [Releases](../../releases) page and install it. Android 8.0 (API 26) or newer is required.
+Download the latest APK from the [Releases](../../releases) page and install it. Android 10 (API 29) or newer is required.
 
 ## License
 

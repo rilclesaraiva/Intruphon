@@ -1,4 +1,4 @@
-package com.intruphon.app.features.home
+package com.intruphon.app.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

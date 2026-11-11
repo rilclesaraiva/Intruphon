@@ -1,3 +1,11 @@
 <resources>
     <style name="Theme.Intruphon" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Transparent window: only the bottom sheet is drawn over the app that shared the link. -->
+    <style name="Theme.Intruphon.Translucent" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

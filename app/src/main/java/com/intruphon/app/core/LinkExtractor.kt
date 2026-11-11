@@ -1,4 +1,4 @@
-package com.intruphon.app.features.home
+package com.intruphon.app.core
 
 /** Finds the first web link inside text shared by other apps (which often add a title or a caption). */
 object LinkExtractor {

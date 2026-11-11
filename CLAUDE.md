@@ -23,14 +23,16 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links, p
 - Release: `gradle assembleRelease` → `app/build/outputs/apk/release/*.apk`
 - Pacote (Android): `com.intruphon.app`, fixo · R8 ativo no release (sem ofuscação), nunca desligar
 - Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir
-- minSdk 26 (ícone vetorial adaptativo sem PNG de fallback)
+- minSdk 29 (ícone vetorial adaptativo sem PNG de fallback; pasta pública sem permissão de armazenamento)
 - Versões de AGP/Kotlin/Compose foram escolhidas sem poder consultar os repositórios
   (rede bloqueada na sessão); o CI é a primeira prova de que compilam.
 
 ## Arquitetura
-Três papéis: core (config, tema), data (banco, rede, arquivos — vazio por enquanto), features (home, about).
-A entrada (`MainActivity`) registra as telas. Plano de extração: NewPipeExtractor (GPL-3.0) numa feature/`data`
-própria quando a primeira versão com download for planejada; sem SDKs de anúncio ou analytics.
+Três papéis: core (config, tema, LinkExtractor), data (net: OkHttpDownloader; media: MediaRepository com NewPipeExtractor; download: FileDownloader com o DownloadManager do sistema), features (home, about, download).
+Entradas: `MainActivity` (app) e `ShareActivity` (destino do compartilhar; tema translúcido, só mostra a sheet de formatos por cima do app de origem). A sheet de formatos vive em `features/download` e é usada pelas duas entradas; `home` só recebe um callback.
+Dependências justificadas: NewPipeExtractor (extração, GPL-3.0 como o projeto), OkHttp (o extrator exige um cliente HTTP do app), coroutines (carga fora da thread principal), desugar_jdk_libs_nio (o extrator exige abaixo do Android 13).
+R8: as classes do extrator e do Rhino ficam com `-keep` em `proguard-rules.pro` (reflexão e JS embutido); o R8 continua ligado.
+Sem SDKs de anúncio ou analytics.
 
 ## Regras de estrutura
 - Feature não importa outra feature; o compartilhado sobe para core/data.
@@ -91,5 +93,5 @@ própria quando a primeira versão com download for planejada; sem SDKs de anún
   permissão; nunca prometer ou sugerir contornar proteções de terceiros.
 
 ## Contexto atual
-- Foco: primeiro CI verde; depois planejar a versão com download (NewPipeExtractor).
-- Problemas conhecidos: sem wrapper do Gradle; versões de AGP/Kotlin/Compose e das actions não verificadas (CI é a prova).
+- Foco: vistoria da versão com pop-up de compartilhar e download no aparelho; depois mux de vídeo em alta resolução e conversão para MP3.
+- Problemas conhecidos: sem wrapper do Gradle; download nunca testado em aparelho (o YouTube muda com frequência e a URL pode exigir cabeçalhos que o DownloadManager não envia); só formatos com áudio embutido (em geral 360p); sem MP3.

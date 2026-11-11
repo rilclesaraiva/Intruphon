@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.intruphon.app"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -40,6 +40,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true   // required by NewPipeExtractor below Android 13
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
@@ -55,4 +56,11 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+
+    // Link reading for supported sites (GPL-3.0, same license as this project)
+    implementation("com.github.teamnewpipe:NewPipeExtractor:v0.26.5")
+    // The extractor needs an HTTP client supplied by the app
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 }

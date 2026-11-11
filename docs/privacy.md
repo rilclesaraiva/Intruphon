@@ -2,13 +2,14 @@
 
 **Last updated:** 2026-11-11 · **Responsible:** rilclesaraiva · **Contact:** saraivarilcle@gmail.com
 
-This policy describes what Intruphon version 0.1.0 does, based on its source code.
+This policy describes what Intruphon does, based on its source code.
 
-- **Data collected:** none. The app has no account, no analytics, no advertising and no third-party SDKs.
-- **Permissions:** the app declares no Android permissions.
-- **Network:** the app makes no network requests. The "Open repository" button in the About screen opens the project's GitHub page in your browser; from then on, GitHub's own policy applies.
-- **Local storage:** the link you type, or the link another app shares with Intruphon through the Android share sheet, is shown in the app's text field and kept only in the app's temporary screen state (so it survives screen rotation). It is not saved to storage or sent anywhere.
-- **Sharing, retention and deletion:** since no data is collected, nothing is shared or retained. Uninstalling the app removes everything it stored on the device.
+- **Data collected by the maintainer:** none. The app has no account, no analytics, no advertising and no third-party SDKs, and sends nothing to the maintainer.
+- **Permissions:** the app declares only the `INTERNET` permission.
+- **Network:** when you press Download or share a link to the app, it sends requests to the website that hosts that link (for example, a video site) and to that site's content servers, to read the available formats and to download the file you choose. Those sites see your IP address and the usual technical data of a web request, and their own policies apply. The "Open repository" button in the About screen opens the project's GitHub page in your browser.
+- **Downloads:** the chosen file is downloaded by Android's system download manager and saved in `Music/Intruphon` or `Movies/Intruphon` on your device. It stays there until you delete it.
+- **Local storage:** the link you type, or the link another app shares with Intruphon through the Android share sheet, is shown in the app and kept only in its temporary screen state (so it survives screen rotation). It is not saved to storage by the app.
+- **Sharing, retention and deletion:** the app does not share data with anyone else. Uninstalling the app removes what it stored; downloaded files remain in your Music and Movies folders until you delete them.
 
 When a version adds a permission, a network call or a library that collects data, this policy and its date are updated in the same release.
 

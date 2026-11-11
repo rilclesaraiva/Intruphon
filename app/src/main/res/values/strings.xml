@@ -3,11 +3,23 @@
     <string name="home_title">Intruphon</string>
     <string name="home_link_label">Paste a link</string>
     <string name="home_download">Download</string>
-    <string name="home_soon">Downloads arrive in the next version.</string>
+    <string name="home_hint">Tip: share a link from any app to Intruphon.</string>
     <string name="menu_about">About</string>
     <string name="about_title">About</string>
     <string name="about_back">Back</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_support">Want to support the project? Visit the project repository.</string>
     <string name="about_open_repo">Open repository</string>
+
+    <string name="download_title">Download as</string>
+    <string name="download_loading">Reading the link…</string>
+    <string name="download_section_audio">Audio</string>
+    <string name="download_section_video">Video</string>
+    <string name="download_button">Download</string>
+    <string name="download_close">Close</string>
+    <string name="download_started">Download started. Follow it in the notification.</string>
+    <string name="download_error_network">Could not reach the site. Check your connection and try again.</string>
+    <string name="download_error_unreadable">Could not read this link. It may be unsupported, private or protected.</string>
+    <string name="download_error_no_formats">No downloadable format was found for this link.</string>
+    <string name="share_no_link">No link found in the shared text.</string>
 </resources>
