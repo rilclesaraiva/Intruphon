@@ -6,7 +6,7 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 
 - Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
 - Or paste a link on the home screen and press Download.
-- Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by Android's own download manager (no storage permission needed).
+- Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by the app itself (no storage permission needed), with a progress notification.
 - A Downloads tab shows progress and status, and lets you open, cancel, delete or retry each download.
 - Material 3 interface with dynamic colors on Android 12+.
 
@@ -14,7 +14,7 @@ Intruphon is meant for content that is yours, freely licensed, or that you have 
 
 ## Privacy and permissions
 
-Intruphon declares only the `INTERNET` permission, includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
+Intruphon declares only the `INTERNET`, notification (`POST_NOTIFICATIONS`) and foreground-service permissions (the last two for download progress), includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
 
 ## 🤖 Built with AI ("vibe coding")
 

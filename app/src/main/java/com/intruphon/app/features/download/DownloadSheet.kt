@@ -1,6 +1,11 @@
 package com.intruphon.app.features.download
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,12 +32,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.intruphon.app.R
-import com.intruphon.app.data.download.FileDownloader
+import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.media.DownloadOption
 import com.intruphon.app.data.media.FailReason
 import com.intruphon.app.data.media.Kind
 import com.intruphon.app.data.media.LoadResult
+import com.intruphon.app.data.media.MediaInfo
 import com.intruphon.app.data.media.MediaRepository
 import java.util.Locale
 
@@ -40,9 +47,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {}) {
-    val context = LocalContext.current
     val result by produceState<LoadResult?>(initialValue = null, link) { value = MediaRepository.load(link) }
-    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -63,26 +68,41 @@ fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {
                     Text(stringResource(message))
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.download_close)) }
                 }
-                is LoadResult.Ready -> {
-                    val options = r.info.options
-                    val selected = options.firstOrNull { it.id == selectedId } ?: options.first()
-                    Text(stringResource(R.string.download_title), style = MaterialTheme.typography.titleLarge)
-                    Text(r.info.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
-                    Section(R.string.download_section_audio, options.filter { it.kind == Kind.AUDIO }, selected) { selectedId = it.id }
-                    Section(R.string.download_section_video, options.filter { it.kind == Kind.VIDEO }, selected) { selectedId = it.id }
-                    Button(
-                        onClick = {
-                            FileDownloader.enqueue(context, r.info.title, selected, link)
-                            Toast.makeText(context, R.string.download_started, Toast.LENGTH_LONG).show()
-                            onStarted()
-                            onDismiss()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.download_button)) }
-                }
+                is LoadResult.Ready -> FormatList(r.info, link, onDismiss, onStarted)
             }
         }
     }
+}
+
+@Composable
+private fun FormatList(info: MediaInfo, link: String, onDismiss: () -> Unit, onStarted: () -> Unit) {
+    val context = LocalContext.current
+    val options = info.options
+    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selected = options.firstOrNull { it.id == selectedId } ?: options.first()
+
+    fun start() {
+        DownloadEngine.enqueue(info.title, selected, link)
+        Toast.makeText(context, R.string.download_started, Toast.LENGTH_LONG).show()
+        onStarted()
+        onDismiss()
+    }
+
+    // Android 13+: ask once for permission to show the progress notification. Download starts either way.
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { start() }
+
+    Text(stringResource(R.string.download_title), style = MaterialTheme.typography.titleLarge)
+    Text(info.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+    Section(R.string.download_section_audio, options.filter { it.kind == Kind.AUDIO }, selected) { selectedId = it.id }
+    Section(R.string.download_section_video, options.filter { it.kind == Kind.VIDEO }, selected) { selectedId = it.id }
+    Button(
+        onClick = {
+            val needsAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            if (needsAsk) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) else start()
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text(stringResource(R.string.download_button)) }
 }
 
 @Composable
