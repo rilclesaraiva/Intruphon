@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import com.intruphon.app.data.media.DownloadOption
 import com.intruphon.app.data.media.Kind
 import com.intruphon.app.data.net.Http
 import kotlinx.coroutines.currentCoroutineContext
@@ -25,18 +24,16 @@ class HttpStatusException(val code: Int) : IOException("HTTP $code")
 internal object HttpFileDownloader {
     private const val CHUNK = 10L * 1024 * 1024
 
-    /** Returns the content Uri of the finished file. [onProgress] gets (bytes so far, total or -1). */
-    suspend fun download(
-        context: Context,
-        title: String,
-        option: DownloadOption,
-        onProgress: (Long, Long) -> Unit,
-    ): Uri {
+    /**
+     * Creates the file in Download/Intruphon/Audio or Video, lets [write] fill it and returns its content Uri.
+     * A half-written file is deleted on failure or cancel.
+     */
+    suspend fun save(context: Context, fileName: String, mimeType: String, kind: Kind, write: suspend (OutputStream) -> Unit): Uri {
         val resolver = context.contentResolver
-        val subfolder = if (option.kind == Kind.AUDIO) "Audio" else "Video"
+        val subfolder = if (kind == Kind.AUDIO) "Audio" else "Video"
         val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "${sanitizeFileName(title)}.${option.extension}")
-            put(MediaStore.MediaColumns.MIME_TYPE, option.mimeType)
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
             put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Intruphon/$subfolder")
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
@@ -45,7 +42,7 @@ internal object HttpFileDownloader {
         var finished = false
         try {
             val out = resolver.openOutputStream(uri) ?: throw IOException("Could not open the file")
-            out.use { copyInChunks(option.url, it, onProgress) }
+            out.use { write(it) }
             resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
             finished = true
             return uri
@@ -54,7 +51,7 @@ internal object HttpFileDownloader {
         }
     }
 
-    private suspend fun copyInChunks(url: String, out: OutputStream, onProgress: (Long, Long) -> Unit) {
+    suspend fun fetch(url: String, out: OutputStream, onProgress: (Long, Long) -> Unit) {
         val buffer = ByteArray(64 * 1024)
         var position = 0L
         var total = -1L

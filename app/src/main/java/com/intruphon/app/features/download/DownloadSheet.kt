@@ -82,7 +82,7 @@ private fun FormatList(info: MediaInfo, link: String, onDismiss: () -> Unit, onS
     val selected = options.firstOrNull { it.id == selectedId } ?: options.first()
 
     fun start() {
-        DownloadEngine.enqueue(info.title, selected, link)
+        DownloadEngine.enqueue(info, selected, link)
         Toast.makeText(context, R.string.download_started, Toast.LENGTH_LONG).show()
         onStarted()
         onDismiss()
@@ -118,7 +118,7 @@ private fun Section(title: Int, options: List<DownloadOption>, selected: Downloa
         ) {
             RadioButton(selected = option.id == selected.id, onClick = null)
             Text(
-                text = listOf(option.extension.uppercase(), option.quality).filter { it.isNotEmpty() }.joinToString(" · "),
+                text = listOf(option.format, option.quality).filter { it.isNotEmpty() }.joinToString(" · "),
                 modifier = Modifier.weight(1f).padding(start = 12.dp),
             )
             option.sizeBytes?.let { Text(formatSize(it), style = MaterialTheme.typography.bodySmall) }

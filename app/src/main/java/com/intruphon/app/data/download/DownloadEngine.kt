@@ -6,6 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import com.intruphon.app.data.media.DownloadOption
+import com.intruphon.app.data.media.Kind
+import com.intruphon.app.data.media.MediaInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,14 +42,14 @@ object DownloadEngine {
         DownloadStore.save(appContext, loaded)
     }
 
-    fun enqueue(title: String, option: DownloadOption, sourceLink: String) {
+    fun enqueue(info: MediaInfo, option: DownloadOption, sourceLink: String) {
         val id = nextId()
-        val record = DownloadRecord(id, title, option.kind, option.extension, option.quality, sourceLink)
+        val record = DownloadRecord(id, if (option.kind == Kind.AUDIO) info.metadata.title else info.title, option.kind, option.extension, option.quality, sourceLink)
         val item = DownloadItem(record, DownloadStatus(DownloadState.WAITING, 0, option.sizeBytes ?: 0, 0))
         state.update { listOf(item) + it }
         DownloadStore.save(appContext, state.value)
         DownloadService.start(appContext)
-        jobs[id] = scope.launch { run(id, title, option) }
+        jobs[id] = scope.launch { run(id, info, option) }
     }
 
     /** Cancels a running download, or deletes the saved file, and forgets the entry. Call off the main thread. */
@@ -79,11 +81,11 @@ object DownloadEngine {
         }
     }
 
-    private suspend fun run(id: Long, title: String, option: DownloadOption) {
+    private suspend fun run(id: Long, info: MediaInfo, option: DownloadOption) {
         edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }
         var lastEmit = 0L
         try {
-            val uri = HttpFileDownloader.download(appContext, title, option) { done, total ->
+            val uri = MediaDownloader.download(appContext, info, option) { done, total ->
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastEmit >= 750) {
                     lastEmit = now
