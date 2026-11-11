@@ -93,7 +93,7 @@ internal object HttpFileDownloader {
     }
 }
 
-/** "bytes 0-99/1234" -> 1234; "bytes 0-99/*" or null -> null. */
+// Reads the total size from a Content-Range header: a range ending in /1234 gives 1234; an unknown total or no header gives null.
 internal fun totalFromContentRange(header: String?): Long? = header?.substringAfter('/', "")?.toLongOrNull()
 
 /** Removes characters that are not allowed in file names and limits the length. */
