@@ -6,7 +6,8 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 
 - Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
 - Or paste a link on the home screen and press Download.
-- Files are saved in `Music/Intruphon` (audio) or `Movies/Intruphon` (video), downloaded by Android's own download manager, with progress in the notification.
+- Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by Android's own download manager (no storage permission needed).
+- A Downloads tab shows progress and status, and lets you open, cancel, delete or retry each download.
 - Material 3 interface with dynamic colors on Android 12+.
 
 Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.

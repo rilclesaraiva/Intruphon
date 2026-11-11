@@ -7,8 +7,9 @@
 - CI build with R8 (no obfuscation) and signed release workflow.
 - Privacy policy and terms (`docs/`).
 - Share target: Intruphon appears in the Android share sheet and opens a pop-up sheet over the app that shared the link (no full-screen switch).
-- Real downloads: the app reads the link with NewPipeExtractor, lists the available audio and video formats and downloads the chosen one with Android's download manager (saved in Music/Intruphon or Movies/Intruphon).
+- Real downloads: the app reads the link with NewPipeExtractor, lists the available audio and video formats and downloads the chosen one with Android's download manager (saved in Download/Intruphon/Audio or Download/Intruphon/Video).
 - The Download button on the home screen opens the same format sheet.
+- Downloads tab: shows each download with progress, status and the HTTP error code when it fails, and lets you open the file, cancel, delete, remove the entry or try again.
 - INTERNET permission (needed to read links and download).
 ### Changed
 - Minimum Android version is now 10 (API 29).

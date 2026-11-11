@@ -4,11 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import com.intruphon.app.core.ui.IntruphonTheme
 import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
+import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
 
 // Entry point: registers the routes. Features never import each other.
@@ -27,31 +30,34 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+        val tabs = listOf(R.string.tab_home, R.string.tab_downloads, R.string.menu_about)
         setContent {
             IntruphonTheme {
-                var showAbout by rememberSaveable { mutableStateOf(false) }
+                var tab by rememberSaveable { mutableStateOf(0) }
                 var sheetLink by rememberSaveable { mutableStateOf<String?>(null) }
-                BackHandler(enabled = showAbout) { showAbout = false }
+                BackHandler(enabled = tab != 0) { tab = 0 }
                 Scaffold(
                     topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(stringResource(if (showAbout) R.string.about_title else R.string.home_title))
-                            },
-                            actions = {
-                                if (showAbout) {
-                                    TextButton(onClick = { showAbout = false }) { Text(stringResource(R.string.about_back)) }
-                                } else {
-                                    TextButton(onClick = { showAbout = true }) { Text(stringResource(R.string.menu_about)) }
+                        Column {
+                            TopAppBar(title = { Text(stringResource(R.string.home_title)) })
+                            TabRow(selectedTabIndex = tab) {
+                                tabs.forEachIndexed { index, label ->
+                                    Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(label)) })
                                 }
-                            },
-                        )
+                            }
+                        }
                     },
                 ) { padding ->
                     val m = Modifier.padding(padding)
-                    if (showAbout) AboutScreen(versionName, m) else HomeScreen(onDownload = { sheetLink = it }, modifier = m)
+                    when (tab) {
+                        0 -> HomeScreen(onDownload = { sheetLink = it }, modifier = m)
+                        1 -> DownloadsScreen(onRetry = { sheetLink = it }, modifier = m)
+                        else -> AboutScreen(versionName, m)
+                    }
                 }
-                sheetLink?.let { DownloadSheet(link = it, onDismiss = { sheetLink = null }) }
+                sheetLink?.let {
+                    DownloadSheet(link = it, onDismiss = { sheetLink = null }, onStarted = { tab = 1 })
+                }
             }
         }
     }

@@ -39,7 +39,7 @@ import java.util.Locale
 /** Bottom sheet that reads [link], lists the formats and starts the download. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DownloadSheet(link: String, onDismiss: () -> Unit) {
+fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {}) {
     val context = LocalContext.current
     val result by produceState<LoadResult?>(initialValue = null, link) { value = MediaRepository.load(link) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -72,8 +72,9 @@ fun DownloadSheet(link: String, onDismiss: () -> Unit) {
                     Section(R.string.download_section_video, options.filter { it.kind == Kind.VIDEO }, selected) { selectedId = it.id }
                     Button(
                         onClick = {
-                            FileDownloader.enqueue(context, r.info.title, selected)
+                            FileDownloader.enqueue(context, r.info.title, selected, link)
                             Toast.makeText(context, R.string.download_started, Toast.LENGTH_LONG).show()
+                            onStarted()
                             onDismiss()
                         },
                         modifier = Modifier.fillMaxWidth(),
