@@ -4,7 +4,8 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 
 ## Features
 
-- Paste a link on the home screen (downloads are not available yet: this is the first skeleton).
+- Share a link from any app to Intruphon (it appears in the Android share sheet) and it opens with the link filled in.
+- Or paste a link on the home screen (downloads are not available yet: this is the first skeleton).
 - Material 3 interface with dynamic colors on Android 12+.
 
 ## Privacy and permissions

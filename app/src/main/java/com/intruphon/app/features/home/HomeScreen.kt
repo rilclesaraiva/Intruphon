@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -20,8 +21,10 @@ import androidx.compose.ui.unit.dp
 import com.intruphon.app.R
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(sharedText: String?, modifier: Modifier = Modifier) {
     var link by rememberSaveable { mutableStateOf("") }
+    // A link shared from another app fills the field.
+    LaunchedEffect(sharedText) { LinkExtractor.firstUrl(sharedText)?.let { link = it } }
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

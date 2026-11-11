@@ -7,7 +7,7 @@ This policy describes what Intruphon version 0.1.0 does, based on its source cod
 - **Data collected:** none. The app has no account, no analytics, no advertising and no third-party SDKs.
 - **Permissions:** the app declares no Android permissions.
 - **Network:** the app makes no network requests. The "Open repository" button in the About screen opens the project's GitHub page in your browser; from then on, GitHub's own policy applies.
-- **Local storage:** the link you type is kept only while the app is open, to survive screen rotation. It is not saved or sent anywhere.
+- **Local storage:** the link you type, or the link another app shares with Intruphon through the Android share sheet, is shown in the app's text field and kept only in the app's temporary screen state (so it survives screen rotation). It is not saved to storage or sent anywhere.
 - **Sharing, retention and deletion:** since no data is collected, nothing is shared or retained. Uninstalling the app removes everything it stored on the device.
 
 When a version adds a permission, a network call or a library that collects data, this policy and its date are updated in the same release.
