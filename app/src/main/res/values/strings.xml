@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Intruphon</string>
+    <string name="home_title">Intruphon</string>
+    <string name="home_link_label">Paste a link</string>
+    <string name="home_download">Download</string>
+    <string name="home_soon">Downloads arrive in the next version.</string>
+    <string name="menu_about">About</string>
+    <string name="about_title">About</string>
+    <string name="about_back">Back</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_support">Want to support the project? Visit the project repository.</string>
+    <string name="about_open_repo">Open repository</string>
+</resources>

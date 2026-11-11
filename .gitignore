@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+build/
+local.properties
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+# secrets: never commit
+*.p12
+*.jks
+*.keystore
+*-github-secrets.txt
+.env
