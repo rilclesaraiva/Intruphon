@@ -15,9 +15,13 @@
 - Video quality list: every resolution the source really has (for example 360p up to 1080p and beyond), never more. Resolutions without a ready file are built by joining the separate video and audio streams on the device (MP4 with H.264 + AAC, or WebM with VP9 + Opus).
 - Audio list: one M4A entry per bitrate the source really has.
 - Tags in audio files: title, artist, album, year, source link and square cover art (from the channel name, the video description and the thumbnail). Video MP4 files get title, artist, year and source link.
+- The Downloads tab shows whether tags and cover were written into each file.
 ### Changed
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
+### Fixed
+- Tags and cover art were not written: files made by the system muxer keep their index before the media data, which the tag writer did not handle (it now shifts the offsets).
+- Opening a downloaded file that was deleted outside the app no longer crashes; the entry is marked "This file is no longer on the device" and can be removed or downloaded again.
 ### Known issues
 - Joining video and audio, M4A tagging and cover art are only compiled by the CI so far; they have not been tested on a real device.
 - No MP3 conversion yet: audio is saved as M4A (or the site's own format when it has no M4A).
