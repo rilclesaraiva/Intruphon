@@ -38,6 +38,9 @@
     <string name="notif_failed">Download failed</string>
     <string name="downloads_open">Open</string>
     <string name="downloads_delete">Delete file</string>
+    <string name="downloads_status_missing">This file is no longer on the device.</string>
+    <string name="downloads_tags_ok">Tags and cover saved in the file.</string>
+    <string name="downloads_tags_failed">The file was saved, but its tags could not be written.</string>
     <string name="downloads_retry">Try again</string>
     <string name="downloads_remove">Remove</string>
     <string name="downloads_cancel">Cancel</string>

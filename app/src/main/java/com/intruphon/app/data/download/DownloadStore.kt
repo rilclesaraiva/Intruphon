@@ -26,6 +26,7 @@ internal object DownloadStore {
                         quality = o.getString("quality"),
                         sourceLink = o.getString("sourceLink"),
                         uri = o.optString("uri").ifEmpty { null },
+                        tags = when (o.optInt("tags", -1)) { 1 -> true; 0 -> false; else -> null },
                     ),
                     DownloadStatus(
                         state = DownloadState.valueOf(o.getString("state")),
@@ -51,6 +52,7 @@ internal object DownloadStore {
                     .put("quality", it.record.quality)
                     .put("sourceLink", it.record.sourceLink)
                     .put("uri", it.record.uri ?: "")
+                    .put("tags", when (it.record.tags) { true -> 1; false -> 0; null -> -1 })
                     .put("state", it.status.state.name)
                     .put("downloaded", it.status.downloadedBytes)
                     .put("total", it.status.totalBytes)

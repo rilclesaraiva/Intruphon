@@ -12,25 +12,32 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
 
+/** The saved file and whether its tags were written (null when no tagging was tried). */
+internal class SavedFile(val uri: Uri, val tagged: Boolean?)
+
 /** Carries out a [Plan]: a direct save, or download + join (+ tags) in the app cache and then save. */
 internal object MediaDownloader {
-    suspend fun download(context: Context, info: MediaInfo, option: DownloadOption, onProgress: (Long, Long) -> Unit): Uri {
+    suspend fun download(context: Context, info: MediaInfo, option: DownloadOption, onProgress: (Long, Long) -> Unit): SavedFile {
+        var tagged: Boolean? = null
         val name = sanitizeFileName(if (option.kind == Kind.AUDIO) info.metadata.title else info.title) + "." + option.extension
         return when (val plan = option.plan) {
-            is Plan.Direct -> HttpFileDownloader.save(context, name, option.mimeType, option.kind) { out ->
-                HttpFileDownloader.fetch(plan.url, out, onProgress)
-            }
-            is Plan.AudioM4a -> processed(context, name, option) { work ->
+            is Plan.Direct -> SavedFile(
+                HttpFileDownloader.save(context, name, option.mimeType, option.kind) { out ->
+                    HttpFileDownloader.fetch(plan.url, out, onProgress)
+                },
+                null,
+            )
+            is Plan.AudioM4a -> processed(context, name, option, produce = { work ->
                 val raw = File(work, "audio.src")
                 fetchTo(raw, plan.url, 0, option.sizeBytes ?: -1, onProgress)
                 currentCoroutineContext().ensureActive()
                 val clean = File(work, "audio.m4a")
                 MediaMuxing.join(listOf(raw), clean, Container.MP4)
                 // Tags are a bonus: if they cannot be written the plain file is still saved.
-                runCatching { Mp4Tags.write(clean, info.metadata, CoverArt.fetch(info.metadata.coverUrl)) }
+                tagged = runCatching { Mp4Tags.write(clean, info.metadata, CoverArt.fetch(info.metadata.coverUrl)) }.isSuccess
                 clean
-            }
-            is Plan.Mux -> processed(context, name, option) { work ->
+            }, tagged = { tagged })
+            is Plan.Mux -> processed(context, name, option, produce = { work ->
                 val video = File(work, "video.src")
                 fetchTo(video, plan.videoUrl, 0, option.sizeBytes ?: -1, onProgress)
                 val audio = File(work, "audio.src")
@@ -39,10 +46,10 @@ internal object MediaDownloader {
                 val joined = File(work, "joined." + option.extension)
                 MediaMuxing.join(listOf(video, audio), joined, plan.container)
                 if (plan.container == Container.MP4) {
-                    runCatching { Mp4Tags.write(joined, videoTags(info.metadata, info.title), null) }
+                    tagged = runCatching { Mp4Tags.write(joined, videoTags(info.metadata, info.title), null) }.isSuccess
                 }
                 joined
-            }
+            }, tagged = { tagged })
         }
     }
 
@@ -59,13 +66,15 @@ internal object MediaDownloader {
         fileName: String,
         option: DownloadOption,
         produce: suspend (File) -> File,
-    ): Uri {
+        tagged: () -> Boolean?,
+    ): SavedFile {
         val work = File(context.cacheDir, "work-${System.nanoTime()}").apply { mkdirs() }
         try {
             val result = produce(work)
-            return HttpFileDownloader.save(context, fileName, option.mimeType, option.kind) { out ->
+            val uri = HttpFileDownloader.save(context, fileName, option.mimeType, option.kind) { out ->
                 result.inputStream().use { it.copyTo(out) }
             }
+            return SavedFile(uri, tagged())
         } finally {
             work.deleteRecursively()
         }

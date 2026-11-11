@@ -48,4 +48,31 @@ class Mp4TagsTest {
     @Test fun fileWithoutExistingTags() = check("plain.m4a", byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 1, 2, 3))
 
     @Test fun fileWithExistingTags() = check("with_udta.m4a", null)
+
+    private fun indexOf(hay: ByteArray, text: String): Int {
+        val needle = text.toByteArray(Charsets.ISO_8859_1)
+        return (0..hay.size - needle.size).first { i -> needle.indices.all { hay[i + it] == needle[it] } }
+    }
+
+    private fun firstChunkOffset(b: ByteArray): Int {
+        val at = indexOf(b, "stco") + 12   // type, version/flags, count, then the first offset
+        return ((b[at].toInt() and 0xFF) shl 24) or ((b[at + 1].toInt() and 0xFF) shl 16) or
+            ((b[at + 2].toInt() and 0xFF) shl 8) or (b[at + 3].toInt() and 0xFF)
+    }
+
+    // moov before mdat (what Android's MediaMuxer writes): the chunk offsets must still point at the same audio bytes.
+    @Test fun moovBeforeMediaDataKeepsChunkOffsets() {
+        val f = fixture("faststart.m4a")
+        val before = f.readBytes()
+        assertEquals("moov", topLevel(before)[1].first)
+        val sample = before.copyOfRange(firstChunkOffset(before), firstChunkOffset(before) + 16)
+        repeat(2) {
+            Mp4Tags.write(f, meta, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 9))
+            val after = f.readBytes()
+            topLevel(after)
+            assertTrue(contains(after, "Título Ç".toByteArray(Charsets.UTF_8)))
+            val offset = firstChunkOffset(after)
+            assertTrue(after.copyOfRange(offset, offset + 16).contentEquals(sample))
+        }
+    }
 }

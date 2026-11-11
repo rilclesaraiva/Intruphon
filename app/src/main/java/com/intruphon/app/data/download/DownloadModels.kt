@@ -11,9 +11,12 @@ data class DownloadRecord(
     val quality: String,
     val sourceLink: String,
     val uri: String? = null,
+    /** true/false when tags were written/failed; null when none were tried. */
+    val tags: Boolean? = null,
 )
 
-enum class DownloadState { WAITING, RUNNING, DONE, FAILED }
+/** MISSING: the file was finished once but is no longer on the device. */
+enum class DownloadState { WAITING, RUNNING, DONE, FAILED, MISSING }
 
 /**
  * [reason] is meaningful when [state] is FAILED: an HTTP status code (for example 403),

@@ -67,25 +67,53 @@ object DownloadEngine {
             .forEach { remove(it.record.id) }
     }
 
-    /** Opens the finished file in another app. Returns false if nothing can open it. */
-    fun open(context: Context, id: Long): Boolean {
-        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse) ?: return false
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, context.contentResolver.getType(uri))
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        return try {
-            context.startActivity(intent)
-            true
-        } catch (e: ActivityNotFoundException) {
-            false
+    enum class OpenResult { OPENED, NO_APP, MISSING }
+
+    /** Opens the finished file in another app. A file that was deleted outside the app is marked as missing. */
+    fun open(context: Context, id: Long): OpenResult {
+        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse) ?: return OpenResult.MISSING
+        if (!exists(uri)) {
+            markMissing(id)
+            return OpenResult.MISSING
         }
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, runCatching { context.contentResolver.getType(uri) }.getOrNull())
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(intent)
+            OpenResult.OPENED
+        } catch (e: ActivityNotFoundException) {
+            OpenResult.NO_APP
+        } catch (e: Exception) {
+            if (exists(uri)) OpenResult.NO_APP else { markMissing(id); OpenResult.MISSING }
+        }
+    }
+
+    /** Looks for finished files that were deleted outside the app and marks them as missing. */
+    fun checkFiles() {
+        scope.launch {
+            state.value
+                .filter { it.status.state == DownloadState.DONE && it.record.uri != null }
+                .filterNot { exists(Uri.parse(it.record.uri)) }
+                .forEach { markMissing(it.record.id) }
+        }
+    }
+
+    private fun markMissing(id: Long) =
+        edit(id) { it.copy(status = it.status.copy(state = DownloadState.MISSING)) }
+
+    // Opening a descriptor fails when the file is gone, even if the media index still lists it.
+    private fun exists(uri: Uri): Boolean = try {
+        appContext.contentResolver.openFileDescriptor(uri, "r")?.use { true } ?: false
+    } catch (e: Exception) {
+        false
     }
 
     private suspend fun run(id: Long, info: MediaInfo, option: DownloadOption) {
         edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }
         var lastEmit = 0L
         try {
-            val uri = MediaDownloader.download(appContext, info, option) { done, total ->
+            val saved = MediaDownloader.download(appContext, info, option) { done, total ->
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastEmit >= 750) {
                     lastEmit = now
@@ -97,7 +125,7 @@ object DownloadEngine {
             finish(id) { item ->
                 val size = item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
                 item.copy(
-                    record = item.record.copy(uri = uri.toString()),
+                    record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged),
                     status = DownloadStatus(DownloadState.DONE, size, size, 0),
                 )
             }

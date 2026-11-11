@@ -16,12 +16,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.intruphon.app.R
@@ -41,6 +45,15 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val list by DownloadEngine.items.collectAsState()
 
+    // Look for files deleted outside the app when the tab opens and whenever the app comes back to the front.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) DownloadEngine.checkFiles() }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        DownloadEngine.checkFiles()
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     when {
         list.isEmpty() -> Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.downloads_empty))
@@ -50,8 +63,12 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
                 DownloadRow(
                     item = item,
                     onOpen = {
-                        if (!DownloadEngine.open(context, item.record.id)) {
-                            Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+                        when (DownloadEngine.open(context, item.record.id)) {
+                            DownloadEngine.OpenResult.OPENED -> Unit
+                            DownloadEngine.OpenResult.NO_APP ->
+                                Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+                            DownloadEngine.OpenResult.MISSING ->
+                                Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
                         }
                     },
                     onRemove = { scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) } },
@@ -88,6 +105,7 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
                     if (percent != null) stringResource(R.string.downloads_status_running, percent)
                     else stringResource(R.string.downloads_status_running_unknown)
                 DownloadState.DONE -> stringResource(R.string.downloads_status_done)
+                DownloadState.MISSING -> stringResource(R.string.downloads_status_missing)
                 DownloadState.FAILED -> when {
                     status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
                     status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
@@ -97,13 +115,19 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
             },
             style = MaterialTheme.typography.bodyMedium,
         )
+        if (status.state == DownloadState.DONE && record.tags != null) {
+            Text(
+                stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         Row {
             when (status.state) {
                 DownloadState.DONE -> {
                     TextButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
                     TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_delete)) }
                 }
-                DownloadState.FAILED -> {
+                DownloadState.FAILED, DownloadState.MISSING -> {
                     TextButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
                     TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_remove)) }
                 }
