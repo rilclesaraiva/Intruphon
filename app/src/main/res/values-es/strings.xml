@@ -123,4 +123,14 @@
     <string name="downloads_delete_failed">No se pudo eliminar el archivo.</string>
     <string name="settings_language">Idioma de la app</string>
     <string name="settings_language_hint">Abre la pantalla de idiomas de Android para esta app: inglés, español o portugués (Brasil).</string>
+    <string name="playlist_loading">Leyendo la lista…</string>
+    <string name="playlist_select_all">Seleccionar todo</string>
+    <string name="playlist_count">%1$d elementos</string>
+    <string name="playlist_download">Descargar (%1$d)</string>
+    <string name="playlist_started">Añadiendo %1$d elementos a Descargas…</string>
+    <string name="playlist_fmt_audio_high">Audio · máxima</string>
+    <string name="playlist_fmt_mp3">MP3</string>
+    <string name="playlist_fmt_audio_small">Audio · mínima</string>
+    <string name="playlist_fmt_video_high">Vídeo · máxima</string>
+    <string name="playlist_fmt_video_small">Vídeo · mínima</string>
 </resources>

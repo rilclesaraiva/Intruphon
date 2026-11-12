@@ -1,6 +1,7 @@
 package com.intruphon.app.features.download
 
 import com.intruphon.app.data.media.DownloadOption
+import com.intruphon.app.data.media.Kind
 
 internal enum class End { HIGHEST, SMALLEST }
 
@@ -22,4 +23,23 @@ internal fun picks(options: List<DownloadOption>): List<Pick> {
     val smallest = options.minWithOrNull(compareBy<DownloadOption>({ rank(it) }, { it.sizeBytes ?: Long.MAX_VALUE }))!!
     return if (highest.id == smallest.id) listOf(Pick(highest, null))
     else listOf(Pick(highest, End.HIGHEST), Pick(smallest, End.SMALLEST))
+}
+
+/** What a whole playlist is saved as: one rule applied to every item, since each item has its own list of formats. */
+internal enum class PlaylistFormat(val kind: Kind, val label: Int) {
+    AUDIO_HIGHEST(Kind.AUDIO, com.intruphon.app.R.string.playlist_fmt_audio_high),
+    MP3(Kind.AUDIO, com.intruphon.app.R.string.playlist_fmt_mp3),
+    AUDIO_SMALLEST(Kind.AUDIO, com.intruphon.app.R.string.playlist_fmt_audio_small),
+    VIDEO_HIGHEST(Kind.VIDEO, com.intruphon.app.R.string.playlist_fmt_video_high),
+    VIDEO_SMALLEST(Kind.VIDEO, com.intruphon.app.R.string.playlist_fmt_video_small);
+
+    /** The option of [options] this rule asks for, or null when the item has none of that kind. */
+    fun pick(options: List<DownloadOption>): DownloadOption? {
+        val ofKind = options.filter { it.kind == kind }
+        return when (this) {
+            MP3 -> ofKind.filter { it.format == "MP3" }.maxByOrNull { rank(it) }
+            AUDIO_HIGHEST, VIDEO_HIGHEST -> picks(ofKind).firstOrNull()?.option
+            AUDIO_SMALLEST, VIDEO_SMALLEST -> picks(ofKind).lastOrNull()?.option
+        }
+    }
 }

@@ -8,7 +8,9 @@ import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
+import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
@@ -53,6 +55,41 @@ object MediaRepository {
             LoadResult.Failed(FailReason.UNREADABLE)
         } catch (e: Exception) {
             LoadResult.Failed(FailReason.UNREADABLE)
+        }
+    }
+
+    private const val MAX_PLAYLIST = 1000
+
+    /** Reads every page of a playlist link and lists its items. Each item is read in full only when it is downloaded. */
+    suspend fun loadPlaylist(link: String): PlaylistResult = withContext(Dispatchers.IO) {
+        try {
+            ensureInit()
+            val service = NewPipe.getServiceByUrl(link)
+            val info = PlaylistInfo.getInfo(service, link)
+            val items = ArrayList<StreamInfoItem>(info.relatedItems)
+            var page = if (info.hasNextPage()) info.nextPage else null
+            while (page != null && items.size < MAX_PLAYLIST) {
+                val more = PlaylistInfo.getMoreItems(service, link, page)
+                items.addAll(more.items)
+                page = if (more.hasNextPage()) more.nextPage else null
+            }
+            val entries = items.filter { it.url.isNotEmpty() }.map {
+                PlaylistEntry(
+                    url = it.url,
+                    title = it.name,
+                    artist = it.uploaderName?.takeIf { name -> name.isNotBlank() },
+                    durationSeconds = it.duration,
+                    thumbnailUrl = it.thumbnails.maxByOrNull { image -> maxOf(image.height, 0) * maxOf(image.width, 0) }?.url,
+                )
+            }
+            if (entries.isEmpty()) PlaylistResult.Failed(FailReason.UNREADABLE)
+            else PlaylistResult.Ready(PlaylistData(info.name, entries))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IOException) {
+            PlaylistResult.Failed(FailReason.NETWORK)
+        } catch (e: Exception) {
+            PlaylistResult.Failed(FailReason.UNREADABLE)
         }
     }
 

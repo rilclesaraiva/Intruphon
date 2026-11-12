@@ -49,3 +49,13 @@ sealed interface LoadResult {
     data class Ready(val info: MediaInfo) : LoadResult
     data class Failed(val reason: FailReason) : LoadResult
 }
+
+/** One item of a playlist, before it is read in full. */
+data class PlaylistEntry(val url: String, val title: String, val artist: String?, val durationSeconds: Long, val thumbnailUrl: String?)
+
+data class PlaylistData(val title: String, val entries: List<PlaylistEntry>)
+
+sealed interface PlaylistResult {
+    data class Ready(val playlist: PlaylistData) : PlaylistResult
+    data class Failed(val reason: FailReason) : PlaylistResult
+}

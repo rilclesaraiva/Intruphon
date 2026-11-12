@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Projeto
-Intruphon — app Android leve e sem rastreamento para baixar mídia de links, para conteúdo próprio, de licença livre ou com permissão.
+Intruphon — app Android leve e sem rastreamento para baixar mídia de links. O app é livre: o usuário decide o que baixa.
 - Tipo: público · Público-alvo: global
 - Nome nos arquivos: `intruphon` (ex: intruphon_v0.1.0.apk; título da Release: "Intruphon v0.1.0")
 
@@ -66,6 +66,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   lugar do app. A entrada envolve cada página em `SaveableStateProvider`; a página guarda rolagem e
   campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
   entra se seguir isso.
+- Playlist: link de playlist (`/playlist?list=`) abre a sheet de playlist (itens com miniatura e duração, selecionar todos, um formato para a lista toda); cada item é lido e enfileirado em ordem pelo `DownloadEngine.enqueueAll`.
 - Downloads: abas em pílula no topo da lista (Todos, padrão; Áudio; Vídeo).
 - Ajustes: seção Atualizações com duas linhas (verificar, mostrando a versão; avisos, com diálogo: normal, 1 semana, 1 mês).
 - Idiomas: inglês (padrão), espanhol e português do Brasil, seguindo o idioma do Android. Em Ajustes há
@@ -132,8 +133,9 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   no mesmo commit.
 - Nenhuma afirmação sem respaldo: o que README, loja e páginas legais dizem
   precisa ser verdade no código. Na dúvida, não afirmar.
-- Uso do app: sempre descrito como para conteúdo próprio, de licença livre ou com
-  permissão; nunca prometer ou sugerir contornar proteções de terceiros.
+- Uso do app: o mantenedor não definiu restrição de direitos autorais; README, loja e app não afirmam
+  que o uso é só para conteúdo próprio, livre ou com permissão. Nunca prometer ou sugerir contornar
+  proteções de terceiros.
 
 ## Contexto atual
 - Foco: vistoria da nova interface (Home com histórico, voltar preditivo, exclusão, pop-up mínima/máxima, Sobre, aviso de atualização); o release v0.2.0 espera a confirmação do mantenedor. Depois novas fontes além do YouTube e wrapper do Gradle.

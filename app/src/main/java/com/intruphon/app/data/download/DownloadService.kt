@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -25,9 +26,11 @@ class DownloadService : Service() {
         super.onCreate()
         startForeground(NOTIFICATION_ID, DownloadNotifications.progress(this, activeItems()), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         scope.launch {
-            DownloadEngine.items.collect { items ->
+            combine(DownloadEngine.items, DownloadEngine.reading) { items, reading -> items to reading }.collect { (items, reading) ->
                 val active = items.filter { it.status.state.active }
-                if (active.isEmpty()) {
+                if (active.isEmpty() && reading) {
+                    // Playlist items are still being read: stay up, the next one is about to be queued.
+                } else if (active.isEmpty()) {
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 } else {
@@ -56,7 +59,8 @@ class DownloadService : Service() {
         private const val NOTIFICATION_ID = 1
 
         fun start(context: Context) {
-            ContextCompat.startForegroundService(context, Intent(context, DownloadService::class.java))
+            // Android 12+ refuses to start a foreground service from the background; the one already running keeps going.
+            runCatching { ContextCompat.startForegroundService(context, Intent(context, DownloadService::class.java)) }
         }
     }
 }

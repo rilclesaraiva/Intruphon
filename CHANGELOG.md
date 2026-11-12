@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Playlists: a playlist link (for example a YouTube Music playlist) opens a sheet with every item, its thumbnail and length, "Select all", and one format for the whole list (audio highest, MP3, audio smallest, video highest or smallest). Items are read and queued one by one; an item that cannot be read appears as a failed entry in Downloads.
 - Initial project structure: Compose app shell, home screen and About screen.
 - Original adaptive launcher icon (with monochrome layer).
 - CI build with R8 (no obfuscation) and signed release workflow.
@@ -27,6 +28,7 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- README no longer says the app is only for your own, freely licensed or permitted content: you choose what you download.
 - Home: the recent downloads fill the screen down to the bottom, so each device shows as many as fit (at least 3).
 - Settings: the "System" section became "Updates" with two rows, "Check for updates" (shows the installed version) and "Update notices" (opens a dialog: notify normally, not for a week, not for a month).
 - Downloads: tabs All (default), Audio and Video at the top of the list.

@@ -1,11 +1,12 @@
 # Intruphon
 
-A lightweight, tracker-free Android app for downloading media from links, meant for your own content, freely licensed content, or content you have permission to download.
+A lightweight, tracker-free Android app for downloading media from links. You choose what you download.
 
 ## Features
 
 - Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
 - Or paste a link on the home screen and press Download.
+- Playlist links (for example a YouTube or YouTube Music playlist) open a list with thumbnails: select all or only some items, pick a format (audio highest, MP3, audio smallest, video highest or smallest) and every item is queued in order.
 - Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by the app itself (no storage permission needed), with a progress notification.
 - Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
 - Audio files get title, artist, album, year and cover art; video files get title, artist and year.
@@ -19,7 +20,7 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 - An About screen (inside Settings) with version, source code, changelog, issues, privacy policy, terms and licenses.
 - An update notice: the app asks GitHub for the latest public Release when it opens and tells you if there is a newer one (you can remind later, skip a version, or check by hand in Settings).
 
-Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
+Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
 
 MP3 encoding uses a bundled Java port of the LAME encoder ([java-lame](https://github.com/nwaldispuehl/java-lame), LGPL; see `third_party/java-lame`).
 

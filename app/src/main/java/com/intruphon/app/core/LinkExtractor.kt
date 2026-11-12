@@ -6,4 +6,9 @@ object LinkExtractor {
 
     fun firstUrl(text: String?): String? =
         text?.let { url.find(it)?.value?.trimEnd('.', ',', ';', ')', '"', '\'') }
+
+    private val playlist = Regex("""^https?://(www\.|m\.|music\.)?youtube\.com/playlist\?(\S*&)?list=""", RegexOption.IGNORE_CASE)
+
+    /** True for a link that points at a whole playlist (not a video that merely carries a list id). */
+    fun isPlaylist(link: String): Boolean = playlist.containsMatchIn(link)
 }

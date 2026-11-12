@@ -123,4 +123,14 @@
     <string name="downloads_delete_failed">Não foi possível apagar o arquivo.</string>
     <string name="settings_language">Idioma do app</string>
     <string name="settings_language_hint">Abre a tela de idiomas do Android para este app: inglês, espanhol ou português (Brasil).</string>
+    <string name="playlist_loading">Lendo a playlist…</string>
+    <string name="playlist_select_all">Selecionar tudo</string>
+    <string name="playlist_count">%1$d itens</string>
+    <string name="playlist_download">Baixar (%1$d)</string>
+    <string name="playlist_started">Adicionando %1$d itens aos Downloads…</string>
+    <string name="playlist_fmt_audio_high">Áudio · máxima</string>
+    <string name="playlist_fmt_mp3">MP3</string>
+    <string name="playlist_fmt_audio_small">Áudio · mínima</string>
+    <string name="playlist_fmt_video_high">Vídeo · máxima</string>
+    <string name="playlist_fmt_video_small">Vídeo · mínima</string>
 </resources>

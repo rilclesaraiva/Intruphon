@@ -11,7 +11,11 @@ import android.net.Uri
 import android.os.SystemClock
 import com.intruphon.app.data.media.DownloadOption
 import com.intruphon.app.data.media.Kind
+import com.intruphon.app.data.media.FailReason
+import com.intruphon.app.data.media.LoadResult
 import com.intruphon.app.data.media.MediaInfo
+import com.intruphon.app.data.media.MediaRepository
+import com.intruphon.app.data.media.PlaylistEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -63,6 +67,40 @@ object DownloadEngine {
         DownloadStore.save(appContext, state.value)
         DownloadService.start(appContext)
         jobs[id] = scope.launch { run(id, info, option) }
+    }
+
+    private val readingCount = MutableStateFlow(0)
+    private val readers = java.util.concurrent.CopyOnWriteArraySet<Job>()
+
+    /** True while playlist items are still being read, so the service stays up between two of them. */
+    val reading: StateFlow<Boolean> = MutableStateFlow(false).also { flag ->
+        scope.launch { readingCount.collect { flag.value = it > 0 } }
+    }.asStateFlow()
+
+    /**
+     * Reads the playlist [entries] one by one and queues each in the format [choose] picks from its options.
+     * An item that cannot be read shows up in the list as a failed entry (the retry button opens it as a single link).
+     */
+    fun enqueueAll(entries: List<PlaylistEntry>, kind: Kind, choose: (List<DownloadOption>) -> DownloadOption?) {
+        readingCount.update { it + 1 }
+        readers.add(scope.launch {
+            try {
+                for (entry in entries) {
+                    val result = MediaRepository.load(entry.url)
+                    val option = (result as? LoadResult.Ready)?.let { choose(it.info.options) }
+                    if (result is LoadResult.Ready && option != null) enqueue(result.info, option, entry.url)
+                    else addFailed(entry, kind, if (result is LoadResult.Failed && result.reason == FailReason.NETWORK) REASON_IO else 0)
+                }
+            } finally {
+                readingCount.update { it - 1 }
+            }
+        }.also { job -> job.invokeOnCompletion { readers.remove(job) } })
+    }
+
+    private fun addFailed(entry: PlaylistEntry, kind: Kind, reason: Int) {
+        val record = DownloadRecord(nextId(), entry.title, kind, "", "", entry.url, note = withBuild("playlist item could not be read"))
+        state.update { listOf(DownloadItem(record, DownloadStatus(DownloadState.FAILED, 0, 0, reason))) + it }
+        DownloadStore.save(appContext, state.value)
     }
 
     /**
@@ -127,6 +165,7 @@ object DownloadEngine {
     }
 
     fun cancelAll() {
+        readers.forEach { it.cancel() }   // playlist items not yet read are dropped too
         state.value
             .filter { it.status.state.active }
             .forEach { remove(it.record.id) }

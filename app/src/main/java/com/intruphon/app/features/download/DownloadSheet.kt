@@ -54,6 +54,11 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {}) {
+    // A playlist link opens the list with checkboxes instead of the format list of one item.
+    if (com.intruphon.app.core.LinkExtractor.isPlaylist(link)) {
+        PlaylistSheet(link, onDismiss)
+        return
+    }
     val result by produceState<LoadResult?>(initialValue = null, link) { value = MediaRepository.load(link) }
     // Fully open from the start, so the Download button is never hidden below the fold.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
