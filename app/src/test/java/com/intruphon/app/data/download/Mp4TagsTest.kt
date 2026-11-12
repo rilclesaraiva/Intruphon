@@ -75,4 +75,19 @@ class Mp4TagsTest {
             assertTrue(after.copyOfRange(offset, offset + 16).contentEquals(sample))
         }
     }
+
+    // Fragmented MP4 (what the web serves as DASH audio): the fragments must come through byte for byte.
+    @Test fun fragmentedFileKeepsItsFragments() {
+        val f = fixture("fragmented.m4a")
+        val before = f.readBytes()
+        val boxesBefore = topLevel(before)
+        val tailBefore = before.copyOfRange(boxesBefore[0].second + boxesBefore[1].second, before.size)
+        Mp4Tags.write(f, meta, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 9))
+        val after = f.readBytes()
+        val boxesAfter = topLevel(after)
+        assertEquals(boxesBefore.map { it.first }, boxesAfter.map { it.first })
+        val moovEnd = boxesAfter[0].second + boxesAfter[1].second
+        assertTrue(after.copyOfRange(moovEnd, after.size).contentEquals(tailBefore))
+        assertTrue(contains(after, "Título Ç".toByteArray(Charsets.UTF_8)))
+    }
 }

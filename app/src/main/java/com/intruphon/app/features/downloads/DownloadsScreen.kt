@@ -156,6 +156,9 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
+            if (record.note.isNotEmpty() && (status.state == DownloadState.DONE || status.state == DownloadState.FAILED)) {
+                Text(record.note, style = MaterialTheme.typography.bodySmall)
+            }
             Row {
                 when (status.state) {
                     DownloadState.DONE -> {

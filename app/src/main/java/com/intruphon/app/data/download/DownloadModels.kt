@@ -13,6 +13,8 @@ data class DownloadRecord(
     val uri: String? = null,
     /** true/false when tags were written/failed; null when none were tried. */
     val tags: Boolean? = null,
+    /** A short technical remark (what fell back or failed), shown under the item. */
+    val note: String = "",
 )
 
 /** PROCESSING: downloaded, now being joined, converted or tagged. MISSING: finished once but no longer on the device. */

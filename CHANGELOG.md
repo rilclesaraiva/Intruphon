@@ -25,6 +25,8 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- An M4A that came out of the system muxer as a tiny, empty file (0:00, would not play): the joined file is now checked, and if it is too small the downloaded file itself is saved so it always plays. The reason is shown in the item.
+- Tags can also be written into the downloaded M4A as it comes from the site (fragmented MP4), not only into a re-joined file.
 - Tags and cover art were not written: files made by the system muxer keep their index before the media data, which the tag writer did not handle (it now shifts the offsets).
 - Opening a downloaded file that was deleted outside the app no longer crashes; the entry is marked "This file is no longer on the device" and can be removed or downloaded again.
 ### Known issues

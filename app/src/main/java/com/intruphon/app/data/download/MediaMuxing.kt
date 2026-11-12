@@ -13,10 +13,13 @@ import java.nio.ByteBuffer
 internal object MediaMuxing {
     private const val BUFFER_SIZE = 4 * 1024 * 1024
 
-    fun join(inputs: List<File>, output: File, container: Container) {
+    /** Returns the number of samples written; throws with details when none were, so the caller can fall back. */
+    fun join(inputs: List<File>, output: File, container: Container): Int {
         val format = if (container == Container.MP4) MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 else MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM
         val muxer = MediaMuxer(output.path, format)
         val extractors = mutableListOf<MediaExtractor>()
+        var written = 0
+        val details = StringBuilder()
         try {
             val active = mutableListOf<Pair<MediaExtractor, Int>>()   // extractor + its track in the muxer
             for (file in inputs) {
@@ -28,6 +31,7 @@ internal object MediaMuxing {
                     mime.startsWith("video/") || mime.startsWith("audio/")
                 } ?: throw IOException("No media track in the downloaded file")
                 extractor.selectTrack(index)
+                details.append("[${file.length()}B tracks=${extractor.trackCount} mime=${extractor.getTrackFormat(index).getString(MediaFormat.KEY_MIME)} t0=${extractor.sampleTime}] ")
                 active += extractor to muxer.addTrack(extractor.getTrackFormat(index))
             }
             muxer.start()
@@ -47,9 +51,12 @@ internal object MediaMuxing {
                 val key = extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0
                 info.set(0, size, extractor.sampleTime, if (key) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0)
                 muxer.writeSampleData(track, buffer, info)
+                written++
                 extractor.advance()
             }
+            if (written == 0) throw IOException("No samples could be read $details")
             muxer.stop()
+            return written
         } finally {
             runCatching { muxer.release() }
             extractors.forEach { runCatching { it.release() } }

@@ -167,7 +167,7 @@ object DownloadEngine {
             finish(id) { item ->
                 val size = fileSize?.takeIf { it > 0 } ?: item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
                 item.copy(
-                    record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged),
+                    record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged, note = saved.note),
                     status = DownloadStatus(DownloadState.DONE, size, size, 0),
                 )
             }
@@ -178,17 +178,17 @@ object DownloadEngine {
             fail(id, e.code)
         } catch (e: java.io.IOException) {
             log(false, REASON_IO)
-            fail(id, REASON_IO)
+            fail(id, REASON_IO, "${e.javaClass.simpleName}: ${e.message}")
         } catch (e: Exception) {
             log(false, 0)
-            fail(id, 0)
+            fail(id, 0, "${e.javaClass.simpleName}: ${e.message}")
         } finally {
             jobs.remove(id)
         }
     }
 
-    private fun fail(id: Long, reason: Int) =
-        finish(id) { it.copy(status = it.status.copy(state = DownloadState.FAILED, reason = reason)) }
+    private fun fail(id: Long, reason: Int, note: String = "") =
+        finish(id) { it.copy(record = it.record.copy(note = note), status = it.status.copy(state = DownloadState.FAILED, reason = reason)) }
 
     private fun finish(id: Long, change: (DownloadItem) -> DownloadItem) {
         edit(id, transform = change)

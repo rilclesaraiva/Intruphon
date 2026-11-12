@@ -10,7 +10,8 @@ import java.io.RandomAccessFile
  * Writes iTunes-style tags (title, artist, album, year, comment, cover) into an MP4/M4A file by
  * replacing the `udta` box inside `moov`. `moov` may come before the media data (Android's MediaMuxer
  * writes it there) or after it; when it comes first, the chunk offsets are shifted by the size change.
- * Fragmented files are not supported and throw.
+ * Fragmented files (moof boxes) are accepted when their offsets are relative to each moof, which is how
+ * DASH audio from the web is made; a fragment that uses an absolute base offset throws.
  */
 object Mp4Tags {
     private const val COVER_JPEG = 13
@@ -28,6 +29,7 @@ object Mp4Tags {
             var foundStart = -1L
             var foundEnd = -1L
             var mdatStart = -1L
+            var checkedMoof = false
             while (pos < length) {
                 raf.seek(pos)
                 val size = raf.readInt().toLong() and 0xFFFFFFFFL
@@ -37,7 +39,13 @@ object Mp4Tags {
                 when (String(typeBytes, Charsets.ISO_8859_1)) {
                     "moov" -> { foundStart = pos; foundEnd = pos + size }
                     "mdat" -> if (mdatStart < 0) mdatStart = pos
-                    "moof" -> throw IllegalStateException("Fragmented MP4 is not supported")
+                    "moof" -> if (!checkedMoof) {
+                        checkedMoof = true
+                        if (size > 4L * 1024 * 1024) throw IllegalStateException("Unexpected fragment size")
+                        val body = ByteArray((size - 8).toInt())
+                        raf.readFully(body)
+                        if (usesAbsoluteBase(body)) throw IllegalStateException("Fragment with absolute offsets")
+                    }
                 }
                 pos += size
             }
@@ -87,6 +95,28 @@ object Mp4Tags {
         } finally {
             temp.delete()
         }
+    }
+
+    /** True if a track fragment header (tfhd) sets the base-data-offset flag, which tag insertion would break. */
+    private fun usesAbsoluteBase(moofBody: ByteArray): Boolean {
+        var pos = 0
+        while (pos + 8 <= moofBody.size) {
+            val size = readInt(moofBody, pos)
+            if (size < 8 || pos + size > moofBody.size) return true
+            if (String(moofBody, pos + 4, 4, Charsets.ISO_8859_1) == "traf") {
+                var inner = pos + 8
+                while (inner + 8 <= pos + size) {
+                    val innerSize = readInt(moofBody, inner)
+                    if (innerSize < 8 || inner + innerSize > pos + size) return true
+                    if (String(moofBody, inner + 4, 4, Charsets.ISO_8859_1) == "tfhd" && innerSize >= 12) {
+                        if (moofBody[inner + 11].toInt() and 0x01 != 0) return true
+                    }
+                    inner += innerSize
+                }
+            }
+            pos += size
+        }
+        return false
     }
 
     private fun copyRange(src: RandomAccessFile, from: Long, to: Long, out: java.io.OutputStream) {
