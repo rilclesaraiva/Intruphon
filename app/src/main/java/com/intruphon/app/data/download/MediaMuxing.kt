@@ -19,6 +19,7 @@ internal object MediaMuxing {
         val muxer = MediaMuxer(output.path, format)
         val extractors = mutableListOf<MediaExtractor>()
         var written = 0
+        val starts = mutableListOf<Long>()   // time of the first sample of each input
         val details = StringBuilder()
         try {
             val active = mutableListOf<Pair<MediaExtractor, Int>>()   // extractor + its track in the muxer
@@ -31,15 +32,18 @@ internal object MediaMuxing {
                     mime.startsWith("video/") || mime.startsWith("audio/")
                 } ?: throw IOException("No media track in the downloaded file")
                 extractor.selectTrack(index)
+                starts += extractor.sampleTime
                 details.append("[${file.length()}B tracks=${extractor.trackCount} mime=${extractor.getTrackFormat(index).getString(MediaFormat.KEY_MIME)} t0=${extractor.sampleTime}] ")
                 active += extractor to muxer.addTrack(extractor.getTrackFormat(index))
             }
+            // Audio files often start with a slightly negative time (encoder delay). The muxer wants times from 0,
+            // so every track is moved by the same amount, which keeps audio and video in sync.
+            val shift = starts.maxOfOrNull { maxOf(0L, -it) } ?: 0L
             muxer.start()
             val buffer = ByteBuffer.allocate(BUFFER_SIZE)
             val info = MediaCodec.BufferInfo()
             // Write samples in time order so audio and video stay interleaved.
             while (true) {
-                active.removeAll { it.first.sampleTime < 0 }
                 if (active.isEmpty()) break
                 val (extractor, track) = active.minBy { it.first.sampleTime }
                 buffer.clear()
@@ -49,7 +53,7 @@ internal object MediaMuxing {
                     continue
                 }
                 val key = extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0
-                info.set(0, size, extractor.sampleTime, if (key) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0)
+                info.set(0, size, maxOf(0L, extractor.sampleTime + shift), if (key) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0)
                 muxer.writeSampleData(track, buffer, info)
                 written++
                 extractor.advance()
