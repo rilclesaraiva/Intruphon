@@ -169,7 +169,7 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
     val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
 
     // Length and picture come from the saved file itself, read once off the main thread.
-    val preview by produceState<MediaPreview?>(null, record.uri, status.state) {
+    val preview by produceState(record.uri?.let { MediaPreview.peek(it) }, record.uri, status.state) {
         value = if (status.state == DownloadState.DONE && record.uri != null) {
             withContext(Dispatchers.IO) { MediaPreview.load(context, record.uri, record.kind) }
         } else null

@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+
 ### Added
 - Initial project structure: Compose app shell, home screen and About screen.
 - Original adaptive launcher icon (with monochrome layer).
@@ -26,6 +27,7 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- Home: removed the tip text; the link field has a paste button on the right that becomes a clear (X) button as soon as there is text.
 - New Material 3 Expressive look (large rounded shapes, heavier titles, spring page transitions) and no fixed top bar: page titles scroll with the content, Home and Downloads switch from a bottom navigation bar, and a floating Settings button sits at the top right (a floating Back button inside Settings and About).
 - No bottom bar anymore: Home is a single page with the link field, the Download button and a short list of recent downloads ("See all" opens the Downloads page). Settings, Downloads and About open from Home, each with a floating Back button at the top left; page titles sit beside it. The floating buttons are slightly see-through.
 - Predictive back (Settings > Appearance, on by default): in pages opened from Home, the page follows your finger with a shadow and rounded corners while the page underneath moves in with a dark veil; releasing finishes the slide, cancelling returns the page. The Back button plays the same exit.
@@ -37,6 +39,9 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- Every page keeps its scroll and fields after opening another page and coming back (Settings → About → back): all stacked pages now stay composed under a stable key.
+- Thumbnails no longer flash the placeholder when a page is revealed: rows start from the already-read preview.
+- The floating Back and Settings buttons now belong to their page and slide with it (also during the predictive back), instead of staying over the whole screen.
 - Tags failed with "Unsupported MP4 box size" on files made by the system muxer, which writes the media data box with a 64-bit size; the tag writer now reads that form.
 - Joining video and audio now fails with a clear message when one of the two files gives no samples (before, a video could be saved without its sound and the app said nothing). The message lists, per file, how many samples were read and what the first read returned.
 - M4A audio is no longer re-joined: the downloaded file already plays, so tags and cover are written straight into it (the re-join step was the cause of the empty files and added nothing).

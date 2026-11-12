@@ -3,7 +3,9 @@
     <string name="home_title">Intruphon</string>
     <string name="home_link_label">Cole um link</string>
     <string name="home_download">Baixar</string>
-    <string name="home_hint">Dica: compartilhe um link de qualquer app com o Intruphon.</string>
+    <string name="home_paste">Colar</string>
+    <string name="home_clear">Limpar</string>
+    <string name="home_clipboard_empty">Nada copiado ainda</string>
     <string name="download_title">Baixar como</string>
     <string name="download_loading">Lendo o link…</string>
     <string name="download_section_audio">Áudio</string>

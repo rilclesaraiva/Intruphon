@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,9 +35,12 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -143,9 +147,6 @@ private fun App(versionName: String) {
     }
     BackHandler(enabled = stack.size > 1 && !predictive) { close() }
 
-    val top = stack.last()
-    val below = stack.getOrNull(stack.size - 2)
-
     @Composable
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
@@ -158,47 +159,55 @@ private fun App(versionName: String) {
 
     Scaffold { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            // The page underneath shows while the top one slides: it moves in from 20% to the left, under a dark veil.
-            if (below != null && exit.value > 0f) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .graphicsLayer { translationX = -0.2f * size.width * (1f - exit.value) },
-                ) {
-                    Page(below)
-                    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.32f * (1f - exit.value))))
-                }
-            }
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        translationX = exit.value * size.width
-                        // Shadow and rounded corners appear right at the start of the movement.
-                        val grow = minOf(1f, exit.value * 12f)
-                        shape = RoundedCornerShape(28.dp * grow)
-                        clip = true
-                        shadowElevation = 16.dp.toPx() * grow
+            // Every page of the stack stays composed in its own layer, keyed by the page, so nothing is rebuilt when a
+            // page goes from top to below: scroll, fields and thumbnails stay. Each layer carries its own floating button.
+            val last = stack.lastIndex
+            stack.forEachIndexed { index, page ->
+                key(page) {
+                    val isTop = index == last
+                    val isBelow = index == last - 1
+                    val layer = when {
+                        isTop -> Modifier
+                            .pointerInput(Unit) {}   // the layers underneath never receive touches
+                            .graphicsLayer {
+                                translationX = exit.value * size.width
+                                // Shadow and rounded corners appear right at the start of the movement.
+                                val grow = minOf(1f, exit.value * 12f)
+                                shape = RoundedCornerShape(28.dp * grow)
+                                clip = true
+                                shadowElevation = 16.dp.toPx() * grow
+                            }
+                        // The page underneath shows while the top one slides: it moves in from 20% to the left, under a dark veil.
+                        isBelow -> Modifier
+                            .clearAndSetSemantics {}
+                            .graphicsLayer {
+                                alpha = if (exit.value > 0f) 1f else 0f
+                                translationX = -0.2f * size.width * (1f - exit.value)
+                            }
+                        else -> Modifier.clearAndSetSemantics {}.graphicsLayer { alpha = 0f }
                     }
-                    .background(MaterialTheme.colorScheme.background),
-            ) {
-                Page(top)
-            }
-            if (top == HOME) {
-                FloatingCircleButton(
-                    icon = Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.settings_open),
-                    onClick = { open(SETTINGS) },
-                    modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-                )
-            } else {
-                FloatingCircleButton(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    onClick = { close() },
-                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
-                )
+                    Box(layer.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        Page(page)
+                        if (page == HOME) {
+                            FloatingCircleButton(
+                                icon = Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.settings_open),
+                                onClick = { open(SETTINGS) },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                            )
+                        } else {
+                            FloatingCircleButton(
+                                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                                onClick = { close() },
+                                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                            )
+                        }
+                        if (isBelow) {
+                            Box(Modifier.fillMaxSize().drawBehind { drawRect(Color.Black.copy(alpha = 0.32f * (1f - exit.value))) })
+                        }
+                    }
+                }
             }
         }
     }

@@ -47,8 +47,11 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   página rola com o conteúdo e fica sempre ao lado do botão flutuante, nunca por baixo dele.
 - A Home é única: link, botão Download e, abaixo, o histórico breve dos downloads recentes, com "Ver
   todos" para a página Downloads. Ajustes, Downloads e Sobre são páginas abertas a partir da Home.
-- Botão de ajustes flutuante e fixo no canto superior direito da Home; nas outras páginas, no canto
-  superior esquerdo fica o botão flutuante de voltar. Os dois são levemente translúcidos.
+- Botão de ajustes flutuante no canto superior direito da Home; nas outras páginas, no canto
+  superior esquerdo fica o botão flutuante de voltar. Os dois são levemente translúcidos e pertencem à
+  própria página (deslizam com ela, nunca ficam fixos sobre a tela inteira). Todas as páginas da pilha
+  ficam compostas com `key(página)`, para não perder rolagem nem miniaturas.
+- Home: sem texto de dica; o campo do link tem botão de colar à direita, que vira X (limpar tudo) quando há texto.
 - Voltar preditivo (opção em Ajustes → Aparência, ligada por padrão; `enableOnBackInvokedCallback` no
   manifesto): só em páginas abertas a partir da Home. No gesto, a página atual acompanha o dedo para a
   direita com sombra e cantos que arredondam até 28 dp logo no começo; a anterior aparece por baixo,

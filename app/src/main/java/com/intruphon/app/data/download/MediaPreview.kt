@@ -14,6 +14,9 @@ class MediaPreview(val durationMs: Long, val thumbnail: Bitmap?) {
         private const val SIZE = 160
         private val cache = LruCache<String, MediaPreview>(64)
 
+        /** The preview if it was already read, so a row can show it on its first frame without flashing the placeholder. */
+        fun peek(uri: String): MediaPreview? = cache.get(uri)
+
         /** Reads the saved file itself (cover art for audio, a frame for video). Null if the file cannot be read. Call off the main thread. */
         fun load(context: Context, uri: String, kind: Kind): MediaPreview? {
             cache.get(uri)?.let { return it }

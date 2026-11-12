@@ -3,7 +3,9 @@
     <string name="home_title">Intruphon</string>
     <string name="home_link_label">Paste a link</string>
     <string name="home_download">Download</string>
-    <string name="home_hint">Tip: share a link from any app to Intruphon.</string>
+    <string name="home_paste">Paste</string>
+    <string name="home_clear">Clear</string>
+    <string name="home_clipboard_empty">Nothing copied yet</string>
 
     <string name="download_title">Download as</string>
     <string name="download_loading">Reading the link…</string>

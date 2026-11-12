@@ -1,5 +1,6 @@
 package com.intruphon.app.features.home
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,9 +40,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -58,6 +66,8 @@ private const val RECENT = 3
 @Composable
 fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifier: Modifier = Modifier) {
     var link by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     val url = LinkExtractor.firstUrl(link)
     val recent = DownloadEngine.items.collectAsState().value.take(RECENT)
 
@@ -80,6 +90,19 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
             label = { Text(stringResource(R.string.home_link_label)) },
             singleLine = true,
             shape = MaterialTheme.shapes.extraLarge,
+            trailingIcon = {
+                if (link.isEmpty()) {
+                    IconButton(onClick = {
+                        val pasted = clipboard.getText()?.text.orEmpty()
+                        if (pasted.isBlank()) Toast.makeText(context, R.string.home_clipboard_empty, Toast.LENGTH_SHORT).show()
+                        else link = pasted
+                    }) { Icon(ImageVector.vectorResource(R.drawable.ic_content_paste), contentDescription = stringResource(R.string.home_paste)) }
+                } else {
+                    IconButton(onClick = { link = "" }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.home_clear))
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
@@ -87,10 +110,6 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
             enabled = url != null,
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) { Text(stringResource(R.string.home_download), style = MaterialTheme.typography.titleMedium) }
-        Text(
-            text = stringResource(R.string.home_hint),
-            style = MaterialTheme.typography.bodyMedium,
-        )
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.home_recent), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
@@ -110,7 +129,7 @@ private fun RecentRow(item: DownloadItem, onClick: () -> Unit) {
     val record = item.record
     val status = item.status
     val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
-    val preview by produceState<MediaPreview?>(null, record.uri, status.state) {
+    val preview by produceState(record.uri?.let { MediaPreview.peek(it) }, record.uri, status.state) {
         value = if (status.state == DownloadState.DONE && record.uri != null) {
             withContext(Dispatchers.IO) { MediaPreview.load(context, record.uri, record.kind) }
         } else null
