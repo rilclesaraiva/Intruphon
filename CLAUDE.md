@@ -81,7 +81,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 
 - Memória de posição: página que sai da pilha de vez (voltar) esquece rolagem e campos (`pages.removeState`); só lembra enquanto outra página aberta a partir dela está por cima.
 - Downloads: toque na linha abre (falha tenta de novo); segurar ou ⋮ abre o painel inferior; toque só na capa inicia a seleção (pílulas no topo: fechar+contagem, selecionar todos+mais; o botão de voltar some); sem botões "Abrir"/"Excluir arquivo". Excluir: pergunta remover da lista ou apagar do aparelho, depois janela própria de confirmação (o Android não mostra a dele para arquivos do próprio app).
-- Painel em passos (`core/ui/BottomPanelFlow`): o passo atual desliza para a direita e some, o próximo chega do mesmo lado com mola leve; do 2º passo em diante há um mini botão voltar no canto superior esquerdo (e o voltar do sistema) que desfaz o passo do mesmo jeito. Downloads usa: ações → excluir? → confirmação.
+- Painel em passos (`core/ui/BottomPanelFlow`): o passo atual desliza para a direita e some, o próximo chega do mesmo lado com mola leve; do 2º passo em diante há um mini botão voltar no canto superior esquerdo (e o voltar do sistema) que desfaz o passo do mesmo jeito. Todos os passos têm a mesma altura (440 dp, no máx. 70% da tela). Downloads usa: ações → excluir? → confirmação.
 - Janelas: nunca no meio da tela (sem AlertDialog); tudo sobe de baixo com `core/ui/BottomPanel` + `PanelAction`. Arquivo já apagado por fora: só "remover da lista" (checado de novo ao abrir o painel/fluxo de exclusão).
 - Playlist: itens indisponíveis são sondados antes, aparecem escurecidos com "!" e são ignorados em silêncio.
 

@@ -1,7 +1,6 @@
 package com.intruphon.app.core.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -20,7 +19,9 @@ import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -89,7 +90,7 @@ fun PanelBody(title: String? = null, message: String? = null, content: @Composab
 
 /**
  * One panel with several steps (0 is the first). Changing [step] makes what is showing slide out to the
- * right and the next step arrive from the same side, with a light spring; from step 1 on a small back
+ * right and the next step arrive from the same side, with a light spring; all steps share one height; from step 1 on a small back
  * button sits at the top left and goes back one step ([onBack]), also on the system back.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,13 +114,13 @@ fun BottomPanelFlow(
                 away.animateTo(0f, spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow))
             }
         }
-        Column(
-            Modifier.fillMaxWidth().animateContentSize(spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow)),
-        ) {
+        // Every step has the same height, so the panel never jumps between steps (shorter on small screens).
+        val height = minOf(440.dp, LocalConfiguration.current.screenHeightDp.dp * 0.7f)
+        Column(Modifier.fillMaxWidth()) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 560.dp)
+                    .height(height)
                     .graphicsLayer {
                         translationX = away.value * size.width
                         alpha = (1f - away.value).coerceIn(0f, 1f)
