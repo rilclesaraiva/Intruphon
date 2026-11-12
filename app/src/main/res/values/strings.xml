@@ -72,8 +72,8 @@
     <string name="settings_updates_check_hint">You are on version %1$s. Tap to see if there is a newer one.</string>
     <string name="settings_updates_checking">Checking…</string>
     <string name="settings_updates_normal">Notify normally</string>
-    <string name="settings_updates_week">Don't notify for a week</string>
-    <string name="settings_updates_month">Don't notify for a month</string>
+    <string name="settings_updates_week">Don\'t notify for a week</string>
+    <string name="settings_updates_month">Don\'t notify for a month</string>
     <string name="settings_updates_snoozed">Snoozed until %1$s. Tap to change.</string>
     <string name="settings_updates_skipping">Skipping version %1$s. Tap to change.</string>
     <string name="settings_updates_check">Check for updates</string>
