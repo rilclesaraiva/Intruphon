@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 /** The few options the user can change, kept in SharedPreferences on the device. */
 object AppSettings {
     const val MIN_PARALLEL = 1
-    const val MAX_PARALLEL = 5
+    const val MAX_PARALLEL = 10
     private const val DEFAULT_PARALLEL = 3
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
