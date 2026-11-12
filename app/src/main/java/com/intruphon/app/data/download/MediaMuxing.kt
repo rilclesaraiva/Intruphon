@@ -23,6 +23,8 @@ internal object MediaMuxing {
         val details = StringBuilder()
         try {
             val active = mutableListOf<Pair<MediaExtractor, Int>>()   // extractor + its track in the muxer
+            val perInput = mutableMapOf<MediaExtractor, Int>()
+            val firstRead = mutableMapOf<MediaExtractor, Int>()
             for (file in inputs) {
                 val extractor = MediaExtractor()
                 extractors += extractor
@@ -48,6 +50,7 @@ internal object MediaMuxing {
                 val (extractor, track) = active.minBy { it.first.sampleTime }
                 buffer.clear()
                 val size = extractor.readSampleData(buffer, 0)
+                if (firstRead[extractor] == null) firstRead[extractor] = size
                 if (size < 0) {
                     active.removeAll { it.first === extractor }
                     continue
@@ -56,9 +59,15 @@ internal object MediaMuxing {
                 info.set(0, size, maxOf(0L, extractor.sampleTime + shift), if (key) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0)
                 muxer.writeSampleData(track, buffer, info)
                 written++
+                perInput[extractor] = (perInput[extractor] ?: 0) + 1
                 extractor.advance()
             }
-            if (written == 0) throw IOException("No samples could be read $details")
+            // Every input must have contributed samples; otherwise a track (for example the sound) would silently be missing.
+            val missing = extractors.indices.filter { (perInput[extractors[it]] ?: 0) == 0 }
+            if (written == 0 || missing.isNotEmpty()) {
+                val report = extractors.indices.joinToString(" ") { "input$it:samples=${perInput[extractors[it]] ?: 0},firstRead=${firstRead[extractors[it]]}" }
+                throw IOException("A track gave no samples $report $details")
+            }
             muxer.stop()
             return written
         } finally {
