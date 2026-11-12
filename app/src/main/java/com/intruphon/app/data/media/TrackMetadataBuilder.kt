@@ -5,7 +5,7 @@ private val RELEASED_ON = Regex("""Released on:\s*(\d{4})""")
 /**
  * Builds clean tags from what a site tells us: the channel name usually is the artist (YouTube adds
  * " - Topic" to auto-generated music channels), and those channels carry a "Provided to YouTube by"
- * description that names the album and release year.
+ * description that names the album and release year. When the site gives no album, the album is the title.
  */
 fun buildTrackMetadata(
     rawTitle: String,
@@ -25,7 +25,9 @@ fun buildTrackMetadata(
         if (songLine >= 0) album = lines.drop(songLine + 1).firstOrNull { it.isNotEmpty() }
         year = RELEASED_ON.find(description)?.groupValues?.get(1)?.toIntOrNull()
     }
-    return TrackMetadata(title.ifEmpty { rawTitle }, artist, album, year ?: uploadYear, sourceUrl, coverUrl)
+    val finalTitle = title.ifEmpty { rawTitle }
+    // Without an album tag, players group the file under its folder name ("Audio"); the title is the honest fallback.
+    return TrackMetadata(finalTitle, artist, album ?: finalTitle, year ?: uploadYear, sourceUrl, coverUrl)
 }
 
 /** Drops an artist that the title repeats, as in "Title — Artist" or "Artist - Title". */

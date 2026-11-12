@@ -35,6 +35,7 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- Audio tags: when the site gives no album, the album tag is the song title (before, players grouped the file under the folder name "Audio"). A real album from the source is still used.
 - About tagline and terms no longer say the app is only for own, freely licensed or permitted content; they say the user chooses what to download.
 - Portuguese wording "Pronto" is now "Concluído".
 - Settings and About forget their scroll position when left for good (back to Home); they keep it only while another page opened from them is on top.

@@ -10,7 +10,7 @@ class TrackMetadataBuilderTest {
         assertEquals("X_X (super slowed)", m.title)
         assertEquals("Ilyhiryu", m.artist)
         assertEquals(2024, m.year)
-        assertNull(m.album)
+        assertEquals("X_X (super slowed)", m.album)
     }
 
     @Test fun artistPrefixInTitle() {
@@ -27,7 +27,7 @@ class TrackMetadataBuilderTest {
 
     @Test fun ordinaryDescriptionIsIgnored() {
         val m = buildTrackMetadata("My video", "Some Channel", "Thanks for watching\n\nReleased on: 1999", 2021, null, null)
-        assertNull(m.album)
+        assertEquals("My video", m.album)
         assertEquals(2021, m.year)
         assertEquals("My video", m.title)
     }
