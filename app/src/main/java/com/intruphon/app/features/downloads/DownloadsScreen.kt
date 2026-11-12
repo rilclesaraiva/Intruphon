@@ -39,11 +39,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -81,6 +78,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.BottomPanel
+import com.intruphon.app.core.ui.PanelAction
 import com.intruphon.app.core.ui.PageHeader
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.DownloadItem
@@ -180,6 +179,16 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
         }
     }
 
+    // Deleting from the device only makes sense for files that are still there: the ones already gone are just dropped from the list.
+    fun askDelete(ids: List<Long>) {
+        scope.launch {
+            val present = DownloadEngine.stillOnDevice(ids)
+            val gone = ids.filterNot { it in present }
+            if (gone.isNotEmpty()) withContext(Dispatchers.IO) { gone.forEach { DownloadEngine.remove(it, deleteFile = false) } }
+            if (present.isEmpty()) selected = emptySet() else askIds = present
+        }
+    }
+
     @Composable
     fun ItemRow(item: DownloadItem) = DownloadRow(
         item = item,
@@ -240,7 +249,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                 count = selected.size,
                 onClose = { selected = emptySet() },
                 onSelectAll = { selected = if (selected.containsAll(pickable)) emptySet() else pickable.toSet() },
-                onDelete = { askIds = selected.toList() },
+                onDelete = { askDelete(selected.toList()) },
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
@@ -249,6 +258,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     // The panel for one download: opens from its dots or by holding the row.
     menuId?.let { id ->
         val item = all.firstOrNull { it.record.id == id }
+        LaunchedEffect(id) { DownloadEngine.checkFiles() }   // a file removed elsewhere turns the delete option into "remove from list"
         if (item == null) menuId = null else ModalBottomSheet(onDismissRequest = { menuId = null }, sheetState = rememberModalBottomSheetState()) {
             Column(Modifier.padding(bottom = 24.dp)) {
                 Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
@@ -257,7 +267,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                 if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { menuId = null; onRetry(item.record.sourceLink) }
                 PanelRow(Icons.Default.Check, R.string.downloads_select) { menuId = null; toggle(id) }
                 if (state == DownloadState.DONE) {
-                    PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menuId = null; askIds = listOf(id) }
+                    PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menuId = null; askDelete(listOf(id)) }
                 } else {
                     PanelRow(Icons.Default.Close, R.string.downloads_remove) { menuId = null; scope.launch(Dispatchers.IO) { DownloadEngine.remove(id) } }
                 }
@@ -267,70 +277,56 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
 
     // First question: only forget the entries, or also delete the files.
     askIds?.let { ids ->
-        AlertDialog(
-            onDismissRequest = { askIds = null },
-            title = { Text(if (ids.size == 1) stringResource(R.string.downloads_delete_title) else stringResource(R.string.downloads_delete_title_many, ids.size)) },
-            text = { Text(stringResource(R.string.downloads_delete_message)) },
-            confirmButton = {
-                TextButton(onClick = { askIds = null; confirmIds = ids }) {
-                    Text(stringResource(R.string.downloads_delete_device), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = {
-                        askIds = null
-                        selected = emptySet()
-                        scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
-                    }) { Text(stringResource(R.string.downloads_remove_list)) }
-                    TextButton(onClick = { askIds = null }) { Text(stringResource(R.string.downloads_cancel)) }
-                }
-            },
-        )
+        BottomPanel(
+            onDismiss = { askIds = null },
+            title = if (ids.size == 1) stringResource(R.string.downloads_delete_title) else stringResource(R.string.downloads_delete_title_many, ids.size),
+            message = stringResource(R.string.downloads_delete_message),
+        ) {
+            PanelAction(stringResource(R.string.downloads_delete_device), main = true, danger = true, onClick = { askIds = null; confirmIds = ids })
+            PanelAction(stringResource(R.string.downloads_remove_list), onClick = {
+                askIds = null
+                selected = emptySet()
+                scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
+            })
+            PanelAction(stringResource(R.string.downloads_cancel), onClick = { askIds = null })
+        }
     }
 
-    // Second question, for deleting from the device: a window like the system one, with the cover.
+    // Second question, for deleting from the device: a panel like the system window, with the cover.
     confirmIds?.let { ids ->
         val first = all.firstOrNull { it.record.id == ids.first() }
         val picture = first?.let { item ->
             item.record.uri?.let { MediaPreview.peek(it)?.thumbnail } ?: item.record.coverUrl?.let { Thumbnails.peek(it) }
         }
-        AlertDialog(
-            onDismissRequest = { confirmIds = null },
-            title = {
-                Text(
-                    when {
-                        ids.size > 1 -> stringResource(R.string.downloads_allow_many, ids.size)
-                        first?.record?.kind == Kind.VIDEO -> stringResource(R.string.downloads_allow_video)
-                        else -> stringResource(R.string.downloads_allow_audio)
-                    },
-                )
+        BottomPanel(
+            onDismiss = { confirmIds = null },
+            title = when {
+                ids.size > 1 -> stringResource(R.string.downloads_allow_many, ids.size)
+                first?.record?.kind == Kind.VIDEO -> stringResource(R.string.downloads_allow_video)
+                else -> stringResource(R.string.downloads_allow_audio)
             },
-            text = {
-                if (picture != null) {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(180.dp).clip(RoundedCornerShape(16.dp)))
+        ) {
+            if (picture != null) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(180.dp).clip(RoundedCornerShape(16.dp)))
+                }
+            }
+            PanelAction(stringResource(R.string.downloads_allow), main = true, danger = true, onClick = {
+                confirmIds = null
+                scope.launch {
+                    when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
+                        is DownloadEngine.DeleteStep.Ask -> {
+                            deletingIds = step.ids
+                            deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+                        }
+                        DownloadEngine.DeleteStep.Gone -> selected = emptySet()
+                        is DownloadEngine.DeleteStep.Failed ->
+                            Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmIds = null
-                    scope.launch {
-                        when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
-                            is DownloadEngine.DeleteStep.Ask -> {
-                                deletingIds = step.ids
-                                deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
-                            }
-                            DownloadEngine.DeleteStep.Gone -> selected = emptySet()
-                            is DownloadEngine.DeleteStep.Failed ->
-                                Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }) { Text(stringResource(R.string.downloads_allow)) }
-            },
-            dismissButton = { TextButton(onClick = { confirmIds = null }) { Text(stringResource(R.string.downloads_deny)) } },
-        )
+            })
+            PanelAction(stringResource(R.string.downloads_deny), onClick = { confirmIds = null })
+        }
     }
 }
 
@@ -350,12 +346,8 @@ private fun SelectionBar(count: Int, onClose: () -> Unit, onSelectAll: () -> Uni
                 IconButton(onClick = onSelectAll) { Icon(ImageVector.vectorResource(R.drawable.ic_select_all), contentDescription = stringResource(R.string.downloads_select_all)) }
                 Box {
                     IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.downloads_more)) }
-                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.downloads_delete)) },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                            onClick = { menu = false; onDelete() },
-                        )
+                    if (menu) BottomPanel(onDismiss = { menu = false }) {
+                        PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menu = false; onDelete() }
                     }
                 }
             }

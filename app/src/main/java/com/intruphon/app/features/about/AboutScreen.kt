@@ -23,7 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AlertDialog
+import com.intruphon.app.core.ui.BottomPanel
+import com.intruphon.app.core.ui.PanelAction
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -123,12 +124,10 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
     }
 
     if (licenses) {
-        AlertDialog(
-            onDismissRequest = { licenses = false },
-            confirmButton = { TextButton(onClick = { licenses = false }) { Text(stringResource(R.string.download_close)) } },
-            title = { Text(stringResource(R.string.about_licenses)) },
-            text = { Text(stringResource(R.string.about_licenses_body), Modifier.verticalScroll(rememberScrollState())) },
-        )
+        BottomPanel(onDismiss = { licenses = false }, title = stringResource(R.string.about_licenses)) {
+            Text(stringResource(R.string.about_licenses_body))
+            PanelAction(stringResource(R.string.download_close), onClick = { licenses = false })
+        }
     }
 }
 

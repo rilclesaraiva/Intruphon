@@ -229,6 +229,19 @@ object DownloadEngine {
         }
     }
 
+    /** Looks at the files right now: marks the vanished ones as missing and returns the ids that still have a file. */
+    suspend fun stillOnDevice(ids: List<Long>): List<Long> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        ids.filter { id ->
+            val item = state.value.firstOrNull { it.record.id == id } ?: return@filter false
+            val uri = item.record.uri
+            when {
+                item.status.state != DownloadState.DONE || uri == null -> false
+                exists(Uri.parse(uri)) -> true
+                else -> { markMissing(id); false }
+            }
+        }
+    }
+
     // Every note says which build wrote it, so a screenshot tells which version was tested.
     private fun withBuild(note: String) = if (note.isEmpty()) "" else "$note [build ${com.intruphon.app.BuildConfig.BUILD}]"
 

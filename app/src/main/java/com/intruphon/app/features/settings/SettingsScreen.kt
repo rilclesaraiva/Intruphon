@@ -56,7 +56,8 @@ import com.intruphon.app.R
 import com.intruphon.app.data.update.MONTH_MS
 import com.intruphon.app.data.update.WEEK_MS
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
+import com.intruphon.app.core.ui.BottomPanel
+import com.intruphon.app.core.ui.PanelAction
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.data.stats.SpeedLog
@@ -201,24 +202,11 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
             ),
         )
         if (choosing) {
-            AlertDialog(
-                onDismissRequest = { choosing = false },
-                title = { Text(stringResource(R.string.settings_updates_title)) },
-                text = {
-                    Column {
-                        TextButton(onClick = { choosing = false; UpdateRepository.undoChoices() }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.settings_updates_normal), modifier = Modifier.fillMaxWidth())
-                        }
-                        TextButton(onClick = { choosing = false; UpdateRepository.snooze(WEEK_MS) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.settings_updates_week), modifier = Modifier.fillMaxWidth())
-                        }
-                        TextButton(onClick = { choosing = false; UpdateRepository.snooze(MONTH_MS) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.settings_updates_month), modifier = Modifier.fillMaxWidth())
-                        }
-                    }
-                },
-                confirmButton = { TextButton(onClick = { choosing = false }) { Text(stringResource(R.string.downloads_cancel)) } },
-            )
+            BottomPanel(onDismiss = { choosing = false }, title = stringResource(R.string.settings_updates_title)) {
+                PanelAction(stringResource(R.string.settings_updates_normal), onClick = { choosing = false; UpdateRepository.undoChoices() })
+                PanelAction(stringResource(R.string.settings_updates_week), onClick = { choosing = false; UpdateRepository.snooze(WEEK_MS) })
+                PanelAction(stringResource(R.string.settings_updates_month), onClick = { choosing = false; UpdateRepository.snooze(MONTH_MS) })
+            }
         }
 
         SectionLabel(stringResource(R.string.settings_cat_about))

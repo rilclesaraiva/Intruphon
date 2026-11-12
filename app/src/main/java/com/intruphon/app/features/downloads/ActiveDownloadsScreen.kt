@@ -20,7 +20,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import com.intruphon.app.core.ui.BottomPanel
+import com.intruphon.app.core.ui.PanelAction
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -83,18 +84,17 @@ fun ActiveDownloadsScreen(modifier: Modifier = Modifier) {
     }
 
     if (confirmAll) {
-        AlertDialog(
-            onDismissRequest = { confirmAll = false },
-            title = { Text(stringResource(R.string.active_cancel_all_title)) },
-            text = { Text(stringResource(R.string.active_cancel_all_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmAll = false
-                    scope.launch(Dispatchers.IO) { DownloadEngine.cancelAll() }
-                }) { Text(stringResource(R.string.active_cancel_all), color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { confirmAll = false }) { Text(stringResource(R.string.download_close)) } },
-        )
+        BottomPanel(
+            onDismiss = { confirmAll = false },
+            title = stringResource(R.string.active_cancel_all_title),
+            message = stringResource(R.string.active_cancel_all_message),
+        ) {
+            PanelAction(stringResource(R.string.active_cancel_all), main = true, danger = true, onClick = {
+                confirmAll = false
+                scope.launch(Dispatchers.IO) { DownloadEngine.cancelAll() }
+            })
+            PanelAction(stringResource(R.string.download_close), onClick = { confirmAll = false })
+        }
     }
 }
 
