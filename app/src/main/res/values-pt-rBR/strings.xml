@@ -87,7 +87,7 @@
     <string name="update_week">Em 1 semana</string>
     <string name="update_month">Em 1 mês</string>
     <string name="update_skip">Pular esta versão</string>
-    <string name="about_tagline">Um app leve para Android que baixa mídia de links que são seus, de licença livre ou que você tem permissão para usar. Sem anúncios e sem analytics.</string>
+    <string name="about_tagline">Um app leve para Android que baixa mídia de links. Você decide o que baixa. Sem anúncios e sem analytics.</string>
     <string name="about_developer">Desenvolvedor</string>
     <string name="about_project">Projeto</string>
     <string name="about_source">Código-fonte</string>

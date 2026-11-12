@@ -87,7 +87,7 @@
     <string name="update_week">En 1 semana</string>
     <string name="update_month">En 1 mes</string>
     <string name="update_skip">Omitir esta versión</string>
-    <string name="about_tagline">Una app ligera para Android que descarga contenido de enlaces que son tuyos, de licencia libre o que tienes permiso para usar. Sin anuncios y sin analíticas.</string>
+    <string name="about_tagline">Una app ligera para Android que descarga contenido de enlaces. Tú decides qué descargas. Sin anuncios y sin analíticas.</string>
     <string name="about_developer">Desarrollador</string>
     <string name="about_project">Proyecto</string>
     <string name="about_source">Código fuente</string>
