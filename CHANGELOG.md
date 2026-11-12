@@ -35,6 +35,7 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- Downloads: the actions, the delete question and the confirmation are now one panel with steps. Going forward, the current step slides out to the right and the next one arrives from the same side with a light spring; a small back button at the top left (or the system back) returns to the previous step the same way.
 - No more windows in the middle of the screen: every question and notice (delete, cancel all, update notice choices, licenses, selection menu) now rises from the bottom like the other panels.
 - Files that were deleted outside the app: the delete-from-device option and its confirmation no longer appear for them; they are checked again right when the panel or the delete flow opens, and only "Remove from list" is offered.
 - Audio tags: when the site gives no album, the album tag is the song title (before, players grouped the file under the folder name "Audio"). A real album from the source is still used.

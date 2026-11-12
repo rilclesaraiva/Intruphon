@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -42,16 +43,20 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, afterBack: Boolean 
     }
 }
 
-/** Round floating button, used for Settings (top right) and Back (top left). */
+/** Round floating button, used for Settings (top right) and Back (top left). [mini] is the small one used inside panels. */
 @Composable
-fun FloatingCircleButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FloatingActionButton(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CircleShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f),   // slightly see-through
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    ) { Icon(icon, contentDescription = contentDescription) }
+fun FloatingCircleButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier, mini: Boolean = false) {
+    val container = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)   // slightly see-through
+    val content = MaterialTheme.colorScheme.onSurface
+    if (mini) {
+        SmallFloatingActionButton(onClick = onClick, modifier = modifier, shape = CircleShape, containerColor = container, contentColor = content) {
+            Icon(icon, contentDescription = contentDescription)
+        }
+    } else {
+        FloatingActionButton(onClick = onClick, modifier = modifier, shape = CircleShape, containerColor = container, contentColor = content) {
+            Icon(icon, contentDescription = contentDescription)
+        }
+    }
 }
 
 /** Small colored label that opens a group of settings. */

@@ -78,7 +78,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.intruphon.app.R
-import com.intruphon.app.core.ui.BottomPanel
+import com.intruphon.app.core.ui.BottomPanelFlow
+import com.intruphon.app.core.ui.PanelBody
 import com.intruphon.app.core.ui.PanelAction
 import com.intruphon.app.core.ui.PageHeader
 import com.intruphon.app.data.download.DownloadEngine
@@ -132,10 +133,10 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     fun toggle(id: Long) { selected = if (id in selected) selected - id else selected + id }
 
     // The panel with the other things to do with one download.
-    var menuId by rememberSaveable { mutableStateOf<Long?>(null) }
+    // The one panel: which downloads it is about, and its step (0 actions, 1 delete question, 2 confirmation).
+    var panelIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
+    var panelStep by rememberSaveable { mutableStateOf(0) }
     // Deleting asks twice: first remove from the list or delete from the device, then the confirmation window.
-    var askIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
-    var confirmIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
     var deletingIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
     val deleteWindow = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         val ids = deletingIds
@@ -185,7 +186,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
             val present = DownloadEngine.stillOnDevice(ids)
             val gone = ids.filterNot { it in present }
             if (gone.isNotEmpty()) withContext(Dispatchers.IO) { gone.forEach { DownloadEngine.remove(it, deleteFile = false) } }
-            if (present.isEmpty()) selected = emptySet() else askIds = present
+            if (present.isEmpty()) { selected = emptySet(); panelIds = null } else { panelIds = present; panelStep = 1 }
         }
     }
 
@@ -194,9 +195,9 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
         item = item,
         picked = item.record.id in selected,
         onTap = { tap(item) },
-        onHold = { menuId = item.record.id },
+        onHold = { panelIds = listOf(item.record.id); panelStep = 0 },
         onCover = { toggle(item.record.id) },
-        onMore = { menuId = item.record.id },
+        onMore = { panelIds = listOf(item.record.id); panelStep = 0 },
     )
 
     Box(modifier.fillMaxSize()) {
@@ -249,91 +250,94 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                 count = selected.size,
                 onClose = { selected = emptySet() },
                 onSelectAll = { selected = if (selected.containsAll(pickable)) emptySet() else pickable.toSet() },
-                onDelete = { askDelete(selected.toList()) },
+                onMore = { panelIds = selected.toList(); panelStep = 0 },
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
     }
 
-    // The panel for one download: opens from its dots or by holding the row.
-    menuId?.let { id ->
-        val item = all.firstOrNull { it.record.id == id }
-        LaunchedEffect(id) { DownloadEngine.checkFiles() }   // a file removed elsewhere turns the delete option into "remove from list"
-        if (item == null) menuId = null else ModalBottomSheet(onDismissRequest = { menuId = null }, sheetState = rememberModalBottomSheetState()) {
-            Column(Modifier.padding(bottom = 24.dp)) {
-                Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                val state = item.status.state
-                if (state == DownloadState.DONE) PanelRow(Icons.Default.PlayArrow, R.string.downloads_open) { menuId = null; open(item) }
-                if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { menuId = null; onRetry(item.record.sourceLink) }
-                PanelRow(Icons.Default.Check, R.string.downloads_select) { menuId = null; toggle(id) }
-                if (state == DownloadState.DONE) {
-                    PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menuId = null; askDelete(listOf(id)) }
-                } else {
-                    PanelRow(Icons.Default.Close, R.string.downloads_remove) { menuId = null; scope.launch(Dispatchers.IO) { DownloadEngine.remove(id) } }
-                }
-            }
-        }
-    }
-
-    // First question: only forget the entries, or also delete the files.
-    askIds?.let { ids ->
-        BottomPanel(
-            onDismiss = { askIds = null },
-            title = if (ids.size == 1) stringResource(R.string.downloads_delete_title) else stringResource(R.string.downloads_delete_title_many, ids.size),
-            message = stringResource(R.string.downloads_delete_message),
-        ) {
-            PanelAction(stringResource(R.string.downloads_delete_device), main = true, danger = true, onClick = { askIds = null; confirmIds = ids })
-            PanelAction(stringResource(R.string.downloads_remove_list), onClick = {
-                askIds = null
-                selected = emptySet()
-                scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
-            })
-            PanelAction(stringResource(R.string.downloads_cancel), onClick = { askIds = null })
-        }
-    }
-
-    // Second question, for deleting from the device: a panel like the system window, with the cover.
-    confirmIds?.let { ids ->
-        val first = all.firstOrNull { it.record.id == ids.first() }
-        val picture = first?.let { item ->
-            item.record.uri?.let { MediaPreview.peek(it)?.thumbnail } ?: item.record.coverUrl?.let { Thumbnails.peek(it) }
-        }
-        BottomPanel(
-            onDismiss = { confirmIds = null },
-            title = when {
-                ids.size > 1 -> stringResource(R.string.downloads_allow_many, ids.size)
-                first?.record?.kind == Kind.VIDEO -> stringResource(R.string.downloads_allow_video)
-                else -> stringResource(R.string.downloads_allow_audio)
-            },
-        ) {
-            if (picture != null) {
-                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                    Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(180.dp).clip(RoundedCornerShape(16.dp)))
-                }
-            }
-            PanelAction(stringResource(R.string.downloads_allow), main = true, danger = true, onClick = {
-                confirmIds = null
-                scope.launch {
-                    when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
-                        is DownloadEngine.DeleteStep.Ask -> {
-                            deletingIds = step.ids
-                            deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+    // One panel for everything about a download: the actions, then the delete question, then the confirmation.
+    // The steps slide inside the same panel, with a back button from the second step on.
+    panelIds?.let { ids ->
+        LaunchedEffect(ids) { DownloadEngine.checkFiles() }   // a file removed elsewhere turns the delete option into "remove from list"
+        val chosen = ids.mapNotNull { id -> all.firstOrNull { it.record.id == id } }
+        if (chosen.isEmpty()) panelIds = null else BottomPanelFlow(
+            onDismiss = { panelIds = null },
+            step = panelStep,
+            onBack = { if (panelStep > 0) panelStep -= 1 },
+        ) { shown ->
+            when (shown) {
+                0 -> {
+                    if (chosen.size == 1) {
+                        val item = chosen.first()
+                        val id = item.record.id
+                        val state = item.status.state
+                        Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                        if (state == DownloadState.DONE) PanelRow(Icons.Default.PlayArrow, R.string.downloads_open) { panelIds = null; open(item) }
+                        if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { panelIds = null; onRetry(item.record.sourceLink) }
+                        PanelRow(Icons.Default.Check, R.string.downloads_select) { panelIds = null; toggle(id) }
+                        if (state == DownloadState.DONE) {
+                            PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { askDelete(listOf(id)) }
+                        } else {
+                            PanelRow(Icons.Default.Close, R.string.downloads_remove) { panelIds = null; scope.launch(Dispatchers.IO) { DownloadEngine.remove(id) } }
                         }
-                        DownloadEngine.DeleteStep.Gone -> selected = emptySet()
-                        is DownloadEngine.DeleteStep.Failed ->
-                            Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
+                    } else {
+                        PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { askDelete(chosen.map { it.record.id }) }
                     }
                 }
-            })
-            PanelAction(stringResource(R.string.downloads_deny), onClick = { confirmIds = null })
+                1 -> PanelBody(
+                    title = if (ids.size == 1) stringResource(R.string.downloads_delete_title) else stringResource(R.string.downloads_delete_title_many, ids.size),
+                    message = stringResource(R.string.downloads_delete_message),
+                ) {
+                    PanelAction(stringResource(R.string.downloads_delete_device), main = true, danger = true, onClick = { panelStep = 2 })
+                    PanelAction(stringResource(R.string.downloads_remove_list), onClick = {
+                        panelIds = null
+                        selected = emptySet()
+                        scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
+                    })
+                    PanelAction(stringResource(R.string.downloads_cancel), onClick = { panelIds = null })
+                }
+                else -> {
+                    // For deleting from the device: a panel like the system window, with the cover.
+                    val first = chosen.first()
+                    val picture = first.record.uri?.let { MediaPreview.peek(it)?.thumbnail } ?: first.record.coverUrl?.let { Thumbnails.peek(it) }
+                    PanelBody(
+                        title = when {
+                            ids.size > 1 -> stringResource(R.string.downloads_allow_many, ids.size)
+                            first.record.kind == Kind.VIDEO -> stringResource(R.string.downloads_allow_video)
+                            else -> stringResource(R.string.downloads_allow_audio)
+                        },
+                    ) {
+                        if (picture != null) {
+                            Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                                Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(180.dp).clip(RoundedCornerShape(16.dp)))
+                            }
+                        }
+                        PanelAction(stringResource(R.string.downloads_allow), main = true, danger = true, onClick = {
+                            panelIds = null
+                            scope.launch {
+                                when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
+                                    is DownloadEngine.DeleteStep.Ask -> {
+                                        deletingIds = step.ids
+                                        deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+                                    }
+                                    DownloadEngine.DeleteStep.Gone -> selected = emptySet()
+                                    is DownloadEngine.DeleteStep.Failed ->
+                                        Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        })
+                        PanelAction(stringResource(R.string.downloads_deny), onClick = { panelIds = null })
+                    }
+                }
+            }
         }
     }
 }
 
 /** The two floating pills while picking: count and close on the left, select all and more on the right. */
 @Composable
-private fun SelectionBar(count: Int, onClose: () -> Unit, onSelectAll: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
-    var menu by androidx.compose.runtime.remember { mutableStateOf(false) }
+private fun SelectionBar(count: Int, onClose: () -> Unit, onSelectAll: () -> Unit, onMore: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().statusBarsPadding().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
             Row(Modifier.height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -344,12 +348,7 @@ private fun SelectionBar(count: Int, onClose: () -> Unit, onSelectAll: () -> Uni
         Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
             Row(Modifier.height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onSelectAll) { Icon(ImageVector.vectorResource(R.drawable.ic_select_all), contentDescription = stringResource(R.string.downloads_select_all)) }
-                Box {
-                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.downloads_more)) }
-                    if (menu) BottomPanel(onDismiss = { menu = false }) {
-                        PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menu = false; onDelete() }
-                    }
-                }
+                IconButton(onClick = onMore) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.downloads_more)) }
             }
         }
     }
