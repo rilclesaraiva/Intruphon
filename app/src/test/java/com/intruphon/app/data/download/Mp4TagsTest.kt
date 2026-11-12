@@ -90,4 +90,16 @@ class Mp4TagsTest {
         assertTrue(after.copyOfRange(moovEnd, after.size).contentEquals(tailBefore))
         assertTrue(contains(after, "Título Ç".toByteArray(Charsets.UTF_8)))
     }
+
+    // The media data box with a 64-bit size (size field 1), as Android's MediaMuxer writes it.
+    @Test fun mediaDataBoxWithLargeSize() {
+        val f = fixture("mdat64.m4a")
+        val before = f.readBytes()
+        val sample = before.copyOfRange(firstChunkOffset(before), firstChunkOffset(before) + 16)
+        Mp4Tags.write(f, meta, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 9))
+        val after = f.readBytes()
+        assertTrue(contains(after, "Título Ç".toByteArray(Charsets.UTF_8)))
+        val offset = firstChunkOffset(after)
+        assertTrue(after.copyOfRange(offset, offset + 16).contentEquals(sample))
+    }
 }

@@ -32,11 +32,21 @@ object Mp4Tags {
             var checkedMoof = false
             while (pos < length) {
                 raf.seek(pos)
-                val size = raf.readInt().toLong() and 0xFFFFFFFFL
+                var size = raf.readInt().toLong() and 0xFFFFFFFFL
                 val typeBytes = ByteArray(4)
                 raf.readFully(typeBytes)
-                if (size < 8) throw IllegalStateException("Unsupported MP4 box size")
-                when (String(typeBytes, Charsets.ISO_8859_1)) {
+                // Size 1 means a 64-bit size follows (Android's muxer writes its media data box that way); 0 means "to the end".
+                var header = 8
+                if (size == 1L) {
+                    size = raf.readLong()
+                    header = 16
+                } else if (size == 0L) {
+                    size = length - pos
+                }
+                if (size < header) throw IllegalStateException("Unsupported MP4 box size")
+                val type = String(typeBytes, Charsets.ISO_8859_1)
+                if (type == "moov" && header != 8) throw IllegalStateException("moov with a 64-bit size")
+                when (type) {
                     "moov" -> { foundStart = pos; foundEnd = pos + size }
                     "mdat" -> if (mdatStart < 0) mdatStart = pos
                     "moof" -> if (!checkedMoof) {

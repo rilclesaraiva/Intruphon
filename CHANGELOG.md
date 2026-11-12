@@ -25,6 +25,7 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- Tags failed with "Unsupported MP4 box size" on files made by the system muxer, which writes the media data box with a 64-bit size; the tag writer now reads that form.
 - Joining video and audio now fails with a clear message when one of the two files gives no samples (before, a video could be saved without its sound and the app said nothing). The message lists, per file, how many samples were read and what the first read returned.
 - M4A audio is no longer re-joined: the downloaded file already plays, so tags and cover are written straight into it (the re-join step was the cause of the empty files and added nothing).
 - Every inspection build now has its own version code (the CI run number) so it always installs as an update, and the About tab and the notes under a download say which build is running.
