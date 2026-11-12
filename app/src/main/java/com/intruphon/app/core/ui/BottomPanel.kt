@@ -19,9 +19,10 @@ import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -89,15 +90,18 @@ fun PanelBody(title: String? = null, message: String? = null, content: @Composab
 }
 
 /**
- * One panel with several steps (0 is the first). Changing [step] makes what is showing slide out to the
- * right and the next step arrive from the same side, with a light spring; all steps share one height; from step 1 on a small back
- * button sits at the top left and goes back one step ([onBack]), also on the system back.
+ * One panel with several steps (0 is the first), [steps] in all. Changing [step] makes what is showing slide
+ * out to the right and the next step arrive from the same side, with a light spring; from step 1 on a small
+ * back button sits at the top left and goes back one step ([onBack]), also on the system back. The panel is
+ * as tall as its tallest step and keeps that height on every step, so it never jumps (and has no empty gap
+ * under the shorter ones beyond that).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomPanelFlow(
     onDismiss: () -> Unit,
     step: Int,
+    steps: Int,
     onBack: () -> Unit,
     content: @Composable ColumnScope.(Int) -> Unit,
 ) {
@@ -114,31 +118,38 @@ fun BottomPanelFlow(
                 away.animateTo(0f, spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow))
             }
         }
-        // Every step has the same height, so the panel never jumps between steps (shorter on small screens).
-        val height = minOf(440.dp, LocalConfiguration.current.screenHeightDp.dp * 0.7f)
-        Column(Modifier.fillMaxWidth()) {
-            Column(
+        val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.7f
+        Column(Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(rememberScrollState())) {
+            // Every step is measured, only the current one is placed: the height is the tallest step's.
+            SubcomposeLayout(
                 Modifier
                     .fillMaxWidth()
-                    .height(height)
                     .graphicsLayer {
                         translationX = away.value * size.width
                         alpha = (1f - away.value).coerceIn(0f, 1f)
-                    }
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (shown > 0) {
-                    FloatingCircleButton(
-                        icon = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back),
-                        onClick = onBack,
-                        modifier = Modifier.padding(start = 16.dp),
-                        mini = true,
-                    )
+                    },
+            ) { constraints ->
+                val loose = constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity)
+                val measured = (0 until steps).map { i ->
+                    subcompose(i) {
+                        Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (i > 0) {
+                                FloatingCircleButton(
+                                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back),
+                                    onClick = onBack,
+                                    modifier = Modifier.padding(start = 16.dp),
+                                    mini = true,
+                                )
+                            }
+                            content(i)
+                        }
+                    }.map { it.measure(loose) }
                 }
-                content(shown)
+                val height = measured.maxOf { list -> list.maxOfOrNull { it.height } ?: 0 }
+                layout(constraints.maxWidth, height) {
+                    measured.getOrNull(shown)?.forEach { it.placeRelative(0, 0) }
+                }
             }
         }
     }

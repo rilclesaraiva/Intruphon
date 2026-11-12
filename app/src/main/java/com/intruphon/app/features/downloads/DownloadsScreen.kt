@@ -264,6 +264,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
         if (chosen.isEmpty()) panelIds = null else BottomPanelFlow(
             onDismiss = { panelIds = null },
             step = panelStep,
+            steps = 3,
             onBack = { if (panelStep > 0) panelStep -= 1 },
         ) { shown ->
             when (shown) {
