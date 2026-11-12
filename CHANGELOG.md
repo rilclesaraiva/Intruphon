@@ -20,6 +20,8 @@
 - Downloads tab: each item shows its cover (or a video frame) and its length, read from the saved file; a "Processing" state is shown while a file is being joined, converted or tagged.
 - Settings tab: download only on Wi-Fi (adds the `ACCESS_NETWORK_STATE` permission) and the number of simultaneous downloads (1 to 5, the rest wait their turn).
 - Speed log: every download records format, quality, connection type, bytes, download time, processing time and result in a file on the device and in logcat (tag `IntruphonSpeed`); Settings shows the average speed per format and quality and can share the log as CSV or clear it.
+- Update notice: when the app opens (and at most every 10 minutes when you come back to it) it asks GitHub for the latest public Release. If it is newer than the installed version, a full-screen panel shows the Release notes with a Download button that opens the APK. "Not now" lasts until the app is opened again; the bell reminds in 1 week or 1 month, or skips that version. The saved ETag keeps repeated checks from using GitHub's rate limit. Settings has a System section to check by hand and to turn the notices back on. The privacy policy and README describe this new network call.
+- About screen rebuilt as a page of Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
 - New Material 3 Expressive look (large rounded shapes, heavier titles, spring page transitions) and no fixed top bar: page titles scroll with the content, Home and Downloads switch from a bottom navigation bar, and a floating Settings button sits at the top right (a floating Back button inside Settings and About).
 - Every page now remembers where you left it (scroll position and typed text) when you go to another page and come back.
@@ -39,6 +41,6 @@
 - Tags and cover art were not written: files made by the system muxer keep their index before the media data, which the tag writer did not handle (it now shifts the offsets).
 - Opening a downloaded file that was deleted outside the app no longer crashes; the entry is marked "This file is no longer on the device" and can be removed or downloaded again.
 ### Known issues
-- Joining video and audio, M4A/MP3 tagging, cover art and the new Downloads thumbnails are only compiled by the CI so far; they have not been tested on a real device.
-- MP3 conversion runs on the phone, so a long track takes a while; it has only been compiled by the CI, not tested on a real device.
-- Not tested on a real device yet: YouTube changes often and some links may fail to read or download.
+- The new look, navigation, short format list, About screen and update notice are only compiled by the CI so far; they have not been tested on a real device.
+- Not tested on a real device yet: downloads from sites other than YouTube, and video resolutions other than 1080p. YouTube changes often and some links may fail to read or download.
+- MP3 conversion runs on the phone, so a very long track may take a while.

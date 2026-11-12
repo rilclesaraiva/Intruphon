@@ -42,6 +42,10 @@ import com.intruphon.app.features.download.DownloadSheet
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
 import com.intruphon.app.features.settings.SettingsScreen
+import com.intruphon.app.features.update.UpdatePrompt
+import com.intruphon.app.data.update.UpdateRepository
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 private const val HOME = 0
 private const val DOWNLOADS = 1
@@ -59,6 +63,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+        // Opening the app from scratch always looks for an update; coming back does it at most every 10 minutes.
+        UpdateRepository.start(applicationContext, versionName, fresh = savedInstanceState == null)
+        lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) UpdateRepository.onResume() })
         setContent {
             IntruphonTheme {
                 var page by rememberSaveable { mutableIntStateOf(HOME) }
@@ -134,6 +141,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                UpdatePrompt()
                 sheetLink?.let {
                     DownloadSheet(link = it, onDismiss = { sheetLink = null }, onStarted = { page = DOWNLOADS })
                 }

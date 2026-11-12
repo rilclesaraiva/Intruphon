@@ -13,7 +13,10 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 - Settings: download only on Wi-Fi, and how many downloads run at the same time.
 - A local speed log (format, quality, connection type, bytes, speed) that stays on the device and can be shared as CSV from Settings.
 - File names carry the quality, for example `Title (M4A_128K).m4a`.
-- Material 3 interface with dynamic colors on Android 12+.
+- Material 3 Expressive interface with dynamic colors on Android 12+: no fixed top bar, a floating Settings button, and every page remembers where you left it.
+- The download pop-up shows the highest and the smallest audio and video choices first, with the rest under "More formats".
+- An About screen (inside Settings) with version, source code, changelog, issues, privacy policy, terms and licenses.
+- An update notice: the app asks GitHub for the latest public Release when it opens and tells you if there is a newer one (you can remind later, skip a version, or check by hand in Settings).
 
 Intruphon is meant for content that is yours, freely licensed, or that you have permission to download. Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
 
@@ -21,7 +24,7 @@ MP3 encoding uses a bundled Java port of the LAME encoder ([java-lame](https://g
 
 ## Privacy and permissions
 
-Intruphon declares only the `INTERNET`, network-state (`ACCESS_NETWORK_STATE`, for the Wi-Fi only option), notification (`POST_NOTIFICATIONS`) and foreground-service permissions (the last two for download progress), includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers). This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
+Intruphon declares only the `INTERNET`, network-state (`ACCESS_NETWORK_STATE`, for the Wi-Fi only option), notification (`POST_NOTIFICATIONS`) and foreground-service permissions (the last two for download progress), includes no analytics, ads or third-party SDKs, and sends nothing to the maintainer. To read a link it contacts the website that hosts it (and that site's own content servers), and to look for updates it asks GitHub for the project's latest public Release. This is checked against the code at every release and the policy is updated with any change. See the [privacy policy](https://rilclesaraiva.github.io/Intruphon/privacy).
 
 ## 🤖 Built with AI ("vibe coding")
 

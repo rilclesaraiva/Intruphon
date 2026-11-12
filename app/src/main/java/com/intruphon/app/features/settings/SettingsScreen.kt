@@ -5,6 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.intruphon.app.data.update.CheckResult
+import com.intruphon.app.data.update.UpdateRepository
+import java.text.DateFormat
+import java.util.Date
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.clickable
@@ -99,6 +107,48 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                     enabled = entries.isNotEmpty(),
                     onClick = { SpeedLog.clear(context); reload++ },
                 ) { Text(stringResource(R.string.settings_speed_clear)) }
+            }
+        }
+
+        SectionLabel(stringResource(R.string.settings_cat_system))
+        SectionCard {
+            val choices by UpdateRepository.choices.collectAsState()
+            val now = System.currentTimeMillis()
+            val notices = when {
+                choices.skippedVersion != null -> stringResource(R.string.settings_updates_skipping, choices.skippedVersion.orEmpty())
+                choices.snoozed(now) -> stringResource(R.string.settings_updates_snoozed, DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(choices.snoozeUntilMs)))
+                else -> stringResource(R.string.settings_updates_on)
+            }
+            val paused = choices.skippedVersion != null || choices.snoozed(now)
+            var checking by remember { mutableStateOf(false) }
+            var result by remember { mutableStateOf<CheckResult?>(null) }
+            val scope = rememberCoroutineScope()
+
+            Text(stringResource(R.string.settings_updates_title), style = MaterialTheme.typography.titleSmall)
+            Text(notices, style = MaterialTheme.typography.bodyMedium)
+            Row {
+                if (paused) TextButton(onClick = { UpdateRepository.undoChoices() }) { Text(stringResource(R.string.settings_updates_undo)) }
+            }
+            Spacer(Modifier.height(8.dp))
+            FilledTonalButton(
+                enabled = !checking,
+                onClick = {
+                    checking = true
+                    scope.launch { result = UpdateRepository.checkNow(); checking = false }
+                },
+            ) { Text(stringResource(R.string.settings_updates_check)) }
+            result?.let {
+                Text(
+                    stringResource(
+                        when (it) {
+                            CheckResult.UP_TO_DATE -> R.string.settings_updates_up_to_date
+                            CheckResult.AVAILABLE -> R.string.settings_updates_available
+                            CheckResult.FAILED -> R.string.settings_updates_failed
+                        },
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
         }
 
