@@ -28,6 +28,7 @@ internal object DownloadStore {
                         uri = o.optString("uri").ifEmpty { null },
                         tags = when (o.optInt("tags", -1)) { 1 -> true; 0 -> false; else -> null },
                         note = o.optString("note"),
+                        coverUrl = o.optString("cover").ifEmpty { null },
                     ),
                     DownloadStatus(
                         state = DownloadState.valueOf(o.getString("state")),
@@ -55,6 +56,7 @@ internal object DownloadStore {
                     .put("uri", it.record.uri ?: "")
                     .put("tags", when (it.record.tags) { true -> 1; false -> 0; null -> -1 })
                     .put("note", it.record.note)
+                    .put("cover", it.record.coverUrl ?: "")
                     .put("state", it.status.state.name)
                     .put("downloaded", it.status.downloadedBytes)
                     .put("total", it.status.totalBytes)

@@ -11,7 +11,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -52,6 +54,7 @@ import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.data.update.UpdateRepository
 import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
+import com.intruphon.app.features.downloads.ActiveDownloadsScreen
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
 import com.intruphon.app.features.settings.SettingsScreen
@@ -65,6 +68,7 @@ private const val HOME = 0
 private const val DOWNLOADS = 1
 private const val SETTINGS = 2
 private const val ABOUT = 3
+private const val ACTIVE = 4
 
 // Entry point: registers the pages. Features never import each other.
 //
@@ -154,14 +158,16 @@ private fun App(versionName: String) {
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
             HOME -> HomeScreen(onDownload = { sheetLink = it }, onOpenDownloads = { open(DOWNLOADS) })
-            DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it })
+            DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) })
+            ACTIVE -> ActiveDownloadsScreen()
             SETTINGS -> SettingsScreen(onOpenAbout = { open(ABOUT) })
             else -> AboutScreen(versionName)
         }
     }
 
-    Scaffold { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+    // The pages draw behind the system bars (edge to edge); each page keeps its content clear of them.
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { _ ->
+        Box(Modifier.fillMaxSize()) {
             // Every page of the stack stays composed in its own layer, keyed by the page, so nothing is rebuilt when a
             // page goes from top to below: scroll, fields and thumbnails stay. Each layer carries its own floating button.
             val last = stack.lastIndex
@@ -196,14 +202,14 @@ private fun App(versionName: String) {
                                 icon = Icons.Default.Settings,
                                 contentDescription = stringResource(R.string.settings_open),
                                 onClick = { open(SETTINGS) },
-                                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                                modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
                             )
                         } else {
                             FloatingCircleButton(
                                 icon = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back),
                                 onClick = { close() },
-                                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp),
                             )
                         }
                         if (isBelow) {

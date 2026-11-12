@@ -36,7 +36,7 @@
     <string name="downloads_status_processing">Procesando: uniendo, convirtiendo y etiquetando…</string>
     <string name="downloads_status_done">Listo. Guardado en Download/Intruphon.</string>
     <string name="downloads_status_failed_http">Error (HTTP %1$d)</string>
-    <string name="downloads_status_failed">Error (código %1$d)</string>
+    <string name="downloads_status_failed">Error (desconocido)</string>
     <string name="downloads_status_failed_io">Error (de conexión o de almacenamiento)</string>
     <string name="downloads_status_interrupted">Interrumpida. Inténtalo de nuevo.</string>
     <string name="notif_channel_progress">Progreso de descargas</string>
@@ -133,4 +133,16 @@
     <string name="playlist_fmt_audio_small">Audio · mínima</string>
     <string name="playlist_fmt_video_high">Vídeo · máxima</string>
     <string name="playlist_fmt_video_small">Vídeo · mínima</string>
+    <string name="active_title">Descargando</string>
+    <string name="active_count">Descargando (%1$d)</string>
+    <string name="active_cancel_all">Cancelar todo</string>
+    <string name="active_cancel_all_title">¿Cancelar todas las descargas?</string>
+    <string name="active_cancel_all_message">Las descargas en curso se detienen y se borran sus archivos parciales.</string>
+    <string name="active_reading">Leyendo la lista… los elementos aparecen aquí a medida que se añaden.</string>
+    <string name="active_empty">No se está descargando nada ahora.</string>
+    <string name="downloads_failed_title">Con error (%1$d)</string>
+    <string name="downloads_failed_remove_all">Quitar todo</string>
+    <string name="downloads_done_title">Descargado</string>
+    <string name="downloads_status_failed_unreadable">No se pudo leer este elemento (puede no estar disponible, ser privado o no compatible)</string>
+    <string name="downloads_status_failed_no_format">Este elemento no tiene un formato del tipo elegido</string>
 </resources>

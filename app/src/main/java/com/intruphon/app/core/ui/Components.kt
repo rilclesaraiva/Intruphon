@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
@@ -36,7 +37,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PageHeader(title: String, modifier: Modifier = Modifier, afterBack: Boolean = false) {
     val padding = if (afterBack) Modifier.padding(start = 72.dp) else Modifier.padding(end = 72.dp)
-    Box(modifier.fillMaxWidth().height(80.dp).then(padding), contentAlignment = Alignment.CenterStart) {
+    Box(modifier.fillMaxWidth().statusBarsPadding().height(80.dp).then(padding), contentAlignment = Alignment.CenterStart) {
         Text(title, style = MaterialTheme.typography.headlineLarge, maxLines = 1)
     }
 }

@@ -62,13 +62,25 @@ import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.REASON_INTERRUPTED
 import com.intruphon.app.data.download.REASON_IO
 import com.intruphon.app.data.download.REASON_NEEDS_WIFI
+import com.intruphon.app.data.download.REASON_NO_FORMAT
+import com.intruphon.app.data.download.REASON_UNREADABLE
+import com.intruphon.app.data.net.Thumbnails
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.runtime.State
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.clickable
+import android.graphics.Bitmap
 import com.intruphon.app.data.media.Kind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /** Library of started downloads, refreshed every second while visible. [onRetry] receives the original link. */
 @Composable
-fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
+fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -105,10 +117,33 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    val active = list.filter { it.status.state.active }
+    val failed = list.filter { it.status.state == DownloadState.FAILED }
+    val rest = list.filter { !it.status.state.active && it.status.state != DownloadState.FAILED }
+
+    @Composable
+    fun ItemRow(item: DownloadItem) = DownloadRow(
+        item = item,
+        onOpen = {
+            when (DownloadEngine.open(context, item.record.id)) {
+                DownloadEngine.OpenResult.OPENED -> Unit
+                DownloadEngine.OpenResult.NO_APP ->
+                    Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+                DownloadEngine.OpenResult.MISSING ->
+                    Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+            }
+        },
+        onRemove = {
+            if (item.status.state == DownloadState.DONE) confirmId = item.record.id
+            else scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) }
+        },
+        onRetry = { onRetry(item.record.sourceLink) },
+    )
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
@@ -127,24 +162,25 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
         if (list.isEmpty()) {
             item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
         }
-        items(list, key = { it.record.id }) { item ->
-            DownloadRow(
-                item = item,
-                onOpen = {
-                    when (DownloadEngine.open(context, item.record.id)) {
-                        DownloadEngine.OpenResult.OPENED -> Unit
-                        DownloadEngine.OpenResult.NO_APP ->
-                            Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
-                        DownloadEngine.OpenResult.MISSING ->
-                            Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+        // Everything that is running sits in one card; it opens the page where each one can be cancelled.
+        if (active.isNotEmpty()) item(key = "active") { ActiveCard(active, onOpenActive) }
+        // Failures pile up here, at the top, until they are retried or removed.
+        if (failed.isNotEmpty()) {
+            item(key = "failed-head") {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.downloads_failed_title, failed.size), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { scope.launch(Dispatchers.IO) { failed.forEach { DownloadEngine.remove(it.record.id) } } }) {
+                        Text(stringResource(R.string.downloads_failed_remove_all))
                     }
-                },
-                onRemove = {
-                    if (item.status.state == DownloadState.DONE) confirmId = item.record.id
-                    else scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) }
-                },
-                onRetry = { onRetry(item.record.sourceLink) },
-            )
+                }
+            }
+            items(failed, key = { it.record.id }) { ItemRow(it) }
+        }
+        if (rest.isNotEmpty()) {
+            if (active.isNotEmpty() || failed.isNotEmpty()) {
+                item(key = "done-head") { Text(stringResource(R.string.downloads_done_title), style = MaterialTheme.typography.titleMedium) }
+            }
+            items(rest, key = { it.record.id }) { ItemRow(it) }
         }
     }
 
@@ -163,8 +199,8 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
                                 deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
                             }
                             DownloadEngine.DeleteStep.Gone -> withContext(Dispatchers.IO) { DownloadEngine.remove(id, deleteFile = false) }
-                            DownloadEngine.DeleteStep.Failed ->
-                                Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
+                            is DownloadEngine.DeleteStep.Failed ->
+                                Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
                         }
                     }
                 }) { Text(stringResource(R.string.downloads_delete_device), color = MaterialTheme.colorScheme.error) }
@@ -197,6 +233,8 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
         } else null
     }
 
+    val cover by rememberCover(record.coverUrl)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -207,7 +245,7 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
             Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
-            val thumbnail = preview?.thumbnail
+            val thumbnail = preview?.thumbnail ?: cover
             if (thumbnail != null) {
                 Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             } else {
@@ -240,7 +278,9 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
                         status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
                         status.reason == REASON_NEEDS_WIFI -> stringResource(R.string.downloads_status_needs_wifi)
                         status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
-                        else -> stringResource(R.string.downloads_status_failed, status.reason)
+                        status.reason == REASON_UNREADABLE -> stringResource(R.string.downloads_status_failed_unreadable)
+                        status.reason == REASON_NO_FORMAT -> stringResource(R.string.downloads_status_failed_no_format)
+                        else -> stringResource(R.string.downloads_status_failed)
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium,
@@ -281,3 +321,38 @@ private fun formatDuration(ms: Long): String {
 }
 
 private fun formatSize(bytes: Long): String = String.format(Locale.US, "%.1f MB", bytes / 1_048_576.0)
+
+/** The picture of a download that is not saved yet (from its web address), shown from the first frame when already loaded. */
+@Composable
+internal fun rememberCover(url: String?): State<Bitmap?> = produceState(url?.let { Thumbnails.peek(it) }, url) {
+    if (url != null && value == null) value = withContext(Dispatchers.IO) { Thumbnails.load(url) }
+}
+
+/** One card for everything that is downloading: count, the first item and its progress. Tap to manage them. */
+@Composable
+private fun ActiveCard(active: List<DownloadItem>, onClick: () -> Unit) {
+    val first = active.first()
+    val status = first.status
+    val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
+    val cover by rememberCover(first.record.coverUrl)
+    Card(
+        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                val picture = cover
+                if (picture != null) Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                else Text(first.record.extension.uppercase(), style = MaterialTheme.typography.labelMedium)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.active_count, active.size), style = MaterialTheme.typography.titleMedium)
+                Text(first.record.title, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                if (percent != null) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
+                else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+    }
+}

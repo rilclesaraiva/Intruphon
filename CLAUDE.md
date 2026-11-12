@@ -67,7 +67,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
   entra se seguir isso.
 - Playlist: link de playlist (`/playlist?list=`) abre a sheet de playlist (itens com miniatura e duração, selecionar todos, um formato para a lista toda); cada item é lido e enfileirado em ordem pelo `DownloadEngine.enqueueAll`.
-- Downloads: abas em pílula no topo da lista (Todos, padrão; Áudio; Vídeo).
+- Downloads: abas em pílula no topo da lista (Todos, padrão; Áudio; Vídeo); um cartão "Baixando (N)" agrupa os ativos e abre a página Baixando (cancelar um ou todos); falhas ficam numa seção no topo; capa aparece já durante o download.
+- Tela cheia: as páginas desenham atrás das barras do sistema (sem barra sólida); cabeçalho e rodapé respeitam os insets.
 - Ajustes: seção Atualizações com duas linhas (verificar, mostrando a versão; avisos, com diálogo: normal, 1 semana, 1 mês).
 - Idiomas: inglês (padrão), espanhol e português do Brasil, seguindo o idioma do Android. Em Ajustes há
   um botão de idioma que abre a tela de idioma do app do próprio Android (Android 13+; antes disso, a

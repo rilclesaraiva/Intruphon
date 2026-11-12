@@ -5,6 +5,10 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -115,6 +119,7 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
         IconRowGroup(
             listOf(IconRowItem(Icons.Default.Favorite, RowTone.TERTIARY, stringResource(R.string.about_support_title), stringResource(R.string.about_support_hint)) { open(Config.REPO_URL) }),
         )
+        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 
     if (licenses) {

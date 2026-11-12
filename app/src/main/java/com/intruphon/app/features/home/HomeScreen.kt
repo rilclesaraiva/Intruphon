@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -66,6 +70,7 @@ import com.intruphon.app.data.download.DownloadItem
 import com.intruphon.app.data.download.DownloadState
 import com.intruphon.app.data.download.MediaPreview
 import com.intruphon.app.data.media.Kind
+import com.intruphon.app.data.net.Thumbnails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -86,7 +91,8 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
     var rowHeight by remember { mutableIntStateOf(0) }
     val gap = with(density) { 16.dp.roundToPx() }
     val rowEstimate = if (rowHeight > 0) rowHeight else with(density) { 80.dp.roundToPx() }
-    val room = viewport - headerBottom - gap - with(density) { 24.dp.roundToPx() }
+    val navigationBar = WindowInsets.navigationBars.getBottom(density)
+    val room = viewport - headerBottom - gap - with(density) { 24.dp.roundToPx() } - navigationBar
     val fit = if (viewport > 0 && headerBottom > 0) maxOf(MIN_RECENT, (room + gap) / (rowEstimate + gap)) else MIN_RECENT
     val recent = DownloadEngine.items.collectAsState().value.take(fit)
 
@@ -145,6 +151,7 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
         } else {
             recent.forEach { RecentRow(it, onOpenDownloads, onHeight = { h -> if (rowHeight == 0 || h < rowHeight) rowHeight = h }) }
         }
+        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
 
@@ -154,6 +161,10 @@ private fun RecentRow(item: DownloadItem, onClick: () -> Unit, onHeight: (Int) -
     val record = item.record
     val status = item.status
     val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
+    val cover by produceState<android.graphics.Bitmap?>(record.coverUrl?.let { Thumbnails.peek(it) }, record.coverUrl) {
+        val url = record.coverUrl
+        if (url != null && value == null) value = withContext(Dispatchers.IO) { Thumbnails.load(url) }
+    }
     val preview by produceState(record.uri?.let { MediaPreview.peek(it) }, record.uri, status.state) {
         value = if (status.state == DownloadState.DONE && record.uri != null) {
             withContext(Dispatchers.IO) { MediaPreview.load(context, record.uri, record.kind) }
@@ -169,7 +180,7 @@ private fun RecentRow(item: DownloadItem, onClick: () -> Unit, onHeight: (Int) -
                 Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
-                val thumbnail = preview?.thumbnail
+                val thumbnail = preview?.thumbnail ?: cover
                 if (thumbnail != null) {
                     Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 } else {

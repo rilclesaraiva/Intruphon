@@ -37,7 +37,7 @@
     <string name="downloads_status_processing">Processing: joining, converting and tagging…</string>
     <string name="downloads_status_done">Done. Saved in Download/Intruphon.</string>
     <string name="downloads_status_failed_http">Failed (HTTP %1$d)</string>
-    <string name="downloads_status_failed">Failed (error %1$d)</string>
+    <string name="downloads_status_failed">Failed (unknown error)</string>
     <string name="downloads_status_failed_io">Failed (connection or storage error)</string>
     <string name="downloads_status_interrupted">Interrupted. Try again.</string>
     <string name="notif_channel_progress">Download progress</string>
@@ -134,4 +134,16 @@
     <string name="playlist_fmt_audio_small">Audio · smallest</string>
     <string name="playlist_fmt_video_high">Video · highest</string>
     <string name="playlist_fmt_video_small">Video · smallest</string>
+    <string name="active_title">Downloading</string>
+    <string name="active_count">Downloading (%1$d)</string>
+    <string name="active_cancel_all">Cancel all</string>
+    <string name="active_cancel_all_title">Cancel all downloads?</string>
+    <string name="active_cancel_all_message">Downloads in progress are stopped and their partial files are removed.</string>
+    <string name="active_reading">Reading the playlist… items show up here as they are queued.</string>
+    <string name="active_empty">Nothing is downloading right now.</string>
+    <string name="downloads_failed_title">Failed (%1$d)</string>
+    <string name="downloads_failed_remove_all">Remove all</string>
+    <string name="downloads_done_title">Downloaded</string>
+    <string name="downloads_status_failed_unreadable">Could not read this item (it may be unavailable, private or unsupported)</string>
+    <string name="downloads_status_failed_no_format">This item has no format of the kind you chose</string>
 </resources>

@@ -15,6 +15,8 @@ data class DownloadRecord(
     val tags: Boolean? = null,
     /** A short technical remark (what fell back or failed), shown under the item. */
     val note: String = "",
+    /** A picture to show while the file is not saved yet (a web address). */
+    val coverUrl: String? = null,
 )
 
 /** PROCESSING: downloaded, now being joined, converted or tagged. MISSING: finished once but no longer on the device. */
@@ -36,3 +38,7 @@ const val REASON_INTERRUPTED = -1
 const val REASON_IO = -2
 /** "Wi-Fi only" is on and the phone is not on Wi-Fi. */
 const val REASON_NEEDS_WIFI = -3
+/** A playlist item that could not be read (unavailable, private, unsupported). */
+const val REASON_UNREADABLE = -4
+/** The item has no format of the kind that was asked for. */
+const val REASON_NO_FORMAT = -5

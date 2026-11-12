@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Added
+- Downloads: a card at the top groups everything that is downloading and opens a new "Downloading" page where each download has its own cancel button and there is a "Cancel all" (with confirmation).
+- Downloads: failed downloads pile up in a "Failed" section at the top of the list, with "Remove all".
+- Downloads in progress and failed items show their cover from the first moment (the picture comes from the source link), not only after the file is saved.
+- Clear failure messages for playlist items: "could not be read" and "no format of the kind you chose"; the playlist reader tries each item twice before giving up. Unknown failures now say "unknown error" instead of "error 0".
 - Playlists: a playlist link (for example a YouTube Music playlist) opens a sheet with every item, its thumbnail and length, "Select all", and one format for the whole list (audio highest, MP3, audio smallest, video highest or smallest). Items are read and queued one by one; an item that cannot be read appears as a failed entry in Downloads.
 - Initial project structure: Compose app shell, home screen and About screen.
 - Original adaptive launcher icon (with monochrome layer).
@@ -28,6 +32,8 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- The app now draws edge to edge: pages go behind the status and navigation bars (no solid bar), and each page keeps its content clear of them.
+- Deleting a file from the device: the app shows the system window first; if the system cannot build it, the app tries to delete the file itself. When it still fails, the message says what the system answered.
 - README no longer says the app is only for your own, freely licensed or permitted content: you choose what you download.
 - Home: the recent downloads fill the screen down to the bottom, so each device shows as many as fit (at least 3).
 - Settings: the "System" section became "Updates" with two rows, "Check for updates" (shows the installed version) and "Update notices" (opens a dialog: notify normally, not for a week, not for a month).
