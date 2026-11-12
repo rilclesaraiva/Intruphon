@@ -12,8 +12,11 @@ android {
         applicationId = "com.intruphon.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
+        // The CI run number, so every inspection build counts as an update and says which build it is.
+        val buildNumber = System.getenv("GITHUB_RUN_NUMBER")
+        versionCode = buildNumber?.toIntOrNull() ?: 1
         versionName = "0.1.0"
+        buildConfigField("String", "BUILD", "\"${buildNumber ?: "local"}\"")
     }
 
     signingConfigs {
@@ -43,7 +46,9 @@ android {
         isCoreLibraryDesugaringEnabled = true   // required by NewPipeExtractor below Android 13
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {

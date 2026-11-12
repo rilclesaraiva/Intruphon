@@ -35,31 +35,20 @@ internal object MediaDownloader {
                 null,
             )
             is Plan.AudioM4a -> processed(context, name, option, produce = { work ->
-                val raw = File(work, "audio.src")
-                fetchTo(raw, plan.url, 0, option.sizeBytes ?: -1, onProgress)
+                val file = File(work, "audio.m4a")
+                fetchTo(file, plan.url, 0, option.sizeBytes ?: -1, onProgress)
                 currentCoroutineContext().ensureActive()
                 onProcessing()
-                // Joining makes a clean MP4. If it fails or yields a suspiciously small file, the downloaded file
-                // itself (a valid M4A) is saved instead, so the user always gets something that plays.
-                var source = raw
-                val clean = File(work, "audio.m4a")
+                // The downloaded file already plays as it is, so only the tags are added to it.
+                // If they cannot be written the plain file is still saved.
                 try {
-                    MediaMuxing.join(listOf(raw), clean, Container.MP4)
-                    if (clean.length() < raw.length() / 2) throw IOException("Joined file too small: ${clean.length()} of ${raw.length()} bytes")
-                    source = clean
-                } catch (e: Exception) {
-                    note = "Used the file as downloaded: ${e.message}"
-                    clean.delete()
-                }
-                // Tags are a bonus: if they cannot be written the plain file is still saved.
-                try {
-                    Mp4Tags.write(source, info.metadata, CoverArt.fetch(info.metadata.coverUrl))
+                    Mp4Tags.write(file, info.metadata, CoverArt.fetch(info.metadata.coverUrl))
                     tagged = true
                 } catch (e: Exception) {
                     tagged = false
-                    note += " Tags: ${e.javaClass.simpleName}: ${e.message}"
+                    note = "Tags: ${e.javaClass.simpleName}: ${e.message}"
                 }
-                source
+                file
             }, tagged = { tagged }, note = { note.trim() })
             is Plan.AudioMp3 -> processed(context, name, option, produce = { work ->
                 val raw = File(work, "audio.src")
@@ -84,7 +73,13 @@ internal object MediaDownloader {
                     throw IOException("Joined file too small: ${joined.length()} of ${video.length() + audio.length()} bytes")
                 }
                 if (plan.container == Container.MP4) {
-                    tagged = runCatching { Mp4Tags.write(joined, videoTags(info.metadata, info.title), null) }.isSuccess
+                    try {
+                        Mp4Tags.write(joined, videoTags(info.metadata, info.title), null)
+                        tagged = true
+                    } catch (e: Exception) {
+                        tagged = false
+                        note = "Tags: ${e.javaClass.simpleName}: ${e.message}"
+                    }
                 }
                 joined
             }, tagged = { tagged }, note = { note.trim() })

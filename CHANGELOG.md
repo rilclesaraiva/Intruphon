@@ -25,6 +25,8 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- M4A audio is no longer re-joined: the downloaded file already plays, so tags and cover are written straight into it (the re-join step was the cause of the empty files and added nothing).
+- Every inspection build now has its own version code (the CI run number) so it always installs as an update, and the About tab and the notes under a download say which build is running.
 - Joining audio (and video+audio) wrongly treated a negative first timestamp as the end of the file, so it found no samples and fell back to the downloaded file. Times are now shifted to start at zero and the end is detected by the read itself.
 - An M4A that came out of the system muxer as a tiny, empty file (0:00, would not play): the joined file is now checked, and if it is too small the downloaded file itself is saved so it always plays. The reason is shown in the item.
 - Tags can also be written into the downloaded M4A as it comes from the site (fragmented MP4), not only into a re-joined file.

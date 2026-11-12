@@ -18,7 +18,7 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links, p
   (sem wrapper por enquanto: o CI usa `gradle/actions/setup-gradle` com Gradle 8.9;
   adicionar o wrapper quando a sessão ou o mantenedor puder gerá-lo)
 - Mapa: core → `app/src/main/java/com/intruphon/app/core` · data → `.../data` · features → `.../features`
-- Versão: `app/build.gradle.kts` (`versionName`) · lida no CI por `VERSION_CMD`
+- Versão: `app/build.gradle.kts` (`versionName`) · lida no CI por `VERSION_CMD` · `versionCode` = número da execução do CI (`GITHUB_RUN_NUMBER`) e `BuildConfig.BUILD` mostra o build na aba About e nas notas de download
 - Versionamento: SemVer (regra; o número é calculado pelo [Unreleased], nunca escolhido)
 - Release: `gradle assembleRelease` → `app/build/outputs/apk/release/*.apk`
 - Pacote (Android): `com.intruphon.app`, fixo · R8 ativo no release (sem ofuscação), nunca desligar

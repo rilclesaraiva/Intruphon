@@ -108,6 +108,9 @@ object DownloadEngine {
         }
     }
 
+    // Every note says which build wrote it, so a screenshot tells which version was tested.
+    private fun withBuild(note: String) = if (note.isEmpty()) "" else "$note [build ${com.intruphon.app.BuildConfig.BUILD}]"
+
     private fun markMissing(id: Long) =
         edit(id) { it.copy(status = it.status.copy(state = DownloadState.MISSING)) }
 
@@ -167,7 +170,7 @@ object DownloadEngine {
             finish(id) { item ->
                 val size = fileSize?.takeIf { it > 0 } ?: item.status.totalBytes.takeIf { it > 0 } ?: item.status.downloadedBytes
                 item.copy(
-                    record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged, note = saved.note),
+                    record = item.record.copy(uri = saved.uri.toString(), tags = saved.tagged, note = withBuild(saved.note)),
                     status = DownloadStatus(DownloadState.DONE, size, size, 0),
                 )
             }
@@ -188,7 +191,7 @@ object DownloadEngine {
     }
 
     private fun fail(id: Long, reason: Int, note: String = "") =
-        finish(id) { it.copy(record = it.record.copy(note = note), status = it.status.copy(state = DownloadState.FAILED, reason = reason)) }
+        finish(id) { it.copy(record = it.record.copy(note = withBuild(note)), status = it.status.copy(state = DownloadState.FAILED, reason = reason)) }
 
     private fun finish(id: Long, change: (DownloadItem) -> DownloadItem) {
         edit(id, transform = change)

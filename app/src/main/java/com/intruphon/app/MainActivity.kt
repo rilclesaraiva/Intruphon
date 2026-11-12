@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+        val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() + " (build " + BuildConfig.BUILD + ")"
         val tabs = listOf(R.string.tab_home, R.string.tab_downloads, R.string.tab_settings, R.string.menu_about)
         setContent {
             IntruphonTheme {
