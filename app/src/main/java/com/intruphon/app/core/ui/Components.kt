@@ -1,6 +1,10 @@
 package com.intruphon.app.core.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,7 +79,15 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 enum class RowTone { PRIMARY, SECONDARY, TERTIARY, NEUTRAL }
 
 /** One tappable row: round colored icon, title and an optional line under it. */
-data class IconRowItem(val icon: ImageVector, val tone: RowTone, val title: String, val subtitle: String? = null, val onClick: () -> Unit)
+data class IconRowItem(
+    val icon: ImageVector,
+    val tone: RowTone,
+    val title: String,
+    val subtitle: String? = null,
+    /** A picture shown in the circle instead of the icon, when there is one. */
+    val image: ImageBitmap? = null,
+    val onClick: () -> Unit,
+)
 
 /** A group of [IconRowItem]s: big rounded corners on the outside, thin gaps between rows. */
 @Composable
@@ -110,7 +122,11 @@ fun IconRowGroup(items: List<IconRowItem>, modifier: Modifier = Modifier) {
                         RowTone.NEUTRAL -> scheme.surfaceContainerHighest to scheme.onSurfaceVariant
                     }
                     Box(Modifier.size(52.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
-                        Icon(item.icon, contentDescription = null, tint = content)
+                        if (item.image != null) {
+                            Image(item.image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                        } else {
+                            Icon(item.icon, contentDescription = null, tint = content)
+                        }
                     }
                     Column(Modifier.weight(1f)) {
                         Text(item.title, style = MaterialTheme.typography.titleMedium)

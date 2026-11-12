@@ -39,7 +39,7 @@ Entradas: `IntruphonApp` (inicia o DownloadEngine), `MainActivity` (app: pilha d
 Pastas no aparelho: `Download/Intruphon/Audio` e `Download/Intruphon/Video`, gravadas via MediaStore pelo próprio app (sem permissão de armazenamento no Android 10+). Permissões: INTERNET, ACCESS_NETWORK_STATE (Wi-Fi e log de velocidade), POST_NOTIFICATIONS (pedida ao tocar em Download no Android 13+; o download segue se negar), FOREGROUND_SERVICE e FOREGROUND_SERVICE_DATA_SYNC. O DownloadManager do sistema foi abandonado (ficava em "Waiting").
 Dependências justificadas: java-lame vendorizado em `app/src/main/java/net/sourceforge/lame` (LGPL, port Java do LAME; o Android não tem encoder MP3 e assim não há biblioteca nativa; licença em `third_party/java-lame`), NewPipeExtractor (extração, GPL-3.0 como o projeto), OkHttp (o extrator exige um cliente HTTP do app), coroutines (carga fora da thread principal), desugar_jdk_libs_nio (o extrator exige abaixo do Android 13).
 R8: as classes do extrator e do Rhino ficam com `-keep` em `proguard-rules.pro` (reflexão e JS embutido); o R8 continua ligado.
-Sem SDKs de anúncio ou analytics.
+Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usuário: Releases do GitHub (atualização) e a foto de perfil do GitHub (tela Sobre).
 
 ## Interface (regras do mantenedor)
 - Material 3 Expressive: formas grandes e arredondadas, tipografia marcante, movimento com mola.
@@ -63,6 +63,12 @@ Sem SDKs de anúncio ou analytics.
   lugar do app. A entrada envolve cada página em `SaveableStateProvider`; a página guarda rolagem e
   campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
   entra se seguir isso.
+- Idiomas: inglês (padrão), espanhol e português do Brasil, seguindo o idioma do Android. Em Ajustes há
+  um botão de idioma que abre a tela de idioma do app do próprio Android (Android 13+; antes disso, a
+  tela de idioma do sistema). Todo texto novo entra nos três arquivos de strings (`values`, `values-es`,
+  `values-pt-rBR`).
+- Sobre: ícones das linhas como no outro app do mantenedor (código, selo, inseto, cadeado, artigo,
+  coração) e a foto do GitHub do desenvolvedor (baixada e guardada no cache; sem foto, um ícone).
 - Pop-up de download como o do SnapTube: duas opções de áudio e duas de vídeo (a mínima e a máxima);
   o resto só em "Mais formatos". O botão Download fica sempre visível.
 

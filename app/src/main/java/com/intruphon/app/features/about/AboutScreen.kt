@@ -16,14 +16,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,6 +32,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.runtime.produceState
+import com.intruphon.app.data.net.Avatar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -58,6 +61,10 @@ import com.intruphon.app.core.ui.SectionLabel
 fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var licenses by rememberSaveable { mutableStateOf(false) }
+    // The profile picture comes from GitHub and is cached; until it arrives (or when offline) an icon shows.
+    val avatar by produceState<ImageBitmap?>(null) {
+        value = withContext(Dispatchers.IO) { Avatar.load(context, Config.MAINTAINER)?.asImageBitmap() }
+    }
     fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
     Column(
@@ -84,14 +91,14 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
         }
 
         SectionLabel(stringResource(R.string.about_developer))
-        IconRowGroup(listOf(IconRowItem(Icons.Default.Person, RowTone.PRIMARY, Config.MAINTAINER, Config.PROFILE_URL.removePrefix("https://")) { open(Config.PROFILE_URL) }))
+        IconRowGroup(listOf(IconRowItem(Icons.Default.Person, RowTone.PRIMARY, Config.MAINTAINER, Config.PROFILE_URL.removePrefix("https://"), avatar) { open(Config.PROFILE_URL) }))
 
         SectionLabel(stringResource(R.string.about_project))
         IconRowGroup(
             listOf(
-                IconRowItem(Icons.Default.Build, RowTone.SECONDARY, stringResource(R.string.about_source), Config.REPO_URL.removePrefix("https://")) { open(Config.REPO_URL) },
-                IconRowItem(Icons.Default.Check, RowTone.TERTIARY, stringResource(R.string.about_news), stringResource(R.string.about_news_hint)) { open(Config.CHANGELOG_URL) },
-                IconRowItem(Icons.Default.Warning, RowTone.PRIMARY, stringResource(R.string.about_report), stringResource(R.string.about_report_hint)) { open(Config.ISSUES_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_code), RowTone.SECONDARY, stringResource(R.string.about_source), Config.REPO_URL.removePrefix("https://")) { open(Config.REPO_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_verified), RowTone.TERTIARY, stringResource(R.string.about_news), stringResource(R.string.about_news_hint)) { open(Config.CHANGELOG_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_bug_report), RowTone.PRIMARY, stringResource(R.string.about_report), stringResource(R.string.about_report_hint)) { open(Config.ISSUES_URL) },
             ),
         )
 
@@ -99,8 +106,8 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
         IconRowGroup(
             listOf(
                 IconRowItem(Icons.Default.Lock, RowTone.NEUTRAL, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_hint)) { open(Config.PRIVACY_URL) },
-                IconRowItem(Icons.AutoMirrored.Filled.List, RowTone.NEUTRAL, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
-                IconRowItem(Icons.Default.Star, RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { licenses = true },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { licenses = true },
             ),
         )
 

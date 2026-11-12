@@ -1,6 +1,10 @@
 package com.intruphon.app.features.settings
 
 import android.content.Intent
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -78,6 +82,24 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                 Switch(checked = predictive, onCheckedChange = { AppSettings.setPredictiveBack(context, it) })
             }
         }
+
+        // Language is chosen on Android's own screen (per-app language on Android 13+).
+        IconRowGroup(
+            listOf(
+                IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_language),
+                    RowTone.SECONDARY,
+                    stringResource(R.string.settings_language),
+                    stringResource(R.string.settings_language_hint),
+                    onClick = {
+                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                        } else Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
+                        runCatching { context.startActivity(intent) }
+                    },
+                ),
+            ),
+        )
 
         SectionLabel(stringResource(R.string.settings_cat_downloads))
         SectionCard {
@@ -177,7 +199,7 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                     RowTone.NEUTRAL,
                     stringResource(R.string.settings_about_entry),
                     stringResource(R.string.settings_about_hint),
-                    onOpenAbout,
+                    onClick = onOpenAbout,
                 ),
             ),
         )
