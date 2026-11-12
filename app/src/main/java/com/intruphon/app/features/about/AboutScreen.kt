@@ -4,19 +4,29 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,12 +42,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.intruphon.app.BuildConfig
 import com.intruphon.app.R
 import com.intruphon.app.core.Config
+import com.intruphon.app.core.ui.IconRowGroup
+import com.intruphon.app.core.ui.IconRowItem
 import com.intruphon.app.core.ui.PageHeader
-import com.intruphon.app.core.ui.SectionCard
+import com.intruphon.app.core.ui.RowTone
 import com.intruphon.app.core.ui.SectionLabel
 
 /** About Intruphon: header, developer, project, legal and the invitation to the repository (rule 9.1). */
@@ -51,46 +64,50 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PageHeader(stringResource(R.string.settings_about_entry))
+        PageHeader(stringResource(R.string.about_title), afterBack = true)
 
         // Header: icon, name, version and build type (read from the build), one sentence.
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                Modifier.size(96.dp).clip(RoundedCornerShape(28.dp)).background(colorResource(R.color.ic_launcher_background)),
+                Modifier.size(120.dp).clip(CircleShape).background(colorResource(R.color.ic_launcher_background)),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize().scale(1.35f))
             }
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-            Text(
-                stringResource(R.string.about_version, "$versionName · build ${BuildConfig.BUILD} · ${BuildConfig.BUILD_TYPE}"),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(stringResource(R.string.about_tagline), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Chip(versionName)
+                Chip(stringResource(R.string.about_build, BuildConfig.BUILD))
+                Chip(BuildConfig.BUILD_TYPE.uppercase())
+            }
+            Text(stringResource(R.string.about_tagline), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
         }
 
         SectionLabel(stringResource(R.string.about_developer))
-        SectionCard(Modifier.clickable { open(Config.PROFILE_URL) }) { Row1(Config.MAINTAINER) }
+        IconRowGroup(listOf(IconRowItem(Icons.Default.Person, RowTone.PRIMARY, Config.MAINTAINER, Config.PROFILE_URL.removePrefix("https://")) { open(Config.PROFILE_URL) }))
 
         SectionLabel(stringResource(R.string.about_project))
-        SectionCard {
-            Link(stringResource(R.string.about_source)) { open(Config.REPO_URL) }
-            Link(stringResource(R.string.about_news)) { open(Config.CHANGELOG_URL) }
-            Link(stringResource(R.string.about_report)) { open(Config.ISSUES_URL) }
-        }
+        IconRowGroup(
+            listOf(
+                IconRowItem(Icons.Default.Build, RowTone.SECONDARY, stringResource(R.string.about_source), Config.REPO_URL.removePrefix("https://")) { open(Config.REPO_URL) },
+                IconRowItem(Icons.Default.Check, RowTone.TERTIARY, stringResource(R.string.about_news), stringResource(R.string.about_news_hint)) { open(Config.CHANGELOG_URL) },
+                IconRowItem(Icons.Default.Warning, RowTone.PRIMARY, stringResource(R.string.about_report), stringResource(R.string.about_report_hint)) { open(Config.ISSUES_URL) },
+            ),
+        )
 
         SectionLabel(stringResource(R.string.about_legal))
-        SectionCard {
-            Link(stringResource(R.string.about_privacy)) { open(Config.PRIVACY_URL) }
-            Link(stringResource(R.string.about_terms)) { open(Config.TERMS_URL) }
-            Link(stringResource(R.string.about_licenses)) { licenses = true }
-        }
+        IconRowGroup(
+            listOf(
+                IconRowItem(Icons.Default.Lock, RowTone.NEUTRAL, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_hint)) { open(Config.PRIVACY_URL) },
+                IconRowItem(Icons.AutoMirrored.Filled.List, RowTone.NEUTRAL, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
+                IconRowItem(Icons.Default.Star, RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { licenses = true },
+            ),
+        )
 
-        SectionLabel(stringResource(R.string.about_support_title))
         // Only an invitation that leads to the repository: no donation or payment wording in the app.
-        SectionCard(Modifier.clickable { open(Config.REPO_URL) }) {
-            Text(stringResource(R.string.about_support))
-        }
+        IconRowGroup(
+            listOf(IconRowItem(Icons.Default.Favorite, RowTone.TERTIARY, stringResource(R.string.about_support_title), stringResource(R.string.about_support_hint)) { open(Config.REPO_URL) }),
+        )
     }
 
     if (licenses) {
@@ -104,13 +121,8 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Row1(text: String) = Text(text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(vertical = 4.dp))
-
-@Composable
-private fun Link(text: String, onClick: () -> Unit) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
-    )
+private fun Chip(text: String) {
+    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Text(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
+    }
 }

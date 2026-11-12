@@ -21,6 +21,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -62,6 +70,21 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val list by DownloadEngine.items.collectAsState()
+    // "Delete" asks first: forget the entry only, or also delete the file from the device (through the system).
+    var confirmId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var deletingId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val deleteWindow = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val id = deletingId
+        deletingId = null
+        if (id != null) scope.launch {
+            val gone = withContext(Dispatchers.IO) { DownloadEngine.finishDelete(context, id) }
+            if (!gone && result.resultCode != Activity.RESULT_OK) {
+                Toast.makeText(context, R.string.downloads_delete_cancelled, Toast.LENGTH_SHORT).show()
+            } else if (!gone) {
+                Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     // Look for files deleted outside the app when the tab opens and whenever the app comes back to the front.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -78,7 +101,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(key = "header") { PageHeader(stringResource(R.string.tab_downloads)) }
+        item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
         if (list.isEmpty()) {
             item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
         }
@@ -94,10 +117,46 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
                             Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
                     }
                 },
-                onRemove = { scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) } },
+                onRemove = {
+                    if (item.status.state == DownloadState.DONE) confirmId = item.record.id
+                    else scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) }
+                },
                 onRetry = { onRetry(item.record.sourceLink) },
             )
         }
+    }
+
+    confirmId?.let { id ->
+        AlertDialog(
+            onDismissRequest = { confirmId = null },
+            title = { Text(stringResource(R.string.downloads_delete_title)) },
+            text = { Text(stringResource(R.string.downloads_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmId = null
+                    scope.launch {
+                        when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, id) }) {
+                            is DownloadEngine.DeleteStep.Ask -> {
+                                deletingId = id
+                                deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+                            }
+                            DownloadEngine.DeleteStep.Gone -> withContext(Dispatchers.IO) { DownloadEngine.remove(id, deleteFile = false) }
+                            DownloadEngine.DeleteStep.Failed ->
+                                Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }) { Text(stringResource(R.string.downloads_delete_device), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        confirmId = null
+                        scope.launch(Dispatchers.IO) { DownloadEngine.remove(id, deleteFile = false) }
+                    }) { Text(stringResource(R.string.downloads_remove_list)) }
+                    TextButton(onClick = { confirmId = null }) { Text(stringResource(R.string.downloads_cancel)) }
+                }
+            },
+        )
     }
 }
 

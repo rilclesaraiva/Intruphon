@@ -4,9 +4,6 @@
     <string name="home_link_label">Paste a link</string>
     <string name="home_download">Download</string>
     <string name="home_hint">Tip: share a link from any app to Intruphon.</string>
-    <string name="about_version">Version %1$s</string>
-    <string name="about_support">Want to support the project? Visit the project repository.</string>
-    <string name="about_open_repo">Open repository</string>
 
     <string name="download_title">Download as</string>
     <string name="download_loading">Reading the link…</string>
@@ -94,6 +91,28 @@
     <string name="about_privacy">Privacy policy</string>
     <string name="about_terms">Terms of use</string>
     <string name="about_licenses">Licenses and attributions</string>
-    <string name="about_support_title">Support</string>
     <string name="about_licenses_body">Intruphon: GPL-3.0\n\nNewPipeExtractor: GPL-3.0\nOkHttp: Apache-2.0\nKotlin coroutines: Apache-2.0\nAndroidX and Jetpack Compose: Apache-2.0\nMozilla Rhino (used by the extractor): MPL-2.0\njava-lame, a Java port of LAME: LGPL (see third_party/java-lame in the repository)\nAndroid desugar_jdk_libs: see its repository for the license\n\nThe extractor brings libraries of its own, each under its own license.</string>
+    <string name="home_recent">Recent downloads</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_recent_done">Done</string>
+    <string name="home_recent_failed">Failed. Open Downloads for details.</string>
+    <string name="settings_cat_appearance">Appearance</string>
+    <string name="settings_predictive_back">Predictive back</string>
+    <string name="settings_predictive_back_hint">In pages opened from Home, the page follows your finger on the back gesture, and the page underneath shows through.</string>
+    <string name="settings_about_hint">Version, license and source code</string>
+    <string name="about_title">About</string>
+    <string name="about_build">build %1$s</string>
+    <string name="about_news_hint">Every version and what changed in it</string>
+    <string name="about_report_hint">Found a bug or have an idea? Open an issue</string>
+    <string name="about_privacy_hint">What stays on your device and what leaves it</string>
+    <string name="about_terms_hint">The rules for using the app</string>
+    <string name="about_licenses_hint">License of the app, libraries and services used</string>
+    <string name="about_support_title">Want to support the project?</string>
+    <string name="about_support_hint">Visit the project repository.</string>
+    <string name="downloads_delete_title">Delete this download?</string>
+    <string name="downloads_delete_message">Remove it from the list only, or also delete the file from this device?</string>
+    <string name="downloads_remove_list">Remove from list</string>
+    <string name="downloads_delete_device">Delete from device</string>
+    <string name="downloads_delete_cancelled">The file was not deleted.</string>
+    <string name="downloads_delete_failed">Could not delete the file.</string>
 </resources>

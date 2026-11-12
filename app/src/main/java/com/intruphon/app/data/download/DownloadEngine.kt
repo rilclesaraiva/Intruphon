@@ -2,7 +2,11 @@ package com.intruphon.app.data.download
 
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.app.RecoverableSecurityException
 import android.content.Intent
+import android.content.IntentSender
+import android.os.Build
+import android.provider.MediaStore
 import android.net.Uri
 import android.os.SystemClock
 import com.intruphon.app.data.media.DownloadOption
@@ -61,13 +65,65 @@ object DownloadEngine {
         jobs[id] = scope.launch { run(id, info, option) }
     }
 
-    /** Cancels a running download, or deletes the saved file, and forgets the entry. Call off the main thread. */
-    fun remove(id: Long) {
+    /**
+     * Cancels a running download and forgets the entry. A file that is still being written is removed with it;
+     * a finished file stays on the device when [deleteFile] is false. Call off the main thread.
+     */
+    fun remove(id: Long, deleteFile: Boolean = true) {
         val item = state.value.firstOrNull { it.record.id == id }
         jobs.remove(id)?.cancel()
         state.update { list -> list.filterNot { it.record.id == id } }
         DownloadStore.save(appContext, state.value)
-        item?.record?.uri?.let { runCatching { appContext.contentResolver.delete(Uri.parse(it), null, null) } }
+        if (deleteFile) item?.record?.uri?.let { runCatching { appContext.contentResolver.delete(Uri.parse(it), null, null) } }
+    }
+
+    /** What to do next to delete a saved file from the device. */
+    sealed interface DeleteStep {
+        /** Nothing left to delete (the file is already gone). */
+        data object Gone : DeleteStep
+        /** The system must ask the person: launch [sender] and call [finishDelete] with the answer. */
+        data class Ask(val sender: IntentSender) : DeleteStep
+        data object Failed : DeleteStep
+    }
+
+    /**
+     * Starts deleting the saved file of [id] through the system, without any storage permission.
+     * Android 11+: the system shows its own "allow to delete" window. Android 10: the file is deleted
+     * directly, and the system only asks if it does not let the app do that. Call off the main thread.
+     */
+    fun startDelete(context: Context, id: Long): DeleteStep {
+        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse) ?: return DeleteStep.Gone
+        if (!exists(uri)) return DeleteStep.Gone
+        val resolver = context.contentResolver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return try {
+                DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, listOf(uri)).intentSender)
+            } catch (e: Exception) {
+                DeleteStep.Failed
+            }
+        }
+        return try {
+            resolver.delete(uri, null, null)
+            if (exists(uri)) DeleteStep.Failed else DeleteStep.Gone
+        } catch (e: RecoverableSecurityException) {
+            DeleteStep.Ask(e.userAction.actionIntent.intentSender)
+        } catch (e: Exception) {
+            DeleteStep.Failed
+        }
+    }
+
+    /**
+     * After the system window closed: if the file is gone, forget the entry and return true.
+     * On Android 10 the delete is tried once more, now that the person agreed. Call off the main thread.
+     */
+    fun finishDelete(context: Context, id: Long): Boolean {
+        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
+        if (uri != null && exists(uri) && Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            runCatching { context.contentResolver.delete(uri, null, null) }
+        }
+        if (uri != null && exists(uri)) return false
+        remove(id, deleteFile = false)
+        return true
     }
 
     fun cancelAll() {

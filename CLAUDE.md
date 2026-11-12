@@ -35,7 +35,7 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links, p
 
 ## Arquitetura
 Três papéis: core (config, tema M3 Expressive, LinkExtractor, `core/ui`: PageHeader, botão flutuante, cartões de seção), data (net: OkHttpDownloader; media: MediaRepository com NewPipeExtractor; download: DownloadEngine (fila, StateFlow), HttpFileDownloader (OkHttp em partes de 10 MiB + MediaStore), MediaDownloader (executa o Plan: direto, M4A limpo ou junção vídeo+áudio no cache), MediaMuxing (MediaMuxer), Mp4Tags (tags iTunes em M4A/MP4), Id3v2 + Mp3Encoder (MediaCodec decodifica, LAME em Java codifica), CoverArt (capa quadrada) e MediaPreview (capa/duração da aba Downloads), `data/settings` (AppSettings: só Wi-Fi, downloads simultâneos), `data/stats` (SpeedLog: velocidade por formato/qualidade, só no aparelho + logcat `IntruphonSpeed`), `data/net/NetworkKind`, `data/update` (UpdateRepository: última Release pública do GitHub com ETag, escolhas do sino; SemVer e política de quando avisar), DownloadService (primeiro plano, dataSync), DownloadNotifications e DownloadStore com a lista em SharedPreferences), features (home, about = Sobre, settings, update = painel de atualização, download = sheet de formatos com mínima/máxima, downloads = biblioteca).
-Entradas: `IntruphonApp` (inicia o DownloadEngine), `MainActivity` (app: páginas Home/Downloads com barra inferior, Ajustes e Sobre como subpáginas, cada uma em `SaveableStateProvider`; monta o aviso de atualização) e `ShareActivity` (destino do compartilhar; tema translúcido, só mostra a sheet de formatos por cima do app de origem). A sheet de formatos vive em `features/download` e é usada pelas duas entradas; `home` e `downloads` só recebem callbacks (a entrada abre a sheet, também para "tentar de novo").
+Entradas: `IntruphonApp` (inicia o DownloadEngine), `MainActivity` (app: pilha de páginas abertas a partir da Home (Downloads, Ajustes, Sobre), cada uma em `SaveableStateProvider`, com o voltar preditivo; monta o aviso de atualização) e `ShareActivity` (destino do compartilhar; tema translúcido, só mostra a sheet de formatos por cima do app de origem). A sheet de formatos vive em `features/download` e é usada pelas duas entradas; `home` e `downloads` só recebem callbacks (a entrada abre a sheet, também para "tentar de novo").
 Pastas no aparelho: `Download/Intruphon/Audio` e `Download/Intruphon/Video`, gravadas via MediaStore pelo próprio app (sem permissão de armazenamento no Android 10+). Permissões: INTERNET, ACCESS_NETWORK_STATE (Wi-Fi e log de velocidade), POST_NOTIFICATIONS (pedida ao tocar em Download no Android 13+; o download segue se negar), FOREGROUND_SERVICE e FOREGROUND_SERVICE_DATA_SYNC. O DownloadManager do sistema foi abandonado (ficava em "Waiting").
 Dependências justificadas: java-lame vendorizado em `app/src/main/java/net/sourceforge/lame` (LGPL, port Java do LAME; o Android não tem encoder MP3 e assim não há biblioteca nativa; licença em `third_party/java-lame`), NewPipeExtractor (extração, GPL-3.0 como o projeto), OkHttp (o extrator exige um cliente HTTP do app), coroutines (carga fora da thread principal), desugar_jdk_libs_nio (o extrator exige abaixo do Android 13).
 R8: as classes do extrator e do Rhino ficam com `-keep` em `proguard-rules.pro` (reflexão e JS embutido); o R8 continua ligado.
@@ -43,9 +43,22 @@ Sem SDKs de anúncio ou analytics.
 
 ## Interface (regras do mantenedor)
 - Material 3 Expressive: formas grandes e arredondadas, tipografia marcante, movimento com mola.
-- Nunca barra superior fixa (nem TopAppBar, nem abas no topo). O título de cada página rola com o conteúdo.
-- Botão de ajustes flutuante e fixo no canto superior direito; dentro de uma subpágina, no lugar dele
-  fica um botão flutuante de voltar no canto superior esquerdo.
+- Nunca barra superior fixa (nem TopAppBar, nem abas no topo) e nunca barra inferior. O título de cada
+  página rola com o conteúdo e fica sempre ao lado do botão flutuante, nunca por baixo dele.
+- A Home é única: link, botão Download e, abaixo, o histórico breve dos downloads recentes, com "Ver
+  todos" para a página Downloads. Ajustes, Downloads e Sobre são páginas abertas a partir da Home.
+- Botão de ajustes flutuante e fixo no canto superior direito da Home; nas outras páginas, no canto
+  superior esquerdo fica o botão flutuante de voltar. Os dois são levemente translúcidos.
+- Voltar preditivo (opção em Ajustes → Aparência, ligada por padrão; `enableOnBackInvokedCallback` no
+  manifesto): só em páginas abertas a partir da Home. No gesto, a página atual acompanha o dedo para a
+  direita com sombra e cantos que arredondam até 28 dp logo no começo; a anterior aparece por baixo,
+  deslocada 20% para a esquerda, com véu escuro de 32% que clareia ao arrastar. Ao soltar, a página
+  termina de sair (`AppMotion.SHORT`) e a troca acontece sem nova animação; ao cancelar, volta ao
+  lugar. O botão de voltar toca a mesma saída e ignora toque durante a animação. Com a opção desligada,
+  o voltar comum faz a mesma saída sem acompanhar o dedo. A tela de aviso de atualização trata o voltar
+  à parte ("Agora não"). A duração ignora a escala de animação do sistema.
+- Excluir um download pergunta: remover só da lista ou apagar também do aparelho. Apagar do aparelho
+  usa o pedido de exclusão do próprio sistema (sem permissão de armazenamento).
 - Toda página lembra a posição em que foi deixada (rolagem e campos) ao sair e voltar, em qualquer
   lugar do app. A entrada envolve cada página em `SaveableStateProvider`; a página guarda rolagem e
   campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
@@ -112,5 +125,5 @@ Sem SDKs de anúncio ou analytics.
   permissão; nunca prometer ou sugerir contornar proteções de terceiros.
 
 ## Contexto atual
-- Foco: vistoria da nova interface (navegação, pop-up mínima/máxima, Sobre, aviso de atualização); o release v0.2.0 espera a confirmação do mantenedor. Depois novas fontes além do YouTube e wrapper do Gradle.
-- Problemas conhecidos: sem wrapper do Gradle; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); nova interface, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.
+- Foco: vistoria da nova interface (Home com histórico, voltar preditivo, exclusão, pop-up mínima/máxima, Sobre, aviso de atualização); o release v0.2.0 espera a confirmação do mantenedor. Depois novas fontes além do YouTube e wrapper do Gradle.
+- Problemas conhecidos: sem wrapper do Gradle; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); nova interface, voltar preditivo, exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.

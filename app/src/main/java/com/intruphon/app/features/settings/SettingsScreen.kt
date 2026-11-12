@@ -16,6 +16,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import com.intruphon.app.core.ui.IconRowGroup
+import com.intruphon.app.core.ui.IconRowItem
+import com.intruphon.app.core.ui.RowTone
 import com.intruphon.app.core.ui.PageHeader
 import com.intruphon.app.core.ui.SectionCard
 import com.intruphon.app.core.ui.SectionLabel
@@ -60,7 +65,19 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PageHeader(stringResource(R.string.tab_settings))
+        PageHeader(stringResource(R.string.tab_settings), afterBack = true)
+
+        SectionLabel(stringResource(R.string.settings_cat_appearance))
+        SectionCard {
+            val predictive by AppSettings.predictiveBackFlow.collectAsState()
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_predictive_back), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.settings_predictive_back_hint), style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = predictive, onCheckedChange = { AppSettings.setPredictiveBack(context, it) })
+            }
+        }
 
         SectionLabel(stringResource(R.string.settings_cat_downloads))
         SectionCard {
@@ -153,8 +170,16 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
         }
 
         SectionLabel(stringResource(R.string.settings_cat_about))
-        SectionCard(Modifier.clickable(onClick = onOpenAbout)) {
-            Text(stringResource(R.string.settings_about_entry), style = MaterialTheme.typography.titleSmall)
-        }
+        IconRowGroup(
+            listOf(
+                IconRowItem(
+                    Icons.Default.Info,
+                    RowTone.NEUTRAL,
+                    stringResource(R.string.settings_about_entry),
+                    stringResource(R.string.settings_about_hint),
+                    onOpenAbout,
+                ),
+            ),
+        )
     }
 }

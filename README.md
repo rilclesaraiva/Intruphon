@@ -9,11 +9,11 @@ A lightweight, tracker-free Android app for downloading media from links, meant 
 - Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by the app itself (no storage permission needed), with a progress notification.
 - Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
 - Audio files get title, artist, album, year and cover art; video files get title, artist and year.
-- A Downloads tab shows progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.
+- The Home page shows your latest downloads, and a Downloads page lists them all with progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.
 - Settings: download only on Wi-Fi, and how many downloads run at the same time.
 - A local speed log (format, quality, connection type, bytes, speed) that stays on the device and can be shared as CSV from Settings.
 - File names carry the quality, for example `Title (M4A_128K).m4a`.
-- Material 3 Expressive interface with dynamic colors on Android 12+: no fixed top bar, a floating Settings button, and every page remembers where you left it.
+- Material 3 Expressive interface with dynamic colors on Android 12+: no fixed top bar and no bottom bar, a floating Settings button, predictive back, and every page remembers where you left it.
 - The download pop-up shows the highest and the smallest audio and video choices first, with the rest under "More formats".
 - An About screen (inside Settings) with version, source code, changelog, issues, privacy policy, terms and licenses.
 - An update notice: the app asks GitHub for the latest public Release when it opens and tells you if there is a newer one (you can remind later, skip a version, or check by hand in Settings).

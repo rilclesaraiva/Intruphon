@@ -3,49 +3,58 @@ package com.intruphon.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.intruphon.app.core.ui.AppMotion
 import com.intruphon.app.core.ui.FloatingCircleButton
 import com.intruphon.app.core.ui.IntruphonTheme
+import com.intruphon.app.data.settings.AppSettings
+import com.intruphon.app.data.update.UpdateRepository
 import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
 import com.intruphon.app.features.settings.SettingsScreen
 import com.intruphon.app.features.update.UpdatePrompt
-import com.intruphon.app.data.update.UpdateRepository
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val HOME = 0
 private const val DOWNLOADS = 1
@@ -54,98 +63,147 @@ private const val ABOUT = 3
 
 // Entry point: registers the pages. Features never import each other.
 //
-// Rules for the screen (CLAUDE.md, "Interface"): no fixed top bar, a floating Settings button
-// (a floating Back button inside sub-pages), and every page remembers where it was left.
-// The last rule is the SaveableStateProvider around each page: whatever a page keeps with
-// rememberSaveable, rememberScrollState or rememberLazyListState survives leaving the page.
+// Rules for the screen (CLAUDE.md, "Interface"): no fixed top bar and no bottom bar, a floating Settings
+// button on Home (a floating Back button inside the other pages), predictive back between pages, and every
+// page remembers where it was left (the SaveableStateProvider around each page keeps whatever it holds with
+// rememberSaveable, rememberScrollState or rememberLazyListState).
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+        AppSettings.loadPredictiveBack(applicationContext)
         // Opening the app from scratch always looks for an update; coming back does it at most every 10 minutes.
         UpdateRepository.start(applicationContext, versionName, fresh = savedInstanceState == null)
         lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) UpdateRepository.onResume() })
-        setContent {
-            IntruphonTheme {
-                var page by rememberSaveable { mutableIntStateOf(HOME) }
-                var returnTo by rememberSaveable { mutableIntStateOf(HOME) }   // main page Settings goes back to
-                var sheetLink by rememberSaveable { mutableStateOf<String?>(null) }
-                val pages = rememberSaveableStateHolder()
-                val onMainPage = page == HOME || page == DOWNLOADS
+        setContent { IntruphonTheme { App(versionName) } }
+    }
+}
 
-                BackHandler(enabled = page != HOME) {
-                    page = when (page) {
-                        ABOUT -> SETTINGS
-                        SETTINGS -> returnTo
-                        else -> HOME
-                    }
-                }
+@Composable
+private fun App(versionName: String) {
+    // Pages opened from Home, in order. Home is always first; the last one is on screen.
+    val stack = rememberSaveable(
+        saver = listSaver<SnapshotStateList<Int>, Int>(save = { it.toList() }, restore = { it.toMutableStateList() }),
+    ) { mutableStateListOf(HOME) }
+    var sheetLink by rememberSaveable { mutableStateOf<String?>(null) }
+    val predictive by AppSettings.predictiveBackFlow.collectAsState()
+    val pages = rememberSaveableStateHolder()
+    val scope = rememberCoroutineScope()
 
-                Scaffold(
-                    bottomBar = {
-                        if (onMainPage) {
-                            NavigationBar {
-                                NavigationBarItem(
-                                    selected = page == HOME,
-                                    onClick = { page = HOME },
-                                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                                    label = { Text(stringResource(R.string.tab_home)) },
-                                )
-                                NavigationBarItem(
-                                    selected = page == DOWNLOADS,
-                                    onClick = { page = DOWNLOADS },
-                                    icon = { Icon(painterResource(R.drawable.ic_nav_downloads), contentDescription = null) },
-                                    label = { Text(stringResource(R.string.tab_downloads)) },
-                                )
-                            }
-                        }
-                    },
-                ) { padding ->
-                    Box(Modifier.fillMaxSize().padding(padding)) {
-                        AnimatedContent(
-                            targetState = page,
-                            modifier = Modifier.fillMaxSize(),
-                            transitionSpec = {
-                                (fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
-                                    scaleIn(initialScale = 0.94f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow))) togetherWith
-                                    fadeOut(spring(stiffness = Spring.StiffnessMedium))
-                            },
-                            label = "page",
-                        ) { target ->
-                            pages.SaveableStateProvider(target) {
-                                when (target) {
-                                    HOME -> HomeScreen(onDownload = { sheetLink = it })
-                                    DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it })
-                                    SETTINGS -> SettingsScreen(onOpenAbout = { page = ABOUT })
-                                    else -> AboutScreen(versionName)
-                                }
-                            }
-                        }
-                        if (onMainPage) {
-                            FloatingCircleButton(
-                                icon = Icons.Default.Settings,
-                                contentDescription = stringResource(R.string.settings_open),
-                                onClick = { returnTo = page; page = SETTINGS },
-                                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-                            )
-                        } else {
-                            FloatingCircleButton(
-                                icon = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
-                                onClick = {
-                                    page = if (page == ABOUT) SETTINGS else returnTo
-                                },
-                                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
-                            )
-                        }
-                    }
-                }
-                UpdatePrompt()
-                sheetLink?.let {
-                    DownloadSheet(link = it, onDismiss = { sheetLink = null }, onStarted = { page = DOWNLOADS })
+    // How far the top page is out of the way: 0 in place, 1 fully slid to the right. The same value drives
+    // opening a page, the back gesture, the back button and the system back.
+    val exit = remember { Animatable(0f) }
+    var busy by remember { mutableStateOf(false) }
+
+    suspend fun slide(to: Float) = withContext(AppMotion.FixedScale) {
+        exit.animateTo(to, tween(AppMotion.SHORT, easing = FastOutSlowInEasing))
+    }
+
+    fun open(page: Int) {
+        if (busy || page in stack) return
+        busy = true
+        scope.launch {
+            stack.add(page)
+            exit.snapTo(1f)
+            slide(0f)
+            busy = false
+        }
+    }
+
+    // The page is swapped after the slide ends, without animating a second time.
+    fun close() {
+        if (busy || stack.size < 2) return
+        busy = true
+        scope.launch {
+            slide(1f)
+            stack.removeAt(stack.lastIndex)
+            exit.snapTo(0f)
+            busy = false
+        }
+    }
+
+    // Only for pages opened from Home; on Home the system closes the app as usual.
+    PredictiveBackHandler(enabled = stack.size > 1 && predictive) { progress ->
+        if (busy) {
+            progress.collect { }
+            return@PredictiveBackHandler
+        }
+        busy = true
+        try {
+            progress.collect { exit.snapTo(it.progress) }
+            slide(1f)
+            stack.removeAt(stack.lastIndex)
+            exit.snapTo(0f)
+        } catch (e: CancellationException) {
+            withContext(NonCancellable) { slide(0f) }   // gesture cancelled: the page returns to its place
+        } finally {
+            busy = false
+        }
+    }
+    BackHandler(enabled = stack.size > 1 && !predictive) { close() }
+
+    val top = stack.last()
+    val below = stack.getOrNull(stack.size - 2)
+
+    @Composable
+    fun Page(page: Int) = pages.SaveableStateProvider(page) {
+        when (page) {
+            HOME -> HomeScreen(onDownload = { sheetLink = it }, onOpenDownloads = { open(DOWNLOADS) })
+            DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it })
+            SETTINGS -> SettingsScreen(onOpenAbout = { open(ABOUT) })
+            else -> AboutScreen(versionName)
+        }
+    }
+
+    Scaffold { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            // The page underneath shows while the top one slides: it moves in from 20% to the left, under a dark veil.
+            if (below != null && exit.value > 0f) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                        .graphicsLayer { translationX = -0.2f * size.width * (1f - exit.value) },
+                ) {
+                    Page(below)
+                    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.32f * (1f - exit.value))))
                 }
             }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationX = exit.value * size.width
+                        // Shadow and rounded corners appear right at the start of the movement.
+                        val grow = minOf(1f, exit.value * 12f)
+                        shape = RoundedCornerShape(28.dp * grow)
+                        clip = true
+                        shadowElevation = 16.dp.toPx() * grow
+                    }
+                    .background(MaterialTheme.colorScheme.background),
+            ) {
+                Page(top)
+            }
+            if (top == HOME) {
+                FloatingCircleButton(
+                    icon = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.settings_open),
+                    onClick = { open(SETTINGS) },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                )
+            } else {
+                FloatingCircleButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.back),
+                    onClick = { close() },
+                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                )
+            }
         }
+    }
+    UpdatePrompt()
+    sheetLink?.let {
+        DownloadSheet(link = it, onDismiss = { sheetLink = null })
     }
 }

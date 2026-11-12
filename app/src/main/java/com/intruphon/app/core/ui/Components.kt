@@ -1,6 +1,13 @@
 package com.intruphon.app.core.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-/** Page title that scrolls away with the content (the app has no fixed top bar). Leaves room for the floating button. */
+/**
+ * Page title that scrolls away with the content (the app has no fixed top bar). It always sits beside the
+ * floating button, never under it: pages with a Back button (top left) pass [afterBack] = true.
+ */
 @Composable
-fun PageHeader(title: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(80.dp).padding(end = 72.dp), contentAlignment = Alignment.CenterStart) {
+fun PageHeader(title: String, modifier: Modifier = Modifier, afterBack: Boolean = false) {
+    val padding = if (afterBack) Modifier.padding(start = 72.dp) else Modifier.padding(end = 72.dp)
+    Box(modifier.fillMaxWidth().height(80.dp).then(padding), contentAlignment = Alignment.CenterStart) {
         Text(title, style = MaterialTheme.typography.headlineLarge, maxLines = 1)
     }
 }
@@ -33,7 +44,7 @@ fun FloatingCircleButton(icon: ImageVector, contentDescription: String, onClick:
         onClick = onClick,
         modifier = modifier,
         shape = CircleShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f),   // slightly see-through
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) { Icon(icon, contentDescription = contentDescription) }
 }
@@ -58,5 +69,55 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(Modifier.padding(20.dp), content = content)
+    }
+}
+
+enum class RowTone { PRIMARY, SECONDARY, TERTIARY, NEUTRAL }
+
+/** One tappable row: round colored icon, title and an optional line under it. */
+data class IconRowItem(val icon: ImageVector, val tone: RowTone, val title: String, val subtitle: String? = null, val onClick: () -> Unit)
+
+/** A group of [IconRowItem]s: big rounded corners on the outside, thin gaps between rows. */
+@Composable
+fun IconRowGroup(items: List<IconRowItem>, modifier: Modifier = Modifier) {
+    val big = 32.dp
+    val small = 6.dp
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        items.forEachIndexed { index, item ->
+            val first = index == 0
+            val last = index == items.lastIndex
+            val shape = RoundedCornerShape(
+                topStart = if (first) big else small,
+                topEnd = if (first) big else small,
+                bottomStart = if (last) big else small,
+                bottomEnd = if (last) big else small,
+            )
+            Surface(
+                shape = shape,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = item.onClick),
+            ) {
+                Row(
+                    Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    val scheme = MaterialTheme.colorScheme
+                    val (container, content) = when (item.tone) {
+                        RowTone.PRIMARY -> scheme.primaryContainer to scheme.onPrimaryContainer
+                        RowTone.SECONDARY -> scheme.secondaryContainer to scheme.onSecondaryContainer
+                        RowTone.TERTIARY -> scheme.tertiaryContainer to scheme.onTertiaryContainer
+                        RowTone.NEUTRAL -> scheme.surfaceContainerHighest to scheme.onSurfaceVariant
+                    }
+                    Box(Modifier.size(52.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
+                        Icon(item.icon, contentDescription = null, tint = content)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(item.title, style = MaterialTheme.typography.titleMedium)
+                        item.subtitle?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant) }
+                    }
+                }
+            }
+        }
     }
 }
