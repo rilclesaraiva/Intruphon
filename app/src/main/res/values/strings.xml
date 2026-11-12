@@ -144,6 +144,15 @@
     <string name="downloads_failed_title">Failed (%1$d)</string>
     <string name="downloads_failed_remove_all">Remove all</string>
     <string name="downloads_done_title">Downloaded</string>
-    <string name="downloads_status_failed_unreadable">Could not read this item (it may be unavailable, private or unsupported)</string>
     <string name="downloads_status_failed_no_format">This item has no format of the kind you chose</string>
+    <string name="downloads_select">Select</string>
+    <string name="downloads_select_all">Select all</string>
+    <string name="downloads_clear_selection">Clear selection</string>
+    <string name="downloads_more">More options</string>
+    <string name="downloads_delete_title_many">Delete %1$d downloads?</string>
+    <string name="downloads_allow_audio">Allow Intruphon to delete this audio file?</string>
+    <string name="downloads_allow_video">Allow Intruphon to delete this video file?</string>
+    <string name="downloads_allow_many">Allow Intruphon to delete these %1$d files?</string>
+    <string name="downloads_allow">Allow</string>
+    <string name="downloads_deny">Deny</string>
 </resources>

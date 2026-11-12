@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- Downloads: tap a row to open it (or retry it, if failed); long-press or the three-dot button opens a bottom panel (open, select, delete or remove). Tapping only the cover starts multi-select, with a "close + count" pill and a "select all / more" pill; for now the only bulk action is delete.
+- Delete: Intruphon asks in two steps (remove from the list only, or delete from the device) and shows its own "Allow Intruphon to delete this file?" window with the cover, because Android shows no system window for files the app created itself.
+- Playlists: items that cannot be downloaded are checked beforehand, shown dimmed with a "!" over the cover, cannot be selected, and are skipped silently (no failed entries).
 - Downloads: a card at the top groups everything that is downloading and opens a new "Downloading" page where each download has its own cancel button and there is a "Cancel all" (with confirmation).
 - Downloads: failed downloads pile up in a "Failed" section at the top of the list, with "Remove all".
 - Downloads in progress and failed items show their cover from the first moment (the picture comes from the source link), not only after the file is saved.
@@ -32,6 +35,9 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- Portuguese wording "Pronto" is now "Concluído".
+- Settings and About forget their scroll position when left for good (back to Home); they keep it only while another page opened from them is on top.
+- Removed the "Open" and "Delete file" buttons from download rows.
 - The app now draws edge to edge: pages go behind the status and navigation bars (no solid bar), and each page keeps its content clear of them.
 - Deleting a file from the device: the app shows the system window first; if the system cannot build it, the app tries to delete the file itself. When it still fails, the message says what the system answered.
 - README no longer says the app is only for your own, freely licensed or permitted content: you choose what you download.

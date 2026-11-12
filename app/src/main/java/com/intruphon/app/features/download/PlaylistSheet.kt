@@ -8,7 +8,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.alpha
+import com.intruphon.app.data.media.LoadResult
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -90,11 +99,29 @@ private fun androidx.compose.foundation.layout.ColumnScope.PlaylistChooser(playl
     val entries = playlist.entries
     // Indexes the person unchecked; everything starts selected.
     var unchecked by remember { mutableStateOf(emptySet<Int>()) }
+    // Items the source cannot give (removed, private, blocked), found by reading them quietly in the background.
+    var unavailable by remember { mutableStateOf(emptySet<Int>()) }
     var format by rememberSaveable { mutableStateOf(PlaylistFormat.AUDIO_HIGHEST) }
-    val count = entries.size - unchecked.size
+    val selectable = entries.indices.filter { it !in unavailable }
+    val chosenIndexes = selectable.filter { it !in unchecked }
+    val count = chosenIndexes.size
+
+    LaunchedEffect(entries) {
+        val gate = Semaphore(2)
+        coroutineScope {
+            entries.forEachIndexed { index, entry ->
+                launch {
+                    gate.withPermit {
+                        val result = MediaRepository.load(entry.url)
+                        if (result is LoadResult.Failed && result.reason != FailReason.NETWORK) unavailable = unavailable + index
+                    }
+                }
+            }
+        }
+    }
 
     fun start() {
-        val chosen = entries.filterIndexed { index, _ -> index !in unchecked }
+        val chosen = chosenIndexes.map { entries[it] }
         val selectedFormat = format
         DownloadEngine.enqueueAll(chosen, selectedFormat.kind) { selectedFormat.pick(it) }
         Toast.makeText(context, context.getString(R.string.playlist_started, chosen.size), Toast.LENGTH_LONG).show()
@@ -112,17 +139,17 @@ private fun androidx.compose.foundation.layout.ColumnScope.PlaylistChooser(playl
         }
         Row(
             Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable {
-                unchecked = if (unchecked.isEmpty()) entries.indices.toSet() else emptySet()
+                unchecked = if (selectable.all { it !in unchecked }) selectable.toSet() else emptySet()
             },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Checkbox(checked = unchecked.isEmpty(), onCheckedChange = null, modifier = Modifier.padding(12.dp))
+            Checkbox(checked = selectable.isNotEmpty() && selectable.all { it !in unchecked }, onCheckedChange = null, modifier = Modifier.padding(12.dp))
             Text(stringResource(R.string.playlist_select_all), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             Text(stringResource(R.string.playlist_count, entries.size), style = MaterialTheme.typography.bodySmall)
         }
         LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             itemsIndexed(entries, key = { index, _ -> index }) { index, entry ->
-                PlaylistRow(index + 1, entry, checked = index !in unchecked) {
+                PlaylistRow(index + 1, entry, checked = index !in unchecked && index !in unavailable, available = index !in unavailable) {
                     unchecked = if (index in unchecked) unchecked - index else unchecked + index
                 }
             }
@@ -140,19 +167,25 @@ private fun androidx.compose.foundation.layout.ColumnScope.PlaylistChooser(playl
 }
 
 @Composable
-private fun PlaylistRow(number: Int, entry: PlaylistEntry, checked: Boolean, onToggle: () -> Unit) {
+private fun PlaylistRow(number: Int, entry: PlaylistEntry, checked: Boolean, available: Boolean, onToggle: () -> Unit) {
     val picture by produceState(entry.thumbnailUrl?.let { Thumbnails.peek(it) }, entry.thumbnailUrl) {
         val url = entry.thumbnailUrl
         if (url != null) value = withContext(Dispatchers.IO) { Thumbnails.load(url) }
     }
+    // An item the source cannot give is dimmed, marked with "!" over its cover and cannot be checked.
     Row(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClick = onToggle),
+        Modifier.fillMaxWidth().alpha(if (available) 1f else 0.4f).clip(MaterialTheme.shapes.medium).clickable(enabled = available, onClick = onToggle),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Checkbox(checked = checked, onCheckedChange = null, modifier = Modifier.padding(start = 12.dp))
-        Box(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+        Checkbox(checked = checked, onCheckedChange = null, enabled = available, modifier = Modifier.padding(start = 12.dp))
+        Box(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
             picture?.let { Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+            if (!available) {
+                Box(Modifier.size(28.dp).border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape), contentAlignment = Alignment.Center) {
+                    Text("!", style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
         Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
             Text("$number. ${entry.title}", style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)

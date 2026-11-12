@@ -31,7 +31,18 @@ object MediaRepository {
         }
     }
 
-    suspend fun load(link: String): LoadResult = withContext(Dispatchers.IO) {
+    // A link read a moment ago (for example while checking a playlist) is not read again when it is downloaded.
+    private const val CACHE_MS = 10 * 60 * 1000L
+    private val cache = android.util.LruCache<String, Pair<Long, LoadResult.Ready>>(150)
+
+    suspend fun load(link: String): LoadResult {
+        cache.get(link)?.let { (at, ready) -> if (System.currentTimeMillis() - at < CACHE_MS) return ready }
+        val result = read(link)
+        if (result is LoadResult.Ready) cache.put(link, System.currentTimeMillis() to result)
+        return result
+    }
+
+    private suspend fun read(link: String): LoadResult = withContext(Dispatchers.IO) {
         try {
             ensureInit()
             val info = StreamInfo.getInfo(link)

@@ -95,14 +95,12 @@ object DownloadEngine {
                     val option = (result as? LoadResult.Ready)?.let { choose(it.info.options) }
                     if (result is LoadResult.Ready && option != null) {
                         enqueue(result.info, option, entry.url)
-                    } else {
-                        val reason = when {
-                            result is LoadResult.Failed && result.reason == FailReason.NETWORK -> REASON_IO
-                            result is LoadResult.Failed && result.reason == FailReason.UNREADABLE -> REASON_UNREADABLE
-                            else -> REASON_NO_FORMAT
-                        }
-                        addFailed(entry, kind, reason)
+                    } else if (result is LoadResult.Failed && result.reason == FailReason.NETWORK) {
+                        addFailed(entry, kind, REASON_IO)   // a connection problem can pass: it stays on the list to retry
+                    } else if (result is LoadResult.Ready) {
+                        addFailed(entry, kind, REASON_NO_FORMAT)
                     }
+                    // An item the source cannot give (removed, private, blocked) is skipped quietly, like the sheet shows it.
                 }
             } finally {
                 readingCount.update { it - 1 }
@@ -130,54 +128,66 @@ object DownloadEngine {
 
     /** What to do next to delete a saved file from the device. */
     sealed interface DeleteStep {
-        /** Nothing left to delete (the file is already gone). */
+        /** Every file is gone and the entries are forgotten. */
         data object Gone : DeleteStep
 
-        /** The system must ask the person; launch [sender] and call [finishDelete] with the result. */
-        data class Ask(val sender: IntentSender) : DeleteStep
+        /** The system must ask the person for the files in [ids]; launch [sender] and call [finishDelete] with the result. */
+        data class Ask(val sender: IntentSender, val ids: List<Long>) : DeleteStep
 
         /** Could not delete. [detail] says what the system answered, to find the cause. */
         data class Failed(val detail: String?) : DeleteStep
     }
 
     /**
-     * Starts deleting a saved file from the device. First the system's own window ("Allow Intruphon to delete this
-     * file?", no storage permission); if it cannot be built the app tries to delete the file itself, which works for
-     * files this install created. Call off the main thread.
+     * Deletes saved files from the device. The app first deletes what it can itself (files this install created); for
+     * the rest the system's own window asks the person (no storage permission). Entries of deleted files are forgotten.
+     * Call off the main thread.
      */
-    fun startDelete(context: Context, id: Long): DeleteStep {
-        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse) ?: return DeleteStep.Gone
-        if (!exists(uri)) return DeleteStep.Gone
+    fun startDelete(context: Context, ids: List<Long>): DeleteStep {
         val resolver = context.contentResolver
+        val left = ArrayList<Pair<Long, Uri>>()
         var problem: Exception? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        var recoverable: IntentSender? = null
+        for (id in ids) {
+            val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
+            if (uri == null || !exists(uri)) {
+                remove(id, deleteFile = false)
+                continue
+            }
             try {
-                return DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, listOf(uri)).intentSender)
+                resolver.delete(uri, null, null)
+            } catch (e: RecoverableSecurityException) {
+                recoverable = recoverable ?: e.userAction.actionIntent.intentSender
             } catch (e: Exception) {
-                problem = e
+                problem = problem ?: e
+            }
+            if (exists(uri)) left.add(id to uri) else remove(id, deleteFile = false)
+        }
+        if (left.isEmpty()) return DeleteStep.Gone
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return try {
+                DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, left.map { it.second }).intentSender, left.map { it.first })
+            } catch (e: Exception) {
+                DeleteStep.Failed("${e.javaClass.simpleName}: ${e.message}")
             }
         }
-        try {
-            resolver.delete(uri, null, null)
-            if (!exists(uri)) return DeleteStep.Gone
-        } catch (e: RecoverableSecurityException) {
-            return DeleteStep.Ask(e.userAction.actionIntent.intentSender)
-        } catch (e: Exception) {
-            problem = problem ?: e
-        }
+        // Android 10: the system asks about one file at a time.
+        recoverable?.let { return DeleteStep.Ask(it, listOf(left.first().first)) }
         return DeleteStep.Failed(problem?.let { "${it.javaClass.simpleName}: ${it.message}" })
     }
 
     /**
-     * After the system window closed: if the file is gone, forget the entry and return true. If the file is still
-     * there the app tries once more to delete it itself. Call off the main thread.
+     * After the system window closed: forgets the entries whose file is gone (trying once more to delete what is left,
+     * now that the person agreed) and returns true when none of [ids] is left. Call off the main thread.
      */
-    fun finishDelete(context: Context, id: Long): Boolean {
-        val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
-        if (uri != null && exists(uri)) runCatching { context.contentResolver.delete(uri, null, null) }
-        if (uri != null && exists(uri)) return false
-        remove(id, deleteFile = false)
-        return true
+    fun finishDelete(context: Context, ids: List<Long>): Boolean {
+        var allGone = true
+        for (id in ids) {
+            val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
+            if (uri != null && exists(uri)) runCatching { context.contentResolver.delete(uri, null, null) }
+            if (uri != null && exists(uri)) allGone = false else remove(id, deleteFile = false)
+        }
+        return allGone
     }
 
     fun cancelAll() {

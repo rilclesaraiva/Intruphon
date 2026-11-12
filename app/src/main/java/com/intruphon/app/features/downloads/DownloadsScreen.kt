@@ -1,86 +1,109 @@
 package com.intruphon.app.features.downloads
 
-import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import java.util.Locale
-import kotlinx.coroutines.withContext
-import com.intruphon.app.data.download.MediaPreview
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.draw.clip
-import androidx.compose.runtime.produceState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.background
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import android.app.Activity
+import android.graphics.Bitmap
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.rememberLazyListState
-import com.intruphon.app.core.ui.PageHeader
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.PageHeader
+import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.DownloadItem
 import com.intruphon.app.data.download.DownloadState
-import com.intruphon.app.data.download.DownloadEngine
+import com.intruphon.app.data.download.MediaPreview
 import com.intruphon.app.data.download.REASON_INTERRUPTED
 import com.intruphon.app.data.download.REASON_IO
 import com.intruphon.app.data.download.REASON_NEEDS_WIFI
 import com.intruphon.app.data.download.REASON_NO_FORMAT
-import com.intruphon.app.data.download.REASON_UNREADABLE
-import com.intruphon.app.data.net.Thumbnails
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.runtime.State
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.Icon
-import androidx.compose.foundation.clickable
-import android.graphics.Bitmap
 import com.intruphon.app.data.media.Kind
+import com.intruphon.app.data.net.Thumbnails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
-/** Library of started downloads, refreshed every second while visible. [onRetry] receives the original link. */
+/**
+ * Library of started downloads. Tap a row to open it; hold it (or tap its dots) for more; tap a cover to start picking
+ * several. [onRetry] receives the original link, [onSelecting] tells the entry when the picking bar is up.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, modifier: Modifier = Modifier) {
+fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelecting: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -92,19 +115,40 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, modifie
         2 -> all.filter { it.record.kind == Kind.VIDEO }
         else -> all
     }
-    // "Delete" asks first: forget the entry only, or also delete the file from the device (through the system).
-    var confirmId by rememberSaveable { mutableStateOf<Long?>(null) }
-    var deletingId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val active = list.filter { it.status.state.active }
+    val failed = list.filter { it.status.state == DownloadState.FAILED }
+    val rest = list.filter { !it.status.state.active && it.status.state != DownloadState.FAILED }
+    val pickable = (failed + rest).map { it.record.id }
+
+    // Picking several: starts from a cover; the bar at the top shows how many and what to do.
+    var selected by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
+    val selecting = selected.isNotEmpty()
+    LaunchedEffect(selecting) { onSelecting(selecting) }
+    DisposableEffect(Unit) { onDispose { onSelecting(false) } }
+    LaunchedEffect(all) {
+        val ids = all.map { it.record.id }.toSet()
+        if (selected.any { it !in ids }) selected = selected.filter { it in ids }.toSet()
+    }
+    BackHandler(enabled = selecting) { selected = emptySet() }
+    fun toggle(id: Long) { selected = if (id in selected) selected - id else selected + id }
+
+    // The panel with the other things to do with one download.
+    var menuId by rememberSaveable { mutableStateOf<Long?>(null) }
+    // Deleting asks twice: first remove from the list or delete from the device, then the confirmation window.
+    var askIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
+    var confirmIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
+    var deletingIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
     val deleteWindow = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val id = deletingId
-        deletingId = null
-        if (id != null) scope.launch {
-            val gone = withContext(Dispatchers.IO) { DownloadEngine.finishDelete(context, id) }
+        val ids = deletingIds
+        deletingIds = null
+        if (ids != null) scope.launch {
+            val gone = withContext(Dispatchers.IO) { DownloadEngine.finishDelete(context, ids) }
             if (!gone && result.resultCode != Activity.RESULT_OK) {
                 Toast.makeText(context, R.string.downloads_delete_cancelled, Toast.LENGTH_SHORT).show()
             } else if (!gone) {
                 Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
             }
+            selected = emptySet()
         }
     }
 
@@ -117,113 +161,227 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, modifie
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val active = list.filter { it.status.state.active }
-    val failed = list.filter { it.status.state == DownloadState.FAILED }
-    val rest = list.filter { !it.status.state.active && it.status.state != DownloadState.FAILED }
+    fun open(item: DownloadItem) {
+        when (DownloadEngine.open(context, item.record.id)) {
+            DownloadEngine.OpenResult.OPENED -> Unit
+            DownloadEngine.OpenResult.NO_APP -> Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+            DownloadEngine.OpenResult.MISSING -> Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // What a tap does: pick (while picking), open a saved file, retry a failed one.
+    fun tap(item: DownloadItem) {
+        val id = item.record.id
+        when {
+            selecting -> toggle(id)
+            item.status.state == DownloadState.DONE -> open(item)
+            item.status.state == DownloadState.FAILED -> onRetry(item.record.sourceLink)
+            item.status.state == DownloadState.MISSING -> Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+        }
+    }
 
     @Composable
     fun ItemRow(item: DownloadItem) = DownloadRow(
         item = item,
-        onOpen = {
-            when (DownloadEngine.open(context, item.record.id)) {
-                DownloadEngine.OpenResult.OPENED -> Unit
-                DownloadEngine.OpenResult.NO_APP ->
-                    Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
-                DownloadEngine.OpenResult.MISSING ->
-                    Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
-            }
-        },
-        onRemove = {
-            if (item.status.state == DownloadState.DONE) confirmId = item.record.id
-            else scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) }
-        },
-        onRetry = { onRetry(item.record.sourceLink) },
+        picked = item.record.id in selected,
+        onTap = { tap(item) },
+        onHold = { menuId = item.record.id },
+        onCover = { toggle(item.record.id) },
+        onMore = { menuId = item.record.id },
     )
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        state = listState,
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
-        item(key = "filters") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
-                    FilterChip(
-                        selected = filter == index,
-                        onClick = { filter = index },
-                        label = { Text(stringResource(label)) },
-                        shape = CircleShape,
-                    )
-                }
-            }
-        }
-        if (list.isEmpty()) {
-            item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
-        }
-        // Everything that is running sits in one card; it opens the page where each one can be cancelled.
-        if (active.isNotEmpty()) item(key = "active") { ActiveCard(active, onOpenActive) }
-        // Failures pile up here, at the top, until they are retried or removed.
-        if (failed.isNotEmpty()) {
-            item(key = "failed-head") {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.downloads_failed_title, failed.size), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    TextButton(onClick = { scope.launch(Dispatchers.IO) { failed.forEach { DownloadEngine.remove(it.record.id) } } }) {
-                        Text(stringResource(R.string.downloads_failed_remove_all))
+    Box(modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
+            item(key = "filters") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
+                        FilterChip(
+                            selected = filter == index,
+                            onClick = { filter = index },
+                            label = { Text(stringResource(label)) },
+                            shape = CircleShape,
+                        )
                     }
                 }
             }
-            items(failed, key = { it.record.id }) { ItemRow(it) }
-        }
-        if (rest.isNotEmpty()) {
-            if (active.isNotEmpty() || failed.isNotEmpty()) {
-                item(key = "done-head") { Text(stringResource(R.string.downloads_done_title), style = MaterialTheme.typography.titleMedium) }
+            if (list.isEmpty()) {
+                item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
             }
-            items(rest, key = { it.record.id }) { ItemRow(it) }
+            // Everything that is running sits in one card; it opens the page where each one can be cancelled.
+            if (active.isNotEmpty()) item(key = "active") { ActiveCard(active, onOpenActive) }
+            // Failures pile up here, at the top, until they are retried or removed.
+            if (failed.isNotEmpty()) {
+                item(key = "failed-head") {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.downloads_failed_title, failed.size), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { scope.launch(Dispatchers.IO) { failed.forEach { DownloadEngine.remove(it.record.id) } } }) {
+                            Text(stringResource(R.string.downloads_failed_remove_all))
+                        }
+                    }
+                }
+                items(failed, key = { it.record.id }) { ItemRow(it) }
+            }
+            if (rest.isNotEmpty()) {
+                if (active.isNotEmpty() || failed.isNotEmpty()) {
+                    item(key = "done-head") { Text(stringResource(R.string.downloads_done_title), style = MaterialTheme.typography.titleMedium) }
+                }
+                items(rest, key = { it.record.id }) { ItemRow(it) }
+            }
+        }
+
+        if (selecting) {
+            SelectionBar(
+                count = selected.size,
+                onClose = { selected = emptySet() },
+                onSelectAll = { selected = if (selected.containsAll(pickable)) emptySet() else pickable.toSet() },
+                onDelete = { askIds = selected.toList() },
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
         }
     }
 
-    confirmId?.let { id ->
+    // The panel for one download: opens from its dots or by holding the row.
+    menuId?.let { id ->
+        val item = all.firstOrNull { it.record.id == id }
+        if (item == null) menuId = null else ModalBottomSheet(onDismissRequest = { menuId = null }, sheetState = rememberModalBottomSheetState()) {
+            Column(Modifier.padding(bottom = 24.dp)) {
+                Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                val state = item.status.state
+                if (state == DownloadState.DONE) PanelRow(Icons.Default.PlayArrow, R.string.downloads_open) { menuId = null; open(item) }
+                if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { menuId = null; onRetry(item.record.sourceLink) }
+                PanelRow(Icons.Default.Check, R.string.downloads_select) { menuId = null; toggle(id) }
+                if (state == DownloadState.DONE) {
+                    PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { menuId = null; askIds = listOf(id) }
+                } else {
+                    PanelRow(Icons.Default.Close, R.string.downloads_remove) { menuId = null; scope.launch(Dispatchers.IO) { DownloadEngine.remove(id) } }
+                }
+            }
+        }
+    }
+
+    // First question: only forget the entries, or also delete the files.
+    askIds?.let { ids ->
         AlertDialog(
-            onDismissRequest = { confirmId = null },
-            title = { Text(stringResource(R.string.downloads_delete_title)) },
+            onDismissRequest = { askIds = null },
+            title = { Text(if (ids.size == 1) stringResource(R.string.downloads_delete_title) else stringResource(R.string.downloads_delete_title_many, ids.size)) },
             text = { Text(stringResource(R.string.downloads_delete_message)) },
             confirmButton = {
-                TextButton(onClick = {
-                    confirmId = null
-                    scope.launch {
-                        when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, id) }) {
-                            is DownloadEngine.DeleteStep.Ask -> {
-                                deletingId = id
-                                deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
-                            }
-                            DownloadEngine.DeleteStep.Gone -> withContext(Dispatchers.IO) { DownloadEngine.remove(id, deleteFile = false) }
-                            is DownloadEngine.DeleteStep.Failed ->
-                                Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }) { Text(stringResource(R.string.downloads_delete_device), color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = { askIds = null; confirmIds = ids }) {
+                    Text(stringResource(R.string.downloads_delete_device), color = MaterialTheme.colorScheme.error)
+                }
             },
             dismissButton = {
                 Row {
                     TextButton(onClick = {
-                        confirmId = null
-                        scope.launch(Dispatchers.IO) { DownloadEngine.remove(id, deleteFile = false) }
+                        askIds = null
+                        selected = emptySet()
+                        scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
                     }) { Text(stringResource(R.string.downloads_remove_list)) }
-                    TextButton(onClick = { confirmId = null }) { Text(stringResource(R.string.downloads_cancel)) }
+                    TextButton(onClick = { askIds = null }) { Text(stringResource(R.string.downloads_cancel)) }
                 }
             },
         )
     }
+
+    // Second question, for deleting from the device: a window like the system one, with the cover.
+    confirmIds?.let { ids ->
+        val first = all.firstOrNull { it.record.id == ids.first() }
+        val picture = first?.let { item ->
+            item.record.uri?.let { MediaPreview.peek(it)?.thumbnail } ?: item.record.coverUrl?.let { Thumbnails.peek(it) }
+        }
+        AlertDialog(
+            onDismissRequest = { confirmIds = null },
+            title = {
+                Text(
+                    when {
+                        ids.size > 1 -> stringResource(R.string.downloads_allow_many, ids.size)
+                        first?.record?.kind == Kind.VIDEO -> stringResource(R.string.downloads_allow_video)
+                        else -> stringResource(R.string.downloads_allow_audio)
+                    },
+                )
+            },
+            text = {
+                if (picture != null) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Image(picture.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(180.dp).clip(RoundedCornerShape(16.dp)))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmIds = null
+                    scope.launch {
+                        when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
+                            is DownloadEngine.DeleteStep.Ask -> {
+                                deletingIds = step.ids
+                                deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+                            }
+                            DownloadEngine.DeleteStep.Gone -> selected = emptySet()
+                            is DownloadEngine.DeleteStep.Failed ->
+                                Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }) { Text(stringResource(R.string.downloads_allow)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmIds = null }) { Text(stringResource(R.string.downloads_deny)) } },
+        )
+    }
+}
+
+/** The two floating pills while picking: count and close on the left, select all and more on the right. */
+@Composable
+private fun SelectionBar(count: Int, onClose: () -> Unit, onSelectAll: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+    var menu by androidx.compose.runtime.remember { mutableStateOf(false) }
+    Row(modifier.fillMaxWidth().statusBarsPadding().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
+            Row(Modifier.height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.downloads_clear_selection)) }
+                Text("$count", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 16.dp))
+            }
+        }
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
+            Row(Modifier.height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onSelectAll) { Icon(ImageVector.vectorResource(R.drawable.ic_select_all), contentDescription = stringResource(R.string.downloads_select_all)) }
+                Box {
+                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.downloads_more)) }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.downloads_delete)) },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                            onClick = { menu = false; onDelete() },
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
-private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> Unit, onRetry: () -> Unit) {
+private fun PanelRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Int, danger: Boolean = false, onClick: () -> Unit) {
+    val color = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = color)
+        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge, color = color)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DownloadRow(item: DownloadItem, picked: Boolean, onTap: () -> Unit, onHold: () -> Unit, onCover: () -> Unit, onMore: () -> Unit) {
     val context = LocalContext.current
     val record = item.record
     val status = item.status
-    val inProgress = status.state.active
     val percent = if (status.state == DownloadState.RUNNING && status.totalBytes > 0) (status.downloadedBytes * 100 / status.totalBytes).toInt() else null
 
     // Length and picture come from the saved file itself, read once off the main thread.
@@ -232,85 +390,75 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
             withContext(Dispatchers.IO) { MediaPreview.load(context, record.uri, record.kind) }
         } else null
     }
-
     val cover by rememberCover(record.coverUrl)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).combinedClickable(onClick = onTap, onLongClick = onHold),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        colors = CardDefaults.cardColors(
+            containerColor = if (picked) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
     ) {
-    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(
-            Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) {
-            val thumbnail = preview?.thumbnail ?: cover
-            if (thumbnail != null) {
-                Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            } else {
-                Text(record.extension.uppercase(), style = MaterialTheme.typography.labelMedium)
-            }
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(record.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
-            val kind = stringResource(if (record.kind == Kind.AUDIO) R.string.download_section_audio else R.string.download_section_video)
-            val details = listOf(kind, record.extension.uppercase(), record.quality).filter { it.isNotEmpty() }.joinToString(" · ")
-            val facts = if (status.state == DownloadState.DONE) {
-                listOfNotNull(preview?.durationMs?.takeIf { it > 0 }?.let(::formatDuration), formatSize(status.totalBytes).takeIf { status.totalBytes > 0 })
-            } else emptyList()
-            Text((listOf(details) + facts).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-            if (inProgress) {
-                if (percent != null) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
-                else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            Text(
-                text = when (status.state) {
-                    DownloadState.WAITING -> stringResource(R.string.downloads_status_waiting)
-                    DownloadState.RUNNING ->
-                        if (percent != null) stringResource(R.string.downloads_status_running, percent)
-                        else stringResource(R.string.downloads_status_running_unknown)
-                    DownloadState.PROCESSING -> stringResource(R.string.downloads_status_processing)
-                    DownloadState.DONE -> stringResource(R.string.downloads_status_done)
-                    DownloadState.MISSING -> stringResource(R.string.downloads_status_missing)
-                    DownloadState.FAILED -> when {
-                        status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
-                        status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
-                        status.reason == REASON_NEEDS_WIFI -> stringResource(R.string.downloads_status_needs_wifi)
-                        status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
-                        status.reason == REASON_UNREADABLE -> stringResource(R.string.downloads_status_failed_unreadable)
-                        status.reason == REASON_NO_FORMAT -> stringResource(R.string.downloads_status_failed_no_format)
-                        else -> stringResource(R.string.downloads_status_failed)
-                    }
-                },
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            if (status.state == DownloadState.DONE && record.tags != null) {
-                Text(
-                    stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (record.note.isNotEmpty() && (status.state == DownloadState.DONE || status.state == DownloadState.FAILED)) {
-                Text(record.note, style = MaterialTheme.typography.bodySmall)
-            }
-            Row {
-                when (status.state) {
-                    DownloadState.DONE -> {
-                        FilledTonalButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
-                        TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_delete)) }
-                    }
-                    DownloadState.FAILED, DownloadState.MISSING -> {
-                        FilledTonalButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
-                        TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_remove)) }
-                    }
-                    else -> TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_cancel)) }
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Only the cover starts picking; while picking, the whole row toggles.
+            Box(
+                Modifier.size(64.dp).clip(RoundedCornerShape(16.dp))
+                    .background(if (picked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable(onClick = onCover),
+                contentAlignment = Alignment.Center,
+            ) {
+                val thumbnail = preview?.thumbnail ?: cover
+                if (picked) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                } else if (thumbnail != null) {
+                    Image(thumbnail.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                } else {
+                    Text(record.extension.uppercase(), style = MaterialTheme.typography.labelMedium)
                 }
             }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(record.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+                val kind = stringResource(if (record.kind == Kind.AUDIO) R.string.download_section_audio else R.string.download_section_video)
+                val details = listOf(kind, record.extension.uppercase(), record.quality).filter { it.isNotEmpty() }.joinToString(" · ")
+                val facts = if (status.state == DownloadState.DONE) {
+                    listOfNotNull(preview?.durationMs?.takeIf { it > 0 }?.let(::formatDuration), formatSize(status.totalBytes).takeIf { status.totalBytes > 0 })
+                } else emptyList()
+                Text((listOf(details) + facts).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = when (status.state) {
+                        DownloadState.WAITING -> stringResource(R.string.downloads_status_waiting)
+                        DownloadState.RUNNING ->
+                            if (percent != null) stringResource(R.string.downloads_status_running, percent)
+                            else stringResource(R.string.downloads_status_running_unknown)
+                        DownloadState.PROCESSING -> stringResource(R.string.downloads_status_processing)
+                        DownloadState.DONE -> stringResource(R.string.downloads_status_done)
+                        DownloadState.MISSING -> stringResource(R.string.downloads_status_missing)
+                        DownloadState.FAILED -> when {
+                            status.reason in 100..599 -> stringResource(R.string.downloads_status_failed_http, status.reason)
+                            status.reason == REASON_INTERRUPTED -> stringResource(R.string.downloads_status_interrupted)
+                            status.reason == REASON_NEEDS_WIFI -> stringResource(R.string.downloads_status_needs_wifi)
+                            status.reason == REASON_IO -> stringResource(R.string.downloads_status_failed_io)
+                            status.reason == REASON_NO_FORMAT -> stringResource(R.string.downloads_status_failed_no_format)
+                            else -> stringResource(R.string.downloads_status_failed)
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                if (status.state == DownloadState.DONE && record.tags != null) {
+                    Text(
+                        stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (record.note.isNotEmpty() && (status.state == DownloadState.DONE || status.state == DownloadState.FAILED)) {
+                    Text(record.note, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            IconButton(onClick = onMore) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.downloads_more)) }
         }
     }
-    }
 }
+
 
 private fun formatDuration(ms: Long): String {
     val total = ms / 1000

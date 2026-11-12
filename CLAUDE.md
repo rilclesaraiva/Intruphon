@@ -79,6 +79,10 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 - Pop-up de download como o do SnapTube: duas opções de áudio e duas de vídeo (a mínima e a máxima);
   o resto só em "Mais formatos". O botão Download fica sempre visível.
 
+- Memória de posição: página que sai da pilha de vez (voltar) esquece rolagem e campos (`pages.removeState`); só lembra enquanto outra página aberta a partir dela está por cima.
+- Downloads: toque na linha abre (falha tenta de novo); segurar ou ⋮ abre o painel inferior; toque só na capa inicia a seleção (pílulas no topo: fechar+contagem, selecionar todos+mais; o botão de voltar some); sem botões "Abrir"/"Excluir arquivo". Excluir: pergunta remover da lista ou apagar do aparelho, depois janela própria de confirmação (o Android não mostra a dele para arquivos do próprio app).
+- Playlist: itens indisponíveis são sondados antes, aparecem escurecidos com "!" e são ignorados em silêncio.
+
 ## Regras de estrutura
 - Feature não importa outra feature; o compartilhado sobe para core/data.
 - Navegação entre features passa pela entrada (rotas registradas lá).

@@ -34,7 +34,7 @@
     <string name="downloads_status_running_unknown">Baixando…</string>
     <string name="downloads_status_needs_wifi">\"Só no Wi-Fi\" está ativado e o celular não está no Wi-Fi.</string>
     <string name="downloads_status_processing">Processando: juntando, convertendo e gravando tags…</string>
-    <string name="downloads_status_done">Pronto. Salvo em Download/Intruphon.</string>
+    <string name="downloads_status_done">Concluído. Salvo em Download/Intruphon.</string>
     <string name="downloads_status_failed_http">Falhou (HTTP %1$d)</string>
     <string name="downloads_status_failed">Falhou (erro desconhecido)</string>
     <string name="downloads_status_failed_io">Falhou (erro de conexão ou de armazenamento)</string>
@@ -100,7 +100,7 @@
     <string name="about_licenses_body">Intruphon: GPL-3.0\n\nNewPipeExtractor: GPL-3.0\nOkHttp: Apache-2.0\nKotlin coroutines: Apache-2.0\nAndroidX e Jetpack Compose: Apache-2.0\nMozilla Rhino (usado pelo extrator): MPL-2.0\njava-lame, um port em Java do LAME: LGPL (veja third_party/java-lame no repositório)\nAndroid desugar_jdk_libs: veja o repositório dela para a licença\n\nO extrator traz bibliotecas próprias, cada uma com sua licença.</string>
     <string name="home_recent">Downloads recentes</string>
     <string name="home_see_all">Ver todos</string>
-    <string name="home_recent_done">Pronto</string>
+    <string name="home_recent_done">Concluído</string>
     <string name="home_recent_failed">Falhou. Abra Downloads para ver os detalhes.</string>
     <string name="settings_cat_appearance">Aparência</string>
     <string name="settings_predictive_back">Voltar preditivo</string>
@@ -143,6 +143,15 @@
     <string name="downloads_failed_title">Com erro (%1$d)</string>
     <string name="downloads_failed_remove_all">Remover todos</string>
     <string name="downloads_done_title">Baixados</string>
-    <string name="downloads_status_failed_unreadable">Não foi possível ler este item (pode estar indisponível, privado ou sem suporte)</string>
     <string name="downloads_status_failed_no_format">Este item não tem formato do tipo escolhido</string>
+    <string name="downloads_select">Selecionar</string>
+    <string name="downloads_select_all">Selecionar tudo</string>
+    <string name="downloads_clear_selection">Limpar seleção</string>
+    <string name="downloads_more">Mais opções</string>
+    <string name="downloads_delete_title_many">Excluir %1$d downloads?</string>
+    <string name="downloads_allow_audio">Permitir que o Intruphon exclua este arquivo de áudio?</string>
+    <string name="downloads_allow_video">Permitir que o Intruphon exclua este arquivo de vídeo?</string>
+    <string name="downloads_allow_many">Permitir que o Intruphon exclua estes %1$d arquivos?</string>
+    <string name="downloads_allow">Permitir</string>
+    <string name="downloads_deny">Negar</string>
 </resources>

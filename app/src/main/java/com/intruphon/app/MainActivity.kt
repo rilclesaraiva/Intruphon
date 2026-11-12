@@ -96,6 +96,8 @@ private fun App(versionName: String) {
         saver = listSaver<SnapshotStateList<Int>, Int>(save = { it.toList() }, restore = { it.toMutableStateList() }),
     ) { mutableStateListOf(HOME) }
     var sheetLink by rememberSaveable { mutableStateOf<String?>(null) }
+    // True while the Downloads page shows its picking bar, which takes the place of the Back button.
+    var picking by rememberSaveable { mutableStateOf(false) }
     val predictive by AppSettings.predictiveBackFlow.collectAsState()
     val pages = rememberSaveableStateHolder()
     val scope = rememberCoroutineScope()
@@ -128,6 +130,7 @@ private fun App(versionName: String) {
         busy = true
         scope.launch {
             slide(1f)
+            pages.removeState(stack.last())   // a page that is left for good forgets where it was
             stack.removeAt(stack.lastIndex)
             exit.snapTo(0f)
             busy = false
@@ -144,6 +147,7 @@ private fun App(versionName: String) {
         try {
             progress.collect { exit.snapTo(it.progress) }
             slide(1f)
+            pages.removeState(stack.last())
             stack.removeAt(stack.lastIndex)
             exit.snapTo(0f)
         } catch (e: CancellationException) {
@@ -158,7 +162,7 @@ private fun App(versionName: String) {
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
             HOME -> HomeScreen(onDownload = { sheetLink = it }, onOpenDownloads = { open(DOWNLOADS) })
-            DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) })
+            DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) }, onSelecting = { picking = it })
             ACTIVE -> ActiveDownloadsScreen()
             SETTINGS -> SettingsScreen(onOpenAbout = { open(ABOUT) })
             else -> AboutScreen(versionName)
@@ -204,7 +208,7 @@ private fun App(versionName: String) {
                                 onClick = { open(SETTINGS) },
                                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp),
                             )
-                        } else {
+                        } else if (!(page == DOWNLOADS && picking)) {
                             FloatingCircleButton(
                                 icon = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back),

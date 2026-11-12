@@ -143,6 +143,15 @@
     <string name="downloads_failed_title">Con error (%1$d)</string>
     <string name="downloads_failed_remove_all">Quitar todo</string>
     <string name="downloads_done_title">Descargado</string>
-    <string name="downloads_status_failed_unreadable">No se pudo leer este elemento (puede no estar disponible, ser privado o no compatible)</string>
     <string name="downloads_status_failed_no_format">Este elemento no tiene un formato del tipo elegido</string>
+    <string name="downloads_select">Seleccionar</string>
+    <string name="downloads_select_all">Seleccionar todo</string>
+    <string name="downloads_clear_selection">Quitar selección</string>
+    <string name="downloads_more">Más opciones</string>
+    <string name="downloads_delete_title_many">¿Eliminar %1$d descargas?</string>
+    <string name="downloads_allow_audio">¿Permitir que Intruphon elimine este archivo de audio?</string>
+    <string name="downloads_allow_video">¿Permitir que Intruphon elimine este archivo de vídeo?</string>
+    <string name="downloads_allow_many">¿Permitir que Intruphon elimine estos %1$d archivos?</string>
+    <string name="downloads_allow">Permitir</string>
+    <string name="downloads_deny">Denegar</string>
 </resources>
