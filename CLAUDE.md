@@ -18,12 +18,18 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links, p
   (sem wrapper por enquanto: o CI usa `gradle/actions/setup-gradle` com Gradle 8.9;
   adicionar o wrapper quando a sessão ou o mantenedor puder gerá-lo)
 - Mapa: core → `app/src/main/java/com/intruphon/app/core` · data → `.../data` · features → `.../features`
-- Versão: `app/build.gradle.kts` (`versionName`) · lida no CI por `VERSION_CMD` · `versionCode` = número da execução do CI (`GITHUB_RUN_NUMBER`) e `BuildConfig.BUILD` mostra o build na aba About e nas notas de download
+- Versão: `app/build.gradle.kts` (`versionName`) · lida no CI por `VERSION_CMD` · `versionCode` = número da execução do CI (`GITHUB_RUN_NUMBER`) e `BuildConfig.BUILD` mostra o build na tela Sobre e nas notas de download
 - Versionamento: SemVer (regra; o número é calculado pelo [Unreleased], nunca escolhido)
 - Release: `gradle assembleRelease` → `app/build/outputs/apk/release/*.apk`
 - Pacote (Android): `com.intruphon.app`, fixo · R8 ativo no release (sem ofuscação), nunca desligar
 - Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir
 - minSdk 29 (ícone vetorial adaptativo sem PNG de fallback; pasta pública sem permissão de armazenamento)
+- Sobre: entrada própria nos ajustes (versão e build lidos do build, código-fonte, novidades,
+  issues, privacidade, termos, licenças e convite de apoio ao repositório), conforme a seção 9.1
+  do estrutura-vibe-coding
+- Atualizações: sim, via Releases públicas (`GET /repos/rilclesaraiva/Intruphon/releases/latest`).
+  Consulta ao abrir e no máximo a cada 10 min ao voltar, com ETag; "Agora não" só na
+  sessão; sino adia 1 semana / 1 mês ou pula a versão; controles em Ajustes → Sistema
 - Versões de AGP/Kotlin/Compose foram escolhidas sem poder consultar os repositórios
   (rede bloqueada na sessão); o CI é a primeira prova de que compilam.
 
@@ -34,6 +40,17 @@ Pastas no aparelho: `Download/Intruphon/Audio` e `Download/Intruphon/Video`, gra
 Dependências justificadas: java-lame vendorizado em `app/src/main/java/net/sourceforge/lame` (LGPL, port Java do LAME; o Android não tem encoder MP3 e assim não há biblioteca nativa; licença em `third_party/java-lame`), NewPipeExtractor (extração, GPL-3.0 como o projeto), OkHttp (o extrator exige um cliente HTTP do app), coroutines (carga fora da thread principal), desugar_jdk_libs_nio (o extrator exige abaixo do Android 13).
 R8: as classes do extrator e do Rhino ficam com `-keep` em `proguard-rules.pro` (reflexão e JS embutido); o R8 continua ligado.
 Sem SDKs de anúncio ou analytics.
+
+## Interface (regras do mantenedor)
+- Material 3 Expressive: formas grandes e arredondadas, tipografia marcante, movimento com mola.
+- Nunca barra superior fixa (nem TopAppBar, nem abas no topo). O título de cada página rola com o conteúdo.
+- Botão de ajustes flutuante e fixo no canto superior direito; dentro de uma subpágina, no lugar dele
+  fica um botão flutuante de voltar no canto superior esquerdo.
+- Toda página lembra a posição em que foi deixada (rolagem e campos) ao sair e voltar, em qualquer
+  lugar do app. O estado de rolagem de cada página é criado na entrada e passado à página; página nova
+  só entra se seguir isso.
+- Pop-up de download como o do SnapTube: duas opções de áudio e duas de vídeo (a mínima e a máxima);
+  o resto só em "Mais formatos". O botão Download fica sempre visível.
 
 ## Regras de estrutura
 - Feature não importa outra feature; o compartilhado sobe para core/data.
