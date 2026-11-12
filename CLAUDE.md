@@ -51,7 +51,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   superior esquerdo fica o botão flutuante de voltar. Os dois são levemente translúcidos e pertencem à
   própria página (deslizam com ela, nunca ficam fixos sobre a tela inteira). Todas as páginas da pilha
   ficam compostas com `key(página)`, para não perder rolagem nem miniaturas.
-- Home: sem texto de dica; o campo do link tem botão de colar à direita, que vira X (limpar tudo) quando há texto.
+- Home: os recentes enchem a tela até o fim (a quantidade que cabe no aparelho, mínimo 3); tocar fora do campo tira o foco; sem texto de dica; o campo do link tem botão de colar à direita, que vira X (limpar tudo) quando há texto.
 - Voltar preditivo (opção em Ajustes → Aparência, ligada por padrão; `enableOnBackInvokedCallback` no
   manifesto): só em páginas abertas a partir da Home. No gesto, a página atual acompanha o dedo para a
   direita com sombra e cantos que arredondam até 28 dp logo no começo; a anterior aparece por baixo,
@@ -66,6 +66,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   lugar do app. A entrada envolve cada página em `SaveableStateProvider`; a página guarda rolagem e
   campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
   entra se seguir isso.
+- Downloads: abas em pílula no topo da lista (Todos, padrão; Áudio; Vídeo).
+- Ajustes: seção Atualizações com duas linhas (verificar, mostrando a versão; avisos, com diálogo: normal, 1 semana, 1 mês).
 - Idiomas: inglês (padrão), espanhol e português do Brasil, seguindo o idioma do Android. Em Ajustes há
   um botão de idioma que abre a tela de idioma do app do próprio Android (Android 13+; antes disso, a
   tela de idioma do sistema). Todo texto novo entra nos três arquivos de strings (`values`, `values-es`,

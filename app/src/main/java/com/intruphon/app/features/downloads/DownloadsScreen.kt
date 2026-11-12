@@ -29,6 +29,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -69,7 +72,14 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val list by DownloadEngine.items.collectAsState()
+    val all by DownloadEngine.items.collectAsState()
+    // Tabs: 0 = all (default), 1 = audio, 2 = video.
+    var filter by rememberSaveable { mutableIntStateOf(0) }
+    val list = when (filter) {
+        1 -> all.filter { it.record.kind == Kind.AUDIO }
+        2 -> all.filter { it.record.kind == Kind.VIDEO }
+        else -> all
+    }
     // "Delete" asks first: forget the entry only, or also delete the file from the device (through the system).
     var confirmId by rememberSaveable { mutableStateOf<Long?>(null) }
     var deletingId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -102,6 +112,18 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
+        item(key = "filters") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
+                    FilterChip(
+                        selected = filter == index,
+                        onClick = { filter = index },
+                        label = { Text(stringResource(label)) },
+                        shape = CircleShape,
+                    )
+                }
+            }
+        }
         if (list.isEmpty()) {
             item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
         }

@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
@@ -94,6 +95,7 @@ private fun App(versionName: String) {
     val predictive by AppSettings.predictiveBackFlow.collectAsState()
     val pages = rememberSaveableStateHolder()
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     // How far the top page is out of the way: 0 in place, 1 fully slid to the right. The same value drives
     // opening a page, the back gesture, the back button and the system back.
@@ -107,6 +109,7 @@ private fun App(versionName: String) {
     fun open(page: Int) {
         if (busy || page in stack) return
         busy = true
+        focusManager.clearFocus()   // the link field must not keep blinking its cursor under the new page
         scope.launch {
             stack.add(page)
             exit.snapTo(1f)

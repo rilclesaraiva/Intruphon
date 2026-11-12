@@ -31,6 +31,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -60,7 +69,7 @@ import com.intruphon.app.data.media.Kind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val RECENT = 3
+private const val MIN_RECENT = 3
 
 /** Home: paste a link, press Download, and see the latest downloads below. The wiring comes from the entry point. */
 @Composable
@@ -69,7 +78,17 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val url = LinkExtractor.firstUrl(link)
-    val recent = DownloadEngine.items.collectAsState().value.take(RECENT)
+    val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    // The recent list fills the screen to the bottom: how many rows fit depends on the device, so it is measured.
+    var viewport by remember { mutableIntStateOf(0) }
+    var headerBottom by remember { mutableIntStateOf(0) }
+    var rowHeight by remember { mutableIntStateOf(0) }
+    val gap = with(density) { 16.dp.roundToPx() }
+    val rowEstimate = if (rowHeight > 0) rowHeight else with(density) { 80.dp.roundToPx() }
+    val room = viewport - headerBottom - gap - with(density) { 24.dp.roundToPx() }
+    val fit = if (viewport > 0 && headerBottom > 0) maxOf(MIN_RECENT, (room + gap) / (rowEstimate + gap)) else MIN_RECENT
+    val recent = DownloadEngine.items.collectAsState().value.take(fit)
 
     // Files deleted outside the app are marked when Home shows, like in the Downloads page.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -80,7 +99,10 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
     }
 
     Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
+        modifier = modifier.fillMaxSize()
+            .onSizeChanged { viewport = it.height }
+            .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }   // tapping outside leaves the field
+            .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PageHeader(stringResource(R.string.home_title))
@@ -111,20 +133,23 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) { Text(stringResource(R.string.home_download), style = MaterialTheme.typography.titleMedium) }
 
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().onGloballyPositioned { headerBottom = (it.positionInParent().y + it.size.height).toInt() },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(stringResource(R.string.home_recent), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             TextButton(onClick = onOpenDownloads) { Text(stringResource(R.string.home_see_all)) }
         }
         if (recent.isEmpty()) {
             Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyMedium)
         } else {
-            recent.forEach { RecentRow(it, onOpenDownloads) }
+            recent.forEach { RecentRow(it, onOpenDownloads, onHeight = { h -> if (rowHeight == 0 || h < rowHeight) rowHeight = h }) }
         }
     }
 }
 
 @Composable
-private fun RecentRow(item: DownloadItem, onClick: () -> Unit) {
+private fun RecentRow(item: DownloadItem, onClick: () -> Unit, onHeight: (Int) -> Unit) {
     val context = LocalContext.current
     val record = item.record
     val status = item.status
@@ -137,7 +162,7 @@ private fun RecentRow(item: DownloadItem, onClick: () -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().onSizeChanged { onHeight(it.height) }.clip(MaterialTheme.shapes.large).clickable(onClick = onClick),
     ) {
         Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(

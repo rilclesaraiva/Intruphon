@@ -27,6 +27,9 @@
 - Deleting a finished download asks whether to remove it from the list only or also delete the file from the device. Deleting from the device uses Android's own delete confirmation (no storage permission).
 - About screen rebuilt in the style of rows with round icons and chips, as a page opened from Settings: icon, name, version, build number and build type, developer, source code, what's new (the changelog), report a problem, privacy policy, terms, licenses and attributions, and the invitation to the repository.
 ### Changed
+- Home: the recent downloads fill the screen down to the bottom, so each device shows as many as fit (at least 3).
+- Settings: the "System" section became "Updates" with two rows, "Check for updates" (shows the installed version) and "Update notices" (opens a dialog: notify normally, not for a week, not for a month).
+- Downloads: tabs All (default), Audio and Video at the top of the list.
 - Home: removed the tip text; the link field has a paste button on the right that becomes a clear (X) button as soon as there is text.
 - New Material 3 Expressive look (large rounded shapes, heavier titles, spring page transitions) and no fixed top bar: page titles scroll with the content, Home and Downloads switch from a bottom navigation bar, and a floating Settings button sits at the top right (a floating Back button inside Settings and About).
 - No bottom bar anymore: Home is a single page with the link field, the Download button and a short list of recent downloads ("See all" opens the Downloads page). Settings, Downloads and About open from Home, each with a floating Back button at the top left; page titles sit beside it. The floating buttons are slightly see-through.
@@ -39,6 +42,7 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- Tapping outside the link field (or opening another page) takes focus off it, so the cursor stops blinking.
 - Every page keeps its scroll and fields after opening another page and coming back (Settings → About → back): all stacked pages now stay composed under a stable key.
 - Thumbnails no longer flash the placeholder when a page is revealed: rows start from the already-read preview.
 - The floating Back and Settings buttons now belong to their page and slide with it (also during the predictive back), instead of staying over the whole screen.

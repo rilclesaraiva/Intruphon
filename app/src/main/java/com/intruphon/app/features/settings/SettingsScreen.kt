@@ -48,7 +48,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.intruphon.app.BuildConfig
 import com.intruphon.app.R
+import com.intruphon.app.data.update.MONTH_MS
+import com.intruphon.app.data.update.WEEK_MS
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.data.stats.SpeedLog
 import com.intruphon.app.data.stats.formatSpeed
@@ -149,46 +155,67 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
             }
         }
 
-        SectionLabel(stringResource(R.string.settings_cat_system))
-        SectionCard {
-            val choices by UpdateRepository.choices.collectAsState()
-            val now = System.currentTimeMillis()
-            val notices = when {
-                choices.skippedVersion != null -> stringResource(R.string.settings_updates_skipping, choices.skippedVersion.orEmpty())
-                choices.snoozed(now) -> stringResource(R.string.settings_updates_snoozed, DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(choices.snoozeUntilMs)))
-                else -> stringResource(R.string.settings_updates_on)
-            }
-            val paused = choices.skippedVersion != null || choices.snoozed(now)
-            var checking by remember { mutableStateOf(false) }
-            var result by remember { mutableStateOf<CheckResult?>(null) }
-            val scope = rememberCoroutineScope()
-
-            Text(stringResource(R.string.settings_updates_title), style = MaterialTheme.typography.titleSmall)
-            Text(notices, style = MaterialTheme.typography.bodyMedium)
-            Row {
-                if (paused) TextButton(onClick = { UpdateRepository.undoChoices() }) { Text(stringResource(R.string.settings_updates_undo)) }
-            }
-            Spacer(Modifier.height(8.dp))
-            FilledTonalButton(
-                enabled = !checking,
-                onClick = {
-                    checking = true
-                    scope.launch { result = UpdateRepository.checkNow(); checking = false }
+        SectionLabel(stringResource(R.string.settings_cat_updates))
+        val choices by UpdateRepository.choices.collectAsState()
+        val now = System.currentTimeMillis()
+        val notices = when {
+            choices.skippedVersion != null -> stringResource(R.string.settings_updates_skipping, choices.skippedVersion.orEmpty())
+            choices.snoozed(now) -> stringResource(R.string.settings_updates_snoozed, DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(choices.snoozeUntilMs)))
+            else -> stringResource(R.string.settings_updates_on)
+        }
+        var checking by remember { mutableStateOf(false) }
+        var result by remember { mutableStateOf<CheckResult?>(null) }
+        var choosing by rememberSaveable { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        val checkHint = when {
+            checking -> stringResource(R.string.settings_updates_checking)
+            result == CheckResult.UP_TO_DATE -> stringResource(R.string.settings_updates_up_to_date)
+            result == CheckResult.AVAILABLE -> stringResource(R.string.settings_updates_available)
+            result == CheckResult.FAILED -> stringResource(R.string.settings_updates_failed)
+            else -> stringResource(R.string.settings_updates_check_hint, BuildConfig.VERSION_NAME)
+        }
+        IconRowGroup(
+            listOf(
+                IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_download),
+                    RowTone.PRIMARY,
+                    stringResource(R.string.settings_updates_check),
+                    checkHint,
+                    onClick = {
+                        if (!checking) {
+                            checking = true
+                            scope.launch { result = UpdateRepository.checkNow(); checking = false }
+                        }
+                    },
+                ),
+                IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_download),
+                    RowTone.PRIMARY,
+                    stringResource(R.string.settings_updates_title),
+                    notices,
+                    onClick = { choosing = true },
+                ),
+            ),
+        )
+        if (choosing) {
+            AlertDialog(
+                onDismissRequest = { choosing = false },
+                title = { Text(stringResource(R.string.settings_updates_title)) },
+                text = {
+                    Column {
+                        TextButton(onClick = { choosing = false; UpdateRepository.undoChoices() }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.settings_updates_normal), modifier = Modifier.fillMaxWidth())
+                        }
+                        TextButton(onClick = { choosing = false; UpdateRepository.snooze(WEEK_MS) }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.settings_updates_week), modifier = Modifier.fillMaxWidth())
+                        }
+                        TextButton(onClick = { choosing = false; UpdateRepository.snooze(MONTH_MS) }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.settings_updates_month), modifier = Modifier.fillMaxWidth())
+                        }
+                    }
                 },
-            ) { Text(stringResource(R.string.settings_updates_check)) }
-            result?.let {
-                Text(
-                    stringResource(
-                        when (it) {
-                            CheckResult.UP_TO_DATE -> R.string.settings_updates_up_to_date
-                            CheckResult.AVAILABLE -> R.string.settings_updates_available
-                            CheckResult.FAILED -> R.string.settings_updates_failed
-                        },
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
+                confirmButton = { TextButton(onClick = { choosing = false }) { Text(stringResource(R.string.downloads_cancel)) } },
+            )
         }
 
         SectionLabel(stringResource(R.string.settings_cat_about))
