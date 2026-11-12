@@ -21,7 +21,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.intruphon.app.core.ui.PageHeader
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,6 +59,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val list by DownloadEngine.items.collectAsState()
 
@@ -66,28 +72,31 @@ fun DownloadsScreen(onRetry: (String) -> Unit, modifier: Modifier = Modifier) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    when {
-        list.isEmpty() -> Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.downloads_empty))
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        state = listState,
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item(key = "header") { PageHeader(stringResource(R.string.tab_downloads)) }
+        if (list.isEmpty()) {
+            item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
         }
-        else -> LazyColumn(modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-            items(list, key = { it.record.id }) { item ->
-                DownloadRow(
-                    item = item,
-                    onOpen = {
-                        when (DownloadEngine.open(context, item.record.id)) {
-                            DownloadEngine.OpenResult.OPENED -> Unit
-                            DownloadEngine.OpenResult.NO_APP ->
-                                Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
-                            DownloadEngine.OpenResult.MISSING ->
-                                Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    onRemove = { scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) } },
-                    onRetry = { onRetry(item.record.sourceLink) },
-                )
-                HorizontalDivider()
-            }
+        items(list, key = { it.record.id }) { item ->
+            DownloadRow(
+                item = item,
+                onOpen = {
+                    when (DownloadEngine.open(context, item.record.id)) {
+                        DownloadEngine.OpenResult.OPENED -> Unit
+                        DownloadEngine.OpenResult.NO_APP ->
+                            Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+                        DownloadEngine.OpenResult.MISSING ->
+                            Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+                    }
+                },
+                onRemove = { scope.launch(Dispatchers.IO) { DownloadEngine.remove(item.record.id) } },
+                onRetry = { onRetry(item.record.sourceLink) },
+            )
         }
     }
 }
@@ -107,9 +116,14 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
         } else null
     }
 
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(
-            Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+            Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             val thumbnail = preview?.thumbnail
@@ -162,17 +176,18 @@ private fun DownloadRow(item: DownloadItem, onOpen: () -> Unit, onRemove: () -> 
             Row {
                 when (status.state) {
                     DownloadState.DONE -> {
-                        TextButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
+                        FilledTonalButton(onClick = onOpen) { Text(stringResource(R.string.downloads_open)) }
                         TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_delete)) }
                     }
                     DownloadState.FAILED, DownloadState.MISSING -> {
-                        TextButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
+                        FilledTonalButton(onClick = onRetry) { Text(stringResource(R.string.downloads_retry)) }
                         TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_remove)) }
                     }
                     else -> TextButton(onClick = onRemove) { Text(stringResource(R.string.downloads_cancel)) }
                 }
             }
         }
+    }
     }
 }
 

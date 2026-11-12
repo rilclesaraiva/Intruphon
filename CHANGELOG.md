@@ -21,6 +21,10 @@
 - Settings tab: download only on Wi-Fi (adds the `ACCESS_NETWORK_STATE` permission) and the number of simultaneous downloads (1 to 5, the rest wait their turn).
 - Speed log: every download records format, quality, connection type, bytes, download time, processing time and result in a file on the device and in logcat (tag `IntruphonSpeed`); Settings shows the average speed per format and quality and can share the log as CSV or clear it.
 ### Changed
+- New Material 3 Expressive look (large rounded shapes, heavier titles, spring page transitions) and no fixed top bar: page titles scroll with the content, Home and Downloads switch from a bottom navigation bar, and a floating Settings button sits at the top right (a floating Back button inside Settings and About).
+- Every page now remembers where you left it (scroll position and typed text) when you go to another page and come back.
+- The About screen moved inside Settings.
+- The download pop-up first shows two audio entries and two video entries (the highest quality and the smallest file); everything else is under "More formats". The Download button stays visible and the list scrolls.
 - File names now carry the quality, for example `Title (M4A_128K).m4a` and `Title (MP4_720p).mp4`.
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).

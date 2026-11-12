@@ -8,6 +8,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +22,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,8 +55,10 @@ import java.util.Locale
 @Composable
 fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {}) {
     val result by produceState<LoadResult?>(initialValue = null, link) { value = MediaRepository.load(link) }
+    // Fully open from the start, so the Download button is never hidden below the fold.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -75,11 +84,18 @@ fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {
 }
 
 @Composable
-private fun FormatList(info: MediaInfo, link: String, onDismiss: () -> Unit, onStarted: () -> Unit) {
+private fun ColumnScope.FormatList(info: MediaInfo, link: String, onDismiss: () -> Unit, onStarted: () -> Unit) {
     val context = LocalContext.current
     val options = info.options
+    val audio = options.filter { it.kind == Kind.AUDIO }
+    val video = options.filter { it.kind == Kind.VIDEO }
+    val audioPicks = picks(audio)
+    val videoPicks = picks(video)
+    val shownCount = audioPicks.size + videoPicks.size
+    var expanded by rememberSaveable { mutableStateOf(false) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
-    val selected = options.firstOrNull { it.id == selectedId } ?: options.first()
+    val default = (audioPicks.firstOrNull() ?: videoPicks.first()).option
+    val selected = options.firstOrNull { it.id == selectedId } ?: default
 
     fun start() {
         DownloadEngine.enqueue(info, selected, link)
@@ -93,35 +109,70 @@ private fun FormatList(info: MediaInfo, link: String, onDismiss: () -> Unit, onS
 
     Text(stringResource(R.string.download_title), style = MaterialTheme.typography.titleLarge)
     Text(info.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
-    Section(R.string.download_section_audio, options.filter { it.kind == Kind.AUDIO }, selected) { selectedId = it.id }
-    Section(R.string.download_section_video, options.filter { it.kind == Kind.VIDEO }, selected) { selectedId = it.id }
+    // Only the list scrolls; the Download button below stays in view.
+    Column(
+        modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (expanded) {
+            Section(R.string.download_section_audio, audio.map { Pick(it, null) }, selected) { selectedId = it.id }
+            Section(R.string.download_section_video, video.map { Pick(it, null) }, selected) { selectedId = it.id }
+        } else {
+            Section(R.string.download_section_audio, audioPicks, selected) { selectedId = it.id }
+            Section(R.string.download_section_video, videoPicks, selected) { selectedId = it.id }
+        }
+        if (options.size > shownCount) {
+            TextButton(
+                onClick = {
+                    expanded = !expanded
+                    // Back to the short list: keep the choice only if that list still shows it.
+                    if (!expanded && (audioPicks + videoPicks).none { it.option.id == selected.id }) selectedId = null
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(if (expanded) R.string.download_fewer else R.string.download_more)) }
+        }
+    }
     Button(
         onClick = {
             val needsAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
             if (needsAsk) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) else start()
         },
-        modifier = Modifier.fillMaxWidth(),
-    ) { Text(stringResource(R.string.download_button)) }
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+    ) { Text(stringResource(R.string.download_button), style = MaterialTheme.typography.titleMedium) }
 }
 
 @Composable
-private fun Section(title: Int, options: List<DownloadOption>, selected: DownloadOption, onSelect: (DownloadOption) -> Unit) {
-    if (options.isEmpty()) return
-    Text(stringResource(title), style = MaterialTheme.typography.labelLarge)
-    options.forEach { option ->
-        Row(
+private fun Section(title: Int, picks: List<Pick>, selected: DownloadOption, onSelect: (DownloadOption) -> Unit) {
+    if (picks.isEmpty()) return
+    Text(stringResource(title), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+    picks.forEach { pick ->
+        val option = pick.option
+        val isSelected = option.id == selected.id
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
             modifier = Modifier
                 .fillMaxWidth()
-                .selectable(selected = option.id == selected.id, role = Role.RadioButton, onClick = { onSelect(option) }),
-            verticalAlignment = Alignment.CenterVertically,
+                .clip(MaterialTheme.shapes.large)
+                .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(option) }),
         ) {
-            RadioButton(selected = option.id == selected.id, onClick = null)
-            Text(
-                text = listOf(option.format, option.quality).filter { it.isNotEmpty() }.joinToString(" · "),
-                modifier = Modifier.weight(1f).padding(start = 12.dp),
-            )
-            option.sizeBytes?.let { Text(formatSize(it), style = MaterialTheme.typography.bodySmall) }
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = isSelected, onClick = null)
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text(
+                        text = listOf(option.format, option.quality).filter { it.isNotEmpty() }.joinToString(" · "),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    val label = when (pick.end) {
+                        End.HIGHEST -> R.string.download_highest
+                        End.SMALLEST -> R.string.download_smallest
+                        null -> null
+                    }
+                    if (label != null) Text(stringResource(label), style = MaterialTheme.typography.labelSmall)
+                }
+                option.sizeBytes?.let { Text(formatSize(it), style = MaterialTheme.typography.bodySmall) }
+            }
         }
     }
 }

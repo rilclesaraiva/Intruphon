@@ -4,7 +4,13 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.clickable
+import com.intruphon.app.core.ui.PageHeader
+import com.intruphon.app.core.ui.SectionCard
+import com.intruphon.app.core.ui.SectionLabel
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,23 +41,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var wifiOnly by remember { mutableStateOf(AppSettings.wifiOnly(context)) }
     var parallel by remember { mutableIntStateOf(AppSettings.maxParallel(context)) }
     var reload by remember { mutableIntStateOf(0) }
     val entries by produceState(emptyList(), reload) { value = withContext(Dispatchers.IO) { SpeedLog.all(context) } }
 
-    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.settings_wifi_only), style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(R.string.settings_wifi_only_hint), style = MaterialTheme.typography.bodySmall)
-            }
-            Switch(checked = wifiOnly, onCheckedChange = { wifiOnly = it; AppSettings.setWifiOnly(context, it) })
-        }
+    Column(
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        PageHeader(stringResource(R.string.tab_settings))
 
-        Column {
+        SectionLabel(stringResource(R.string.settings_cat_downloads))
+        SectionCard {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_wifi_only), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.settings_wifi_only_hint), style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = wifiOnly, onCheckedChange = { wifiOnly = it; AppSettings.setWifiOnly(context, it) })
+            }
+            Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.settings_parallel, parallel), style = MaterialTheme.typography.titleSmall)
             Slider(
                 value = parallel.toFloat(),
@@ -62,9 +74,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(R.string.settings_speed_title), style = MaterialTheme.typography.titleSmall)
+        SectionLabel(stringResource(R.string.settings_speed_title))
+        SectionCard {
             Text(stringResource(R.string.settings_speed_hint), style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(8.dp))
             val summary = summarize(entries)
             if (summary.isEmpty()) {
                 Text(stringResource(R.string.settings_speed_empty), style = MaterialTheme.typography.bodyMedium)
@@ -87,6 +100,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     onClick = { SpeedLog.clear(context); reload++ },
                 ) { Text(stringResource(R.string.settings_speed_clear)) }
             }
+        }
+
+        SectionLabel(stringResource(R.string.settings_cat_about))
+        SectionCard(Modifier.clickable(onClick = onOpenAbout)) {
+            Text(stringResource(R.string.settings_about_entry), style = MaterialTheme.typography.titleSmall)
         }
     }
 }

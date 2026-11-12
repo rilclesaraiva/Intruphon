@@ -47,8 +47,9 @@ Sem SDKs de anúncio ou analytics.
 - Botão de ajustes flutuante e fixo no canto superior direito; dentro de uma subpágina, no lugar dele
   fica um botão flutuante de voltar no canto superior esquerdo.
 - Toda página lembra a posição em que foi deixada (rolagem e campos) ao sair e voltar, em qualquer
-  lugar do app. O estado de rolagem de cada página é criado na entrada e passado à página; página nova
-  só entra se seguir isso.
+  lugar do app. A entrada envolve cada página em `SaveableStateProvider`; a página guarda rolagem e
+  campos com `rememberScrollState`, `rememberLazyListState` ou `rememberSaveable`. Página nova só
+  entra se seguir isso.
 - Pop-up de download como o do SnapTube: duas opções de áudio e duas de vídeo (a mínima e a máxima);
   o resto só em "Mais formatos". O botão Download fica sempre visível.
 
