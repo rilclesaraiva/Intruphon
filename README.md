@@ -7,7 +7,7 @@ A lightweight, tracker-free Android app for downloading media from links. You ch
 - Share a link from any app to Intruphon: a pop-up sheet appears over that app with the available audio and video formats.
 - Or paste a link on the home screen and press Download.
 - Playlist links (for example a YouTube or YouTube Music playlist) open a list with thumbnails: select all or only some items, pick a format (audio highest, MP3, audio smallest, video highest or smallest) and every item is queued in order.
-- Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video`, downloaded by the app itself (no storage permission needed), with a progress notification.
+- Files are saved in `Download/Intruphon/Audio` or `Download/Intruphon/Video` (or in a folder you pick in Settings), downloaded by the app itself (no storage permission needed), with a progress notification.
 - Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
 - Audio files get title, artist, album, year and cover art; video files get title, artist and year.
 - The Home page shows your latest downloads, and a Downloads page lists them all with progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.

@@ -31,6 +31,19 @@ internal object HttpFileDownloader {
     suspend fun save(context: Context, fileName: String, mimeType: String, kind: Kind, write: suspend (OutputStream) -> Unit): Uri {
         val resolver = context.contentResolver
         val subfolder = if (kind == Kind.AUDIO) "Audio" else "Video"
+        SaveLocation.picked(context)?.let { tree ->
+            val target = SaveLocation.create(context, tree, subfolder, fileName, mimeType)
+            var saved = false
+            try {
+                val out = resolver.openOutputStream(target) ?: throw IOException("Could not open the file")
+                out.use { write(it) }
+                saved = true
+            } finally {
+                if (!saved) runCatching { SaveLocation.delete(resolver, target) }   // no partial files, also on cancel
+            }
+            SaveLocation.index(context, target, mimeType)
+            return target
+        }
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)

@@ -21,7 +21,14 @@
     <string name="tab_settings">Ajustes</string>
     <string name="settings_wifi_only">Descargar solo con Wi-Fi</string>
     <string name="settings_wifi_only_hint">Si está activado y el teléfono no está en Wi-Fi, la descarga se detiene con un aviso y se puede reintentar.</string>
-    <string name="settings_parallel">Descargas simultáneas: %1$d</string>
+    <string name="settings_parallel_wifi">Descargas simultáneas con Wi-Fi: %1$d</string>
+    <string name="settings_parallel_mobile">Descargas simultáneas con datos móviles: %1$d</string>
+    <string name="settings_parallel_hint">Aumentar estos números puede ralentizar el teléfono.</string>
+    <string name="settings_folder">Carpeta de descarga</string>
+    <string name="settings_folder_default">Predeterminada: Download/Intruphon</string>
+    <string name="settings_folder_message">Carpeta actual: %1$s. Las descargas nuevas van a las subcarpetas Audio y Video de ahí; los archivos ya guardados se quedan donde están.</string>
+    <string name="settings_folder_choose">Elegir carpeta</string>
+    <string name="settings_folder_reset">Volver a la carpeta predeterminada</string>
     <string name="settings_speed_title">Registro de velocidad de descarga</string>
     <string name="settings_speed_hint">Cada descarga registra su formato, calidad, tipo de conexión, tamaño y velocidad. Solo se guarda en este dispositivo (y en logcat con la etiqueta IntruphonSpeed); no se envía nada si no lo compartes.</string>
     <string name="settings_speed_empty">Aún no hay descargas registradas.</string>

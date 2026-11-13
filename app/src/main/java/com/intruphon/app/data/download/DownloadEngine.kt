@@ -123,7 +123,7 @@ object DownloadEngine {
         jobs.remove(id)?.cancel()
         state.update { list -> list.filterNot { it.record.id == id } }
         DownloadStore.save(appContext, state.value)
-        if (deleteFile) item?.record?.uri?.let { runCatching { appContext.contentResolver.delete(Uri.parse(it), null, null) } }
+        if (deleteFile) item?.record?.uri?.let { runCatching { SaveLocation.delete(appContext.contentResolver, Uri.parse(it)) } }
     }
 
     /** What to do next to delete a saved file from the device. */
@@ -155,7 +155,7 @@ object DownloadEngine {
                 continue
             }
             try {
-                resolver.delete(uri, null, null)
+                SaveLocation.delete(resolver, uri)
             } catch (e: RecoverableSecurityException) {
                 recoverable = recoverable ?: e.userAction.actionIntent.intentSender
             } catch (e: Exception) {
@@ -164,6 +164,11 @@ object DownloadEngine {
             if (exists(uri)) left.add(id to uri) else remove(id, deleteFile = false)
         }
         if (left.isEmpty()) return DeleteStep.Gone
+        // Files in a folder the person picked are deleted through the folder's own permission: the system window
+        // (MediaStore) cannot handle them.
+        if (left.any { it.second.authority != MediaStore.AUTHORITY }) {
+            return DeleteStep.Failed(problem?.let { "${it.javaClass.simpleName}: ${it.message}" })
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return try {
                 DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, left.map { it.second }).intentSender, left.map { it.first })
@@ -184,7 +189,7 @@ object DownloadEngine {
         var allGone = true
         for (id in ids) {
             val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
-            if (uri != null && exists(uri)) runCatching { context.contentResolver.delete(uri, null, null) }
+            if (uri != null && exists(uri)) runCatching { SaveLocation.delete(context.contentResolver, uri) }
             if (uri != null && exists(uri)) allGone = false else remove(id, deleteFile = false)
         }
         return allGone
@@ -258,7 +263,7 @@ object DownloadEngine {
     private suspend fun run(id: Long, info: MediaInfo, option: DownloadOption) {
         // Downloads start one by one, in order, while fewer than the chosen number are running.
         gate.withLock {
-            while (state.value.count { it.status.state == DownloadState.RUNNING || it.status.state == DownloadState.PROCESSING } >= AppSettings.maxParallel(appContext)) {
+            while (state.value.count { it.status.state == DownloadState.RUNNING || it.status.state == DownloadState.PROCESSING } >= AppSettings.maxParallelNow(appContext)) {
                 delay(500)
             }
             edit(id) { it.copy(status = it.status.copy(state = DownloadState.RUNNING)) }

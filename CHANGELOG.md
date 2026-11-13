@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- Settings: choose the download folder with Android's own folder picker (no storage permission). Audio and Video subfolders are created inside it; "Back to default folder" returns to Download/Intruphon. Files already saved stay where they are. If the folder permission is lost, the app falls back to the default folder.
+- Settings: two separate limits for simultaneous downloads, one for Wi-Fi and one for mobile data (1 to 10 each); the one for the current connection applies. The old single value is used as the starting point for both.
 - Downloads: tap a row to open it (or retry it, if failed); long-press or the three-dot button opens a bottom panel (open, select, delete or remove). Tapping only the cover starts multi-select, with a "close + count" pill and a "select all / more" pill; for now the only bulk action is delete.
 - Delete: Intruphon asks in two steps (remove from the list only, or delete from the device) and shows its own "Allow Intruphon to delete this file?" window with the cover, because Android shows no system window for files the app created itself.
 - Playlists: items that cannot be downloaded are checked beforehand, shown dimmed with a "!" over the cover, cannot be selected, and are skipped silently (no failed entries).

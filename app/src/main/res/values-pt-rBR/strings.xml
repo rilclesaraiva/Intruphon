@@ -21,7 +21,14 @@
     <string name="tab_settings">Ajustes</string>
     <string name="settings_wifi_only">Baixar só no Wi-Fi</string>
     <string name="settings_wifi_only_hint">Quando ativado e o celular não está no Wi-Fi, o download para com um aviso e pode ser tentado de novo.</string>
-    <string name="settings_parallel">Downloads simultâneos: %1$d</string>
+    <string name="settings_parallel_wifi">Downloads simultâneos no Wi-Fi: %1$d</string>
+    <string name="settings_parallel_mobile">Downloads simultâneos nos dados móveis: %1$d</string>
+    <string name="settings_parallel_hint">Aumentar esses números pode deixar o celular mais lento.</string>
+    <string name="settings_folder">Pasta de download</string>
+    <string name="settings_folder_default">Padrão: Download/Intruphon</string>
+    <string name="settings_folder_message">Pasta atual: %1$s. Os novos downloads vão para as subpastas Audio e Video dela; os arquivos já salvos ficam onde estão.</string>
+    <string name="settings_folder_choose">Escolher pasta</string>
+    <string name="settings_folder_reset">Voltar à pasta padrão</string>
     <string name="settings_speed_title">Registro de velocidade de download</string>
     <string name="settings_speed_hint">Cada download registra formato, qualidade, tipo de conexão, tamanho e velocidade. Fica só neste aparelho (e no logcat, com a tag IntruphonSpeed); nada é enviado se você não compartilhar.</string>
     <string name="settings_speed_empty">Nenhum download registrado ainda.</string>

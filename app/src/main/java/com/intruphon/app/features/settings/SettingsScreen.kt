@@ -1,6 +1,9 @@
 package com.intruphon.app.features.settings
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.intruphon.app.data.download.SaveLocation
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import android.net.Uri
@@ -71,7 +74,16 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var wifiOnly by remember { mutableStateOf(AppSettings.wifiOnly(context)) }
-    var parallel by remember { mutableIntStateOf(AppSettings.maxParallel(context)) }
+    var parallelWifi by remember { mutableIntStateOf(AppSettings.maxParallelWifi(context)) }
+    var parallelMobile by remember { mutableIntStateOf(AppSettings.maxParallelMobile(context)) }
+    var folder by remember { mutableStateOf(SaveLocation.label(context)) }
+    var folderPanel by rememberSaveable { mutableStateOf(false) }
+    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree != null) {
+            runCatching { SaveLocation.choose(context, tree) }
+            folder = SaveLocation.label(context)
+        }
+    }
     var reload by remember { mutableIntStateOf(0) }
     val entries by produceState(emptyList(), reload) { value = withContext(Dispatchers.IO) { SpeedLog.all(context) } }
 
@@ -121,14 +133,51 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                 Switch(checked = wifiOnly, onCheckedChange = { wifiOnly = it; AppSettings.setWifiOnly(context, it) })
             }
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.settings_parallel, parallel), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.settings_parallel_wifi, parallelWifi), style = MaterialTheme.typography.titleSmall)
             Slider(
-                value = parallel.toFloat(),
-                onValueChange = { parallel = it.toInt() },
-                onValueChangeFinished = { AppSettings.setMaxParallel(context, parallel) },
+                value = parallelWifi.toFloat(),
+                onValueChange = { parallelWifi = it.toInt() },
+                onValueChangeFinished = { AppSettings.setMaxParallelWifi(context, parallelWifi) },
                 valueRange = AppSettings.MIN_PARALLEL.toFloat()..AppSettings.MAX_PARALLEL.toFloat(),
                 steps = AppSettings.MAX_PARALLEL - AppSettings.MIN_PARALLEL - 1,
             )
+            Text(stringResource(R.string.settings_parallel_mobile, parallelMobile), style = MaterialTheme.typography.titleSmall)
+            Slider(
+                value = parallelMobile.toFloat(),
+                onValueChange = { parallelMobile = it.toInt() },
+                onValueChangeFinished = { AppSettings.setMaxParallelMobile(context, parallelMobile) },
+                valueRange = AppSettings.MIN_PARALLEL.toFloat()..AppSettings.MAX_PARALLEL.toFloat(),
+                steps = AppSettings.MAX_PARALLEL - AppSettings.MIN_PARALLEL - 1,
+            )
+            Text(stringResource(R.string.settings_parallel_hint), style = MaterialTheme.typography.bodySmall)
+        }
+
+        IconRowGroup(
+            listOf(
+                IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_folder),
+                    RowTone.SECONDARY,
+                    stringResource(R.string.settings_folder),
+                    folder ?: stringResource(R.string.settings_folder_default),
+                    onClick = { folderPanel = true },
+                ),
+            ),
+        )
+        if (folderPanel) {
+            BottomPanel(
+                onDismiss = { folderPanel = false },
+                title = stringResource(R.string.settings_folder),
+                message = stringResource(R.string.settings_folder_message, folder ?: stringResource(R.string.settings_folder_default)),
+            ) {
+                PanelAction(stringResource(R.string.settings_folder_choose), main = true, onClick = { folderPanel = false; folderPicker.launch(null) })
+                if (folder != null) {
+                    PanelAction(stringResource(R.string.settings_folder_reset), onClick = {
+                        folderPanel = false
+                        SaveLocation.useDefault(context)
+                        folder = null
+                    })
+                }
+            }
         }
 
         SectionLabel(stringResource(R.string.settings_speed_title))
