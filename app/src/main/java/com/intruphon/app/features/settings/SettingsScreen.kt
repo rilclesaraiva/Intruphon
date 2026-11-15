@@ -109,6 +109,17 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                 }
                 Switch(checked = predictive, onCheckedChange = { AppSettings.setPredictiveBack(context, it) })
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {   // wallpaper colors exist from Android 12
+                val systemColors by AppSettings.dynamicColorFlow.collectAsState()
+                Spacer(Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.settings_dynamic_color), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.settings_dynamic_color_hint), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(checked = systemColors, onCheckedChange = { AppSettings.setDynamicColor(context, it) })
+                }
+            }
         }
 
         // Language is chosen on Android's own screen (per-app language on Android 13+).

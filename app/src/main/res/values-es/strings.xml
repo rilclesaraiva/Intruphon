@@ -117,6 +117,8 @@
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_theme_amoled">AMOLED (negro puro)</string>
+    <string name="settings_dynamic_color">Usar colores del sistema</string>
+    <string name="settings_dynamic_color_hint">Actívalo para seguir los colores del fondo de pantalla (Android 12+). Desactivado: la app usa sus propios colores, tomados de su icono.</string>
     <string name="settings_cat_appearance">Apariencia</string>
     <string name="settings_predictive_back">Atrás predictivo</string>
     <string name="settings_predictive_back_hint">En las páginas abiertas desde Inicio, la página sigue tu dedo en el gesto de atrás y se ve la página anterior debajo.</string>

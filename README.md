@@ -15,7 +15,7 @@ A lightweight, tracker-free Android app for downloading media from links. You ch
 - A local speed log (format, quality, connection type, bytes, speed) that stays on the device and can be shared as CSV from Settings.
 - File names carry the quality, for example `Title (M4A_128K).m4a`.
 - Available in English, Spanish and Portuguese (Brazil), following the Android language; a button in Settings opens Android's per-app language screen.
-- Material 3 Expressive interface with dynamic colors on Android 12+: no fixed top bar and no bottom bar, a theme choice (system, light, dark or AMOLED), a floating Settings button, predictive back, and every page remembers where you left it.
+- Material 3 Expressive interface with its own colors taken from the icon (or your wallpaper colors on Android 12+, if you turn on "Use system colors"): no fixed top bar and no bottom bar, a theme choice (system, light, dark or AMOLED), a floating Settings button, predictive back, and every page remembers where you left it.
 - The download pop-up shows the highest and the smallest audio and video choices first, with the rest under "More formats".
 - An About screen (inside Settings) with version, source code, changelog, issues, privacy policy, terms and licenses.
 - An update notice: the app asks GitHub for the latest public Release when it opens and tells you if there is a newer one (you can remind later, skip a version, or check by hand in Settings).

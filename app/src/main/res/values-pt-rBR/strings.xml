@@ -117,6 +117,8 @@
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Escuro</string>
     <string name="settings_theme_amoled">AMOLED (preto puro)</string>
+    <string name="settings_dynamic_color">Usar cores do sistema</string>
+    <string name="settings_dynamic_color_hint">Ative para seguir as cores do papel de parede (Android 12+). Desligado: o app usa as próprias cores, tiradas do ícone.</string>
     <string name="settings_cat_appearance">Aparência</string>
     <string name="settings_predictive_back">Voltar preditivo</string>
     <string name="settings_predictive_back_hint">Nas páginas abertas a partir da Home, a página acompanha o dedo no gesto de voltar e a página de baixo aparece por trás.</string>

@@ -59,7 +59,16 @@ object AppSettings {
 
     val themeFlow = MutableStateFlow(ThemeMode.SYSTEM)
 
+    /** Follow the wallpaper colors (Android 12+). Off by default: the app uses its own colors, taken from its icon. */
+    val dynamicColorFlow = MutableStateFlow(false)
+
+    fun setDynamicColor(context: Context, value: Boolean) {
+        prefs(context).edit().putBoolean("dynamic_color", value).apply()
+        dynamicColorFlow.value = value
+    }
+
     fun loadTheme(context: Context) {
+        dynamicColorFlow.value = prefs(context).getBoolean("dynamic_color", false)
         themeFlow.value = runCatching { ThemeMode.valueOf(prefs(context).getString("theme", null).orEmpty()) }.getOrDefault(ThemeMode.SYSTEM)
     }
 

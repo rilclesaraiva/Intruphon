@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.
+
 ## [0.1.0] - 2026-11-15
 
 ### Added

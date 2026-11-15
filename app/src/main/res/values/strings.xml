@@ -118,6 +118,8 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_amoled">AMOLED (pure black)</string>
+    <string name="settings_dynamic_color">Use system colors</string>
+    <string name="settings_dynamic_color_hint">Turn on to follow your wallpaper colors (Android 12+). Off: the app uses its own colors, taken from its icon.</string>
     <string name="settings_cat_appearance">Appearance</string>
     <string name="settings_predictive_back">Predictive back</string>
     <string name="settings_predictive_back_hint">In pages opened from Home, the page follows your finger on the back gesture, and the page underneath shows through.</string>
