@@ -39,6 +39,7 @@ import kotlin.math.pow
 private const val ART_K = 0.78f
 private const val ART_TX = 15.03f
 private const val ART_TY = 19.01f
+private const val VISIBLE = 72f   // the part of the 108-unit canvas a launcher shows
 private const val END = 2.3f   // seconds
 
 private val IconLight = Color(0xFFC7DDE8)
@@ -101,9 +102,9 @@ private fun DrawScope.drawIntruder(t: Float, background: Color) {
     val ease = back(u)
     val settle = smooth(u)
     val faceScale = when {
-        u > 0f -> lerp(1.5f, 1f, ease)
-        t < 0.28f -> lerp(0.6f, 1.5f, back(clamp01(t / 0.28f)))
-        else -> 1.5f
+        u > 0f -> lerp(1.15f, 1f, ease)
+        t < 0.28f -> lerp(0.45f, 1.15f, back(clamp01(t / 0.28f)))
+        else -> 1.15f
     }
     val faceX = lerp(50f, 42f, settle) + keys(t, look(6f)) * (1 - settle)
     val faceY = lerp(42f, 30f, settle)
@@ -116,7 +117,9 @@ private fun DrawScope.drawIntruder(t: Float, background: Color) {
     val funnelAlpha = keys(t, listOf(1.7f to 0f, 1.85f to 1f))
 
     withTransform({
-        scale(size.width / 108f, size.width / 108f, Offset.Zero)
+        // Like a launcher mask: only the central 72 of the 108 units show, so the drawing fills the tile.
+        scale(size.width / VISIBLE, size.width / VISIBLE, Offset.Zero)
+        translate(-(108f - VISIBLE) / 2, -(108f - VISIBLE) / 2)
         translate(ART_TX, ART_TY)
         scale(ART_K, ART_K, Offset.Zero)
     }) {
