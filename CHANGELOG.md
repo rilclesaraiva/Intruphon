@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Settings → Appearance: theme choice (system default, light, dark, AMOLED with pure black backgrounds). The system bar icons follow the chosen theme.
 - README and About: a short, neutral note on sources (tested: YouTube and YouTube Music; other services the extractor knows are untested and may not work).
 - Settings: choose the download folder with Android's own folder picker (no storage permission). Audio and Video subfolders are created inside it; "Back to default folder" returns to Download/Intruphon. Files already saved stay where they are. If the folder permission is lost, the app falls back to the default folder.
 - Settings: two separate limits for simultaneous downloads, one for Wi-Fi and one for mobile data (1 to 10 each); the one for the current connection applies. The old single value is used as the starting point for both.

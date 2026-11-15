@@ -112,6 +112,11 @@
     <string name="home_see_all">Ver todas</string>
     <string name="home_recent_done">Listo</string>
     <string name="home_recent_failed">Error. Abre Descargas para ver los detalles.</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Predeterminado del sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_theme_amoled">AMOLED (negro puro)</string>
     <string name="settings_cat_appearance">Apariencia</string>
     <string name="settings_predictive_back">Atrás predictivo</string>
     <string name="settings_predictive_back_hint">En las páginas abiertas desde Inicio, la página sigue tu dedo en el gesto de atrás y se ve la página anterior debajo.</string>

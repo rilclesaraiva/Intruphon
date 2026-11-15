@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
         AppSettings.loadPredictiveBack(applicationContext)
+        AppSettings.loadTheme(applicationContext)
         // Opening the app from scratch always looks for an update; coming back does it at most every 10 minutes.
         UpdateRepository.start(applicationContext, versionName, fresh = savedInstanceState == null)
         lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) UpdateRepository.onResume() })

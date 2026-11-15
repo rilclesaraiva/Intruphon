@@ -89,6 +89,8 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
         }
     }
     var reload by remember { mutableIntStateOf(0) }
+    val theme by AppSettings.themeFlow.collectAsState()
+    var themePanel by rememberSaveable { mutableStateOf(false) }
     val entries by produceState(emptyList(), reload) { value = withContext(Dispatchers.IO) { SpeedLog.all(context) } }
 
     Column(
@@ -113,6 +115,13 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
         IconRowGroup(
             listOf(
                 IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_palette),
+                    RowTone.PRIMARY,
+                    stringResource(R.string.settings_theme),
+                    themeName(theme),
+                    onClick = { themePanel = true },
+                ),
+                IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_language),
                     RowTone.SECONDARY,
                     stringResource(R.string.settings_language),
@@ -126,6 +135,14 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                 ),
             ),
         )
+
+        if (themePanel) {
+            BottomPanel(onDismiss = { themePanel = false }, title = stringResource(R.string.settings_theme)) {
+                AppSettings.ThemeMode.entries.forEach { mode ->
+                    PanelAction(themeName(mode), main = mode == theme, onClick = { themePanel = false; AppSettings.setTheme(context, mode) })
+                }
+            }
+        }
 
         SectionLabel(stringResource(R.string.settings_cat_downloads))
         SectionCard {
@@ -278,3 +295,13 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
+
+@Composable
+private fun themeName(mode: AppSettings.ThemeMode): String = stringResource(
+    when (mode) {
+        AppSettings.ThemeMode.SYSTEM -> R.string.settings_theme_system
+        AppSettings.ThemeMode.LIGHT -> R.string.settings_theme_light
+        AppSettings.ThemeMode.DARK -> R.string.settings_theme_dark
+        AppSettings.ThemeMode.AMOLED -> R.string.settings_theme_amoled
+    },
+)

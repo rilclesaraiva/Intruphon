@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.ui.IntruphonTheme
+import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.features.download.DownloadSheet
 
 // Entry point for the Android share sheet: shows the format sheet over the app that shared the link.
@@ -19,6 +20,7 @@ class ShareActivity : ComponentActivity() {
             finish()
             return
         }
+        AppSettings.loadTheme(applicationContext)
         setContent {
             IntruphonTheme {
                 DownloadSheet(link = link, onDismiss = { finish() })

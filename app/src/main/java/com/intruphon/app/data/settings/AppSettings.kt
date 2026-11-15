@@ -53,4 +53,18 @@ object AppSettings {
         prefs(context).edit().putBoolean("predictive_back", value).apply()
         predictiveBackFlow.value = value
     }
+
+    /** App theme: follow the system, always light, always dark, or dark with pure black backgrounds (AMOLED). */
+    enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
+
+    val themeFlow = MutableStateFlow(ThemeMode.SYSTEM)
+
+    fun loadTheme(context: Context) {
+        themeFlow.value = runCatching { ThemeMode.valueOf(prefs(context).getString("theme", null).orEmpty()) }.getOrDefault(ThemeMode.SYSTEM)
+    }
+
+    fun setTheme(context: Context, value: ThemeMode) {
+        prefs(context).edit().putString("theme", value.name).apply()
+        themeFlow.value = value
+    }
 }
