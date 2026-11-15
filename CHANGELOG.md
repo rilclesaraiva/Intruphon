@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-15
+
 ### Added
 - New app icon: an intruder peeking from behind a funnel of three bars, one color on a deep blue-black background, with a one-color layer for Android 13+ themed icons. The drawing is a little larger than the launcher's safe zone on purpose.
 - About: the icon is animated. The intruder looks left, right, then straight at you, and settles behind the funnel exactly as in the launcher icon (about 2 seconds). It plays every time About opens and again on every tap; with system animations turned off it just shows the final icon.
