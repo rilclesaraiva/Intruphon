@@ -96,6 +96,7 @@
     <string name="update_month">In 1 month</string>
     <string name="update_skip">Skip this version</string>
     <string name="about_tagline">A lightweight Android app to download media from links. You choose what you download. No ads and no analytics.</string>
+    <string name="about_sources">Tested: YouTube and YouTube Music. Other services the extractor knows (SoundCloud, Bandcamp, PeerTube, media.ccc.de) are untested and may not work.</string>
     <string name="about_developer">Developer</string>
     <string name="about_project">Project</string>
     <string name="about_source">Source code</string>

@@ -11,7 +11,7 @@ A lightweight, tracker-free Android app for downloading media from links. You ch
 - Audio as M4A at each bitrate the source has, or as MP3 (64 to 320 kbps, never above the source's bitrate); video at each resolution the source has. Higher resolutions are built on the device by joining the separate video and audio streams.
 - Audio files get title, artist, album, year and cover art; video files get title, artist and year.
 - The Home page shows your latest downloads, and a Downloads page lists them all with progress and status, and shows each file's cover and length, and lets you open, cancel, delete or retry each download.
-- Settings: download only on Wi-Fi, and how many downloads run at the same time.
+- Settings: download only on Wi-Fi, and how many downloads run at the same time (separate limits for Wi-Fi and mobile data).
 - A local speed log (format, quality, connection type, bytes, speed) that stays on the device and can be shared as CSV from Settings.
 - File names carry the quality, for example `Title (M4A_128K).m4a`.
 - Available in English, Spanish and Portuguese (Brazil), following the Android language; a button in Settings opens Android's per-app language screen.
@@ -19,6 +19,10 @@ A lightweight, tracker-free Android app for downloading media from links. You ch
 - The download pop-up shows the highest and the smallest audio and video choices first, with the rest under "More formats".
 - An About screen (inside Settings) with version, source code, changelog, issues, privacy policy, terms and licenses.
 - An update notice: the app asks GitHub for the latest public Release when it opens and tells you if there is a newer one (you can remind later, skip a version, or check by hand in Settings).
+
+## Sources
+
+Tested: YouTube and YouTube Music. Intruphon reads links with [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor), which also understands a few other open services (SoundCloud, Bandcamp, PeerTube and media.ccc.de). Those have not been tested in Intruphon and may not work.
 
 Some links cannot be read (unsupported, private or protected), and sites change often, so a link that works today may fail tomorrow.
 

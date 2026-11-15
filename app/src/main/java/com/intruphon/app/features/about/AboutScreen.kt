@@ -93,6 +93,7 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
                 Chip(BuildConfig.BUILD_TYPE.uppercase())
             }
             Text(stringResource(R.string.about_tagline), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.about_sources), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         }
 
         SectionLabel(stringResource(R.string.about_developer))

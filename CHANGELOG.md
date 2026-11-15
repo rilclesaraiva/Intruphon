@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- README and About: a short, neutral note on sources (tested: YouTube and YouTube Music; other services the extractor knows are untested and may not work).
 - Settings: choose the download folder with Android's own folder picker (no storage permission). Audio and Video subfolders are created inside it; "Back to default folder" returns to Download/Intruphon. Files already saved stay where they are. If the folder permission is lost, the app falls back to the default folder.
 - Settings: two separate limits for simultaneous downloads, one for Wi-Fi and one for mobile data (1 to 10 each); the one for the current connection applies. The old single value is used as the starting point for both.
 - Downloads: tap a row to open it (or retry it, if failed); long-press or the three-dot button opens a bottom panel (open, select, delete or remove). Tapping only the cover starts multi-select, with a "close + count" pill and a "select all / more" pill; for now the only bulk action is delete.

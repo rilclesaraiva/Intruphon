@@ -95,6 +95,7 @@
     <string name="update_month">En 1 mes</string>
     <string name="update_skip">Omitir esta versión</string>
     <string name="about_tagline">Una app ligera para Android que descarga contenido de enlaces. Tú decides qué descargas. Sin anuncios y sin analíticas.</string>
+    <string name="about_sources">Probado: YouTube y YouTube Music. Otros servicios que conoce el extractor (SoundCloud, Bandcamp, PeerTube, media.ccc.de) no se han probado y pueden no funcionar.</string>
     <string name="about_developer">Desarrollador</string>
     <string name="about_project">Proyecto</string>
     <string name="about_source">Código fuente</string>

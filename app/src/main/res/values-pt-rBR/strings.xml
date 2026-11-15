@@ -95,6 +95,7 @@
     <string name="update_month">Em 1 mês</string>
     <string name="update_skip">Pular esta versão</string>
     <string name="about_tagline">Um app leve para Android que baixa mídia de links. Você decide o que baixa. Sem anúncios e sem analytics.</string>
+    <string name="about_sources">Testado: YouTube e YouTube Music. Outros serviços que o extrator conhece (SoundCloud, Bandcamp, PeerTube, media.ccc.de) não foram testados e podem não funcionar.</string>
     <string name="about_developer">Desenvolvedor</string>
     <string name="about_project">Projeto</string>
     <string name="about_source">Código-fonte</string>
