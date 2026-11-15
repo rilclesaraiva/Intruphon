@@ -19,31 +19,29 @@ import java.io.IOException
 object SaveLocation {
     private val lock = Any()
 
-    /** The folder the person picked, as long as its permission is still held; otherwise null (the default folder). */
+    /** The folder the person picked, as long as its permission is still held; otherwise null (the default folder). Reads only. */
     fun picked(context: Context): Uri? {
         val saved = AppSettings.downloadFolder(context) ?: return null
         val uri = Uri.parse(saved)
         val held = context.contentResolver.persistedUriPermissions.any { it.uri == uri && it.isReadPermission && it.isWritePermission }
-        if (!held) {
-            AppSettings.setDownloadFolder(context, null)
-            return null
-        }
-        return uri
+        return if (held) uri else null
     }
 
-    /** Keeps the permission for [tree] and makes it the download folder (the previous grant is released). */
+    /** True when a folder was picked but Android no longer lets the app use it: downloads then go to the default folder. */
+    fun lost(context: Context): Boolean = AppSettings.downloadFolder(context) != null && picked(context) == null
+
+    /**
+     * Keeps the permission for [tree] and makes it the download folder. Permissions of folders used before are kept
+     * on purpose: files saved there must stay reachable (open, delete) from the Downloads list. Throws if Android refuses.
+     */
     fun choose(context: Context, tree: Uri) {
         val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        val resolver = context.contentResolver
-        picked(context)?.let { old -> if (old != tree) runCatching { resolver.releasePersistableUriPermission(old, flags) } }
-        resolver.takePersistableUriPermission(tree, flags)
+        context.contentResolver.takePersistableUriPermission(tree, flags)   // first: if it fails, the old choice stays
         AppSettings.setDownloadFolder(context, tree.toString())
     }
 
-    /** Goes back to Download/Intruphon. Files already saved stay where they are. */
+    /** Goes back to Download/Intruphon. Files already saved stay where they are and stay reachable. */
     fun useDefault(context: Context) {
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        picked(context)?.let { runCatching { context.contentResolver.releasePersistableUriPermission(it, flags) } }
         AppSettings.setDownloadFolder(context, null)
     }
 

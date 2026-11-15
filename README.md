@@ -40,7 +40,7 @@ direction of the human maintainer, a workflow often called *vibe coding*.
 We take care that it doesn't turn into AI slop:
 
 - **The maintainer decides, the AI executes.** Every feature starts from a real
-  need, and every build is tested on real devices before the next round.
+  need, and the maintainer reviews each build on his own device before the next round.
 - **Written rules the AI has to follow.** [`CLAUDE.md`](CLAUDE.md) sets the
   architecture, privacy limits and process, and is updated with every decision.
 - **Tests and automated builds.** Every change goes through GitHub Actions,

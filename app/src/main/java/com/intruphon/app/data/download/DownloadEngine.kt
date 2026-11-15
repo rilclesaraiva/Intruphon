@@ -224,13 +224,19 @@ object DownloadEngine {
         }
     }
 
-    /** Looks for finished files that were deleted outside the app and marks them as missing. */
+    /**
+     * Looks for finished files that were deleted outside the app and marks them as missing. Entries already marked
+     * missing are looked at again, so a file that came back (or a folder whose access came back) is usable again.
+     */
     fun checkFiles() {
         scope.launch {
             state.value
-                .filter { it.status.state == DownloadState.DONE && it.record.uri != null }
-                .filterNot { exists(Uri.parse(it.record.uri)) }
-                .forEach { markMissing(it.record.id) }
+                .filter { (it.status.state == DownloadState.DONE || it.status.state == DownloadState.MISSING) && it.record.uri != null }
+                .forEach {
+                    val here = exists(Uri.parse(it.record.uri))
+                    if (here && it.status.state == DownloadState.MISSING) edit(it.record.id) { item -> item.copy(status = item.status.copy(state = DownloadState.DONE)) }
+                    else if (!here && it.status.state == DownloadState.DONE) markMissing(it.record.id)
+                }
         }
     }
 

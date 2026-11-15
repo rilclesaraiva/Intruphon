@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -77,11 +78,14 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
     var parallelWifi by remember { mutableIntStateOf(AppSettings.maxParallelWifi(context)) }
     var parallelMobile by remember { mutableIntStateOf(AppSettings.maxParallelMobile(context)) }
     var folder by remember { mutableStateOf(SaveLocation.label(context)) }
+    var folderLost by remember { mutableStateOf(SaveLocation.lost(context)) }
     var folderPanel by rememberSaveable { mutableStateOf(false) }
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
         if (tree != null) {
             runCatching { SaveLocation.choose(context, tree) }
+                .onFailure { Toast.makeText(context, R.string.settings_folder_failed, Toast.LENGTH_LONG).show() }
             folder = SaveLocation.label(context)
+            folderLost = SaveLocation.lost(context)
         }
     }
     var reload by remember { mutableIntStateOf(0) }
@@ -158,7 +162,7 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                     ImageVector.vectorResource(R.drawable.ic_folder),
                     RowTone.SECONDARY,
                     stringResource(R.string.settings_folder),
-                    folder ?: stringResource(R.string.settings_folder_default),
+                    if (folderLost) stringResource(R.string.settings_folder_lost) else folder ?: stringResource(R.string.settings_folder_default),
                     onClick = { folderPanel = true },
                 ),
             ),
@@ -167,14 +171,15 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
             BottomPanel(
                 onDismiss = { folderPanel = false },
                 title = stringResource(R.string.settings_folder),
-                message = stringResource(R.string.settings_folder_message, folder ?: stringResource(R.string.settings_folder_default)),
+                message = if (folderLost) stringResource(R.string.settings_folder_lost) else stringResource(R.string.settings_folder_message, folder ?: stringResource(R.string.settings_folder_default)),
             ) {
                 PanelAction(stringResource(R.string.settings_folder_choose), main = true, onClick = { folderPanel = false; folderPicker.launch(null) })
-                if (folder != null) {
+                if (folder != null || folderLost) {
                     PanelAction(stringResource(R.string.settings_folder_reset), onClick = {
                         folderPanel = false
                         SaveLocation.useDefault(context)
                         folder = null
+                        folderLost = false
                     })
                 }
             }

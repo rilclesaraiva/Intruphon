@@ -27,6 +27,8 @@
     <string name="settings_folder">Carpeta de descarga</string>
     <string name="settings_folder_default">Predeterminada: Download/Intruphon</string>
     <string name="settings_folder_message">Carpeta actual: %1$s. Las descargas nuevas van a las subcarpetas Audio y Video de ahí; los archivos ya guardados se quedan donde están.</string>
+    <string name="settings_folder_lost">La carpeta que elegiste ya no está disponible. Las descargas van a Download/Intruphon hasta que elijas una carpeta de nuevo.</string>
+    <string name="settings_folder_failed">No se pudo usar esa carpeta. Se mantuvo la elección anterior.</string>
     <string name="settings_folder_choose">Elegir carpeta</string>
     <string name="settings_folder_reset">Volver a la carpeta predeterminada</string>
     <string name="settings_speed_title">Registro de velocidad de descarga</string>

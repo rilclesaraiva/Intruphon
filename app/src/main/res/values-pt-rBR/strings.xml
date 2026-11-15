@@ -27,6 +27,8 @@
     <string name="settings_folder">Pasta de download</string>
     <string name="settings_folder_default">Padrão: Download/Intruphon</string>
     <string name="settings_folder_message">Pasta atual: %1$s. Os novos downloads vão para as subpastas Audio e Video dela; os arquivos já salvos ficam onde estão.</string>
+    <string name="settings_folder_lost">A pasta que você escolheu não está mais disponível. Os downloads estão indo para Download/Intruphon até você escolher uma pasta de novo.</string>
+    <string name="settings_folder_failed">Não foi possível usar essa pasta. A escolha anterior foi mantida.</string>
     <string name="settings_folder_choose">Escolher pasta</string>
     <string name="settings_folder_reset">Voltar à pasta padrão</string>
     <string name="settings_speed_title">Registro de velocidade de download</string>

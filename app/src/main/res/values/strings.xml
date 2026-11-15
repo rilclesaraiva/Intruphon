@@ -28,6 +28,8 @@
     <string name="settings_folder">Download folder</string>
     <string name="settings_folder_default">Default: Download/Intruphon</string>
     <string name="settings_folder_message">Current folder: %1$s. New downloads go into Audio and Video subfolders there; files already saved stay where they are.</string>
+    <string name="settings_folder_lost">The folder you picked is no longer available. Downloads are going to Download/Intruphon until you choose a folder again.</string>
+    <string name="settings_folder_failed">Could not use that folder. The previous choice was kept.</string>
     <string name="settings_folder_choose">Choose folder</string>
     <string name="settings_folder_reset">Back to default folder</string>
     <string name="settings_speed_title">Download speed log</string>

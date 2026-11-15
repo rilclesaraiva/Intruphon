@@ -30,7 +30,7 @@
 - The Downloads tab shows whether tags and cover were written into each file.
 - MP3 downloads: pick a constant bitrate (64 to 320 kbps, never above the bitrate the source really has). The app decodes the audio with Android's own decoder and encodes it with a bundled Java port of LAME (`third_party/java-lame`, LGPL); the MP3 gets an ID3v2.3 tag with title, artist, album, year, source link and cover.
 - Downloads tab: each item shows its cover (or a video frame) and its length, read from the saved file; a "Processing" state is shown while a file is being joined, converted or tagged.
-- Settings tab: download only on Wi-Fi (adds the `ACCESS_NETWORK_STATE` permission) and the number of simultaneous downloads (1 to 5, the rest wait their turn).
+- Settings tab: download only on Wi-Fi (adds the `ACCESS_NETWORK_STATE` permission) and the number of simultaneous downloads (1 to 10 for Wi-Fi and for mobile data separately, the rest wait their turn).
 - Speed log: every download records format, quality, connection type, bytes, download time, processing time and result in a file on the device and in logcat (tag `IntruphonSpeed`); Settings shows the average speed per format and quality and can share the log as CSV or clear it.
 - Languages: English, Spanish and Portuguese (Brazil), following the Android language. A button in Settings opens Android's own per-app language screen (on Android 12 and older, the system language screen).
 - The About screen shows the maintainer's public GitHub profile picture (downloaded when the screen opens and cached for a week; an icon shows when it cannot load) and uses the same icons as the maintainer's other app (code, badge, bug, lock, article, heart). The privacy policy describes this extra request.
@@ -49,7 +49,7 @@
 - Settings and About forget their scroll position when left for good (back to Home); they keep it only while another page opened from them is on top.
 - Removed the "Open" and "Delete file" buttons from download rows.
 - The app now draws edge to edge: pages go behind the status and navigation bars (no solid bar), and each page keeps its content clear of them.
-- Deleting a file from the device: the app shows the system window first; if the system cannot build it, the app tries to delete the file itself. When it still fails, the message says what the system answered.
+- Deleting a file from the device: the app first deletes what it can by itself (files this install created); for the rest the system asks. When it still fails, the message says what the system answered.
 - README no longer says the app is only for your own, freely licensed or permitted content: you choose what you download.
 - Home: the recent downloads fill the screen down to the bottom, so each device shows as many as fit (at least 3).
 - Settings: the "System" section became "Updates" with two rows, "Check for updates" (shows the installed version) and "Update notices" (opens a dialog: notify normally, not for a week, not for a month).
@@ -66,6 +66,9 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- Changing the download folder (or going back to the default) no longer makes earlier downloads show as missing: access to folders used before is kept, and entries marked missing are checked again, so they come back when the file is reachable.
+- Picking a folder keeps the previous choice if Android refuses the new one (a message says so).
+- When Android takes back access to the picked folder, Settings says so (downloads go to Download/Intruphon meanwhile) instead of silently resetting.
 - Tapping outside the link field (or opening another page) takes focus off it, so the cursor stops blinking.
 - Every page keeps its scroll and fields after opening another page and coming back (Settings → About → back): all stacked pages now stay composed under a stable key.
 - Thumbnails no longer flash the placeholder when a page is revealed: rows start from the already-read preview.
