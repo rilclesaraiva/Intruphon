@@ -2,6 +2,7 @@ package com.intruphon.app.features.downloads
 
 import android.app.Activity
 import android.graphics.Bitmap
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -138,18 +139,41 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     var panelStep by rememberSaveable { mutableStateOf(0) }
     // Deleting asks twice: first remove from the list or delete from the device, then the confirmation window.
     var deletingIds by rememberSaveable { mutableStateOf<List<Long>?>(null) }
+    var deleteAll by rememberSaveable { mutableStateOf<List<Long>>(emptyList()) }   // everything the person agreed to delete
+    var nextDelete by remember { mutableStateOf<List<Long>?>(null) }
     val deleteWindow = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         val ids = deletingIds
         deletingIds = null
         if (ids != null) scope.launch {
             val gone = withContext(Dispatchers.IO) { DownloadEngine.finishDelete(context, ids) }
-            if (!gone && result.resultCode != Activity.RESULT_OK) {
+            val rest = DownloadEngine.stillListed(deleteAll).filterNot { it in ids }   // never ask twice about the same file
+            if (!gone && result.resultCode == Activity.RESULT_OK && rest.isNotEmpty() && Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                nextDelete = rest   // Android 10 asks one file at a time: go on with the others
+            } else if (!gone && result.resultCode != Activity.RESULT_OK) {
                 Toast.makeText(context, R.string.downloads_delete_cancelled, Toast.LENGTH_SHORT).show()
             } else if (!gone) {
                 Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
             }
-            selected = emptySet()
+            if (nextDelete == null) selected = emptySet()
         }
+    }
+
+    // Deleting from the device: tries what the app can do itself, then asks the system when needed.
+    suspend fun runDelete(ids: List<Long>) {
+        when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
+            is DownloadEngine.DeleteStep.Ask -> {
+                deletingIds = step.ids
+                deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
+            }
+            DownloadEngine.DeleteStep.Gone -> selected = emptySet()
+            is DownloadEngine.DeleteStep.Failed ->
+                Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
+        }
+    }
+    LaunchedEffect(nextDelete) {
+        val ids = nextDelete ?: return@LaunchedEffect
+        nextDelete = null
+        runDelete(ids)
     }
 
     // Look for files deleted outside the app when the tab opens and whenever the app comes back to the front.
@@ -162,10 +186,13 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     }
 
     fun open(item: DownloadItem) {
-        when (DownloadEngine.open(context, item.record.id)) {
-            DownloadEngine.OpenResult.OPENED -> Unit
-            DownloadEngine.OpenResult.NO_APP -> Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
-            DownloadEngine.OpenResult.MISSING -> Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+        // Looking at the file can take a while on a slow card or cloud folder: not on the main thread.
+        scope.launch {
+            when (withContext(Dispatchers.IO) { DownloadEngine.open(context, item.record.id) }) {
+                DownloadEngine.OpenResult.OPENED -> Unit
+                DownloadEngine.OpenResult.NO_APP -> Toast.makeText(context, R.string.downloads_cannot_open, Toast.LENGTH_LONG).show()
+                DownloadEngine.OpenResult.MISSING -> Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -315,17 +342,8 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                         }
                         PanelAction(stringResource(R.string.downloads_allow), main = true, danger = true, onClick = {
                             panelIds = null
-                            scope.launch {
-                                when (val step = withContext(Dispatchers.IO) { DownloadEngine.startDelete(context, ids) }) {
-                                    is DownloadEngine.DeleteStep.Ask -> {
-                                        deletingIds = step.ids
-                                        deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
-                                    }
-                                    DownloadEngine.DeleteStep.Gone -> selected = emptySet()
-                                    is DownloadEngine.DeleteStep.Failed ->
-                                        Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
-                                }
-                            }
+                            deleteAll = ids
+                            scope.launch { runDelete(ids) }
                         })
                         PanelAction(stringResource(R.string.downloads_deny), onClick = { panelIds = null })
                     }

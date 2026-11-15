@@ -145,5 +145,5 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   proteções de terceiros.
 
 ## Contexto atual
-- Foco: vistoria da nova interface (Home com histórico, voltar preditivo, exclusão, pop-up mínima/máxima, Sobre, aviso de atualização); o release v0.2.0 espera a confirmação do mantenedor. Depois novas fontes além do YouTube e wrapper do Gradle.
+- Foco: vistoria da nova interface (Home com histórico, voltar preditivo, exclusão, pop-up mínima/máxima, Sobre, aviso de atualização); o primeiro release (v0.1.0, calculado pela regra: ainda não há tag nem Release) espera a confirmação do mantenedor ("confirmo release v0.1.0"). Depois novas fontes além do YouTube e wrapper do Gradle.
 - Problemas conhecidos: sem wrapper do Gradle; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); a interface nova vem sendo vistoriada pelo mantenedor no aparelho a cada build (o que ele não comentou, a IA não dá como testado); exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.

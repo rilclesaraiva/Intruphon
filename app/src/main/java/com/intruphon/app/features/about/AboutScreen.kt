@@ -70,7 +70,7 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
     val avatar by produceState<ImageBitmap?>(null) {
         value = withContext(Dispatchers.IO) { Avatar.load(context, Config.MAINTAINER)?.asImageBitmap() }
     }
-    fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    fun open(url: String) { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }   // no browser: nothing happens
 
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),

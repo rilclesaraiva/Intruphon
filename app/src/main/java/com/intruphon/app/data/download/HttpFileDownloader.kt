@@ -33,6 +33,7 @@ internal object HttpFileDownloader {
         val subfolder = if (kind == Kind.AUDIO) "Audio" else "Video"
         SaveLocation.picked(context)?.let { tree ->
             val target = SaveLocation.create(context, tree, subfolder, fileName, mimeType)
+            SaveLocation.trackPartial(context, target)
             var saved = false
             try {
                 val out = resolver.openOutputStream(target) ?: throw IOException("Could not open the file")
@@ -40,6 +41,7 @@ internal object HttpFileDownloader {
                 saved = true
             } finally {
                 if (!saved) runCatching { SaveLocation.delete(resolver, target) }   // no partial files, also on cancel
+                SaveLocation.untrackPartial(context, target)
             }
             SaveLocation.index(context, target, mimeType)
             return target

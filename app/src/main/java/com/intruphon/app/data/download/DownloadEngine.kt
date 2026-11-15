@@ -57,6 +57,21 @@ object DownloadEngine {
         }
         state.value = loaded
         DownloadStore.save(appContext, loaded)
+        // A dead process can leave work folders in the cache and half-written files in the picked folder.
+        val leftovers = appContext.cacheDir.listFiles { f -> f.name.startsWith("work-") }.orEmpty()
+        scope.launch {
+            leftovers.forEach { it.deleteRecursively() }
+            SaveLocation.cleanPartials(appContext)
+        }
+    }
+
+    /** Stops every active download and keeps the entries as interrupted (a retry is one tap). Returns at once. */
+    fun interruptAll() {
+        readers.forEach { it.cancel() }
+        state.value.filter { it.status.state.active }.forEach { item ->
+            jobs.remove(item.record.id)?.cancel()
+            edit(item.record.id) { it.copy(status = it.status.copy(state = DownloadState.FAILED, reason = REASON_INTERRUPTED)) }
+        }
     }
 
     fun enqueue(info: MediaInfo, option: DownloadOption, sourceLink: String) {
@@ -147,7 +162,7 @@ object DownloadEngine {
         val resolver = context.contentResolver
         val left = ArrayList<Pair<Long, Uri>>()
         var problem: Exception? = null
-        var recoverable: IntentSender? = null
+        var recoverable: Pair<Long, IntentSender>? = null   // Android 10: the first file the system wants to ask about
         for (id in ids) {
             val uri = state.value.firstOrNull { it.record.id == id }?.record?.uri?.let(Uri::parse)
             if (uri == null || !exists(uri)) {
@@ -157,29 +172,32 @@ object DownloadEngine {
             try {
                 SaveLocation.delete(resolver, uri)
             } catch (e: RecoverableSecurityException) {
-                recoverable = recoverable ?: e.userAction.actionIntent.intentSender
+                recoverable = recoverable ?: (id to e.userAction.actionIntent.intentSender)
             } catch (e: Exception) {
                 problem = problem ?: e
             }
             if (exists(uri)) left.add(id to uri) else remove(id, deleteFile = false)
         }
         if (left.isEmpty()) return DeleteStep.Gone
-        // Files in a folder the person picked are deleted through the folder's own permission: the system window
-        // (MediaStore) cannot handle them.
-        if (left.any { it.second.authority != MediaStore.AUTHORITY }) {
-            return DeleteStep.Failed(problem?.let { "${it.javaClass.simpleName}: ${it.message}" })
-        }
+        val failure = DeleteStep.Failed(problem?.let { "${it.javaClass.simpleName}: ${it.message}" })
+        // Files in a folder the person picked are deleted through the folder's own permission; only MediaStore files
+        // can go through the system window. Both kinds can be in one list (after the folder was changed).
+        val media = left.filter { it.second.authority == MediaStore.AUTHORITY }
+        if (media.isEmpty()) return failure
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return try {
-                DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, left.map { it.second }).intentSender, left.map { it.first })
+                DeleteStep.Ask(MediaStore.createDeleteRequest(resolver, media.map { it.second }).intentSender, left.map { it.first })
             } catch (e: Exception) {
                 DeleteStep.Failed("${e.javaClass.simpleName}: ${e.message}")
             }
         }
-        // Android 10: the system asks about one file at a time.
-        recoverable?.let { return DeleteStep.Ask(it, listOf(left.first().first)) }
-        return DeleteStep.Failed(problem?.let { "${it.javaClass.simpleName}: ${it.message}" })
+        // Android 10: the system asks about one file at a time; the screen asks again for the next ones.
+        recoverable?.let { (id, sender) -> return DeleteStep.Ask(sender, listOf(id)) }
+        return failure
     }
+
+    /** The ids of [ids] that are still in the list. */
+    fun stillListed(ids: List<Long>): List<Long> = ids.filter { id -> state.value.any { it.record.id == id } }
 
     /**
      * After the system window closed: forgets the entries whose file is gone (trying once more to delete what is left,

@@ -66,6 +66,10 @@
 - Downloads no longer use Android's system download manager (it stayed stuck on "Waiting"): the app downloads by itself.
 - Minimum Android version is now 10 (API 29).
 ### Fixed
+- Deleting several files at once on Android 10 now goes on with the next file after you allow the first one (the system asks one at a time), and a list that mixes files from the default folder and a picked folder no longer fails as a whole.
+- On Android 15, when the system's time limit for background downloading is reached, the service stops cleanly and the unfinished downloads stay in the list as interrupted, ready to retry.
+- Leftovers of a download interrupted by the app being killed are cleaned at the next start (temporary work folders and half-written files in a picked folder).
+- Opening a download no longer touches the file on the main thread, and the About links no longer crash on a phone without a browser.
 - Changing the download folder (or going back to the default) no longer makes earlier downloads show as missing: access to folders used before is kept, and entries marked missing are checked again, so they come back when the file is reachable.
 - Picking a folder keeps the previous choice if Android refuses the new one (a message says so).
 - When Android takes back access to the picked folder, Settings says so (downloads go to Download/Intruphon meanwhile) instead of silently resetting.

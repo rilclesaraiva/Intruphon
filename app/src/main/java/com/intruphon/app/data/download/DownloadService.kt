@@ -46,6 +46,13 @@ class DownloadService : Service() {
         return START_NOT_STICKY
     }
 
+    /** Android 15 limits how long a data-sync service may run in one day: stop cleanly; the entries stay to retry. */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        DownloadEngine.interruptAll()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
     override fun onDestroy() {
         scope.cancel()
         super.onDestroy()

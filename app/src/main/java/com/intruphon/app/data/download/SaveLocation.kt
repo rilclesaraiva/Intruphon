@@ -94,4 +94,29 @@ object SaveLocation {
             MediaScannerConnection.scanFile(context, arrayOf(path), arrayOf(mime), null)
         }
     }
+
+    // Files being written into the picked folder: if the process dies, they are removed the next time the app starts.
+    private const val PARTIALS = "partials"
+    private val partialLock = Any()
+
+    private fun partialPrefs(context: Context) = context.getSharedPreferences(PARTIALS, Context.MODE_PRIVATE)
+
+    fun trackPartial(context: Context, uri: Uri) = synchronized(partialLock) {
+        val prefs = partialPrefs(context)
+        prefs.edit().putStringSet(PARTIALS, (prefs.getStringSet(PARTIALS, emptySet()).orEmpty() + uri.toString())).apply()
+    }
+
+    fun untrackPartial(context: Context, uri: Uri) = synchronized(partialLock) {
+        val prefs = partialPrefs(context)
+        prefs.edit().putStringSet(PARTIALS, (prefs.getStringSet(PARTIALS, emptySet()).orEmpty() - uri.toString())).apply()
+    }
+
+    /** Deletes what a dead process left half-written in the picked folder. Call off the main thread, before any download starts. */
+    fun cleanPartials(context: Context) {
+        val left = synchronized(partialLock) {
+            val prefs = partialPrefs(context)
+            prefs.getStringSet(PARTIALS, emptySet()).orEmpty().also { prefs.edit().remove(PARTIALS).apply() }
+        }
+        left.forEach { runCatching { delete(context.contentResolver, Uri.parse(it)) } }
+    }
 }
