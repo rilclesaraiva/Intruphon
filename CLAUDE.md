@@ -22,7 +22,7 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links. O
 - Versionamento: SemVer (regra; o número é calculado pelo [Unreleased], nunca escolhido)
 - Release: `gradle assembleRelease` → `app/build/outputs/apk/release/*.apk`
 - Pacote (Android): `com.intruphon.app`, fixo · R8 ativo no release (sem ofuscação), nunca desligar
-- Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir
+- Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` (+ `ic_launcher_monochrome.xml` para o ícone temático) + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir. Desenho: intruso espiando atrás de um funil de 3 barras, uma cor (#C7DDE8) sobre #0C1620, um pouco maior que a zona segura de propósito. O Sobre desenha o mesmo ícone em Compose (`features/about/AboutIcon.kt`, formas em coordenadas da arte + `ART_K/ART_TX/ART_TY`) e o anima: olha esquerda, direita, para o usuário e assenta no funil; toca ao abrir o Sobre e a cada toque. Mudou o desenho, atualizar os dois
 - minSdk 29 (ícone vetorial adaptativo sem PNG de fallback; pasta pública sem permissão de armazenamento)
 - Sobre: entrada própria nos ajustes (versão e build lidos do build, código-fonte, novidades,
   issues, privacidade, termos, licenças e convite de apoio ao repositório), conforme a seção 9.1

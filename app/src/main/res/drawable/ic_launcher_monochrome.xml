@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- The intruder behind the funnel. Face, eyes and the three bars are separate shapes with real cut-outs, so the
+         same drawing works as the colored icon and as the one-color (themed) icon. Drawn a bit larger than the 66 dp
+         safe zone on purpose: only empty corners are trimmed by round launcher masks. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M65.69,44.48 L65.77,42.73 L65.77,41.86 L65.67,40.14 L65.58,39.29 L65.31,37.62 L64.91,35.98 L64.67,35.18 L64.10,33.62 L63.78,32.86 L63.04,31.37 L62.19,29.95 L61.72,29.27 L60.70,27.96 L59.57,26.72 L58.97,26.14 L57.68,25.03 L56.29,24.02 L55.55,23.55 L54.00,22.69 L52.35,21.94 L51.49,21.60 L49.69,21.02 L47.79,20.57 L45.84,20.24 L43.93,20.05 L42.98,20.00 L41.10,19.99 L39.27,20.10 L38.37,20.20 L36.60,20.50 L34.88,20.91 L33.23,21.44 L32.42,21.74 L30.86,22.44 L30.11,22.83 L28.67,23.69 L27.31,24.67 L26.66,25.19 L25.44,26.32 L24.32,27.55 L23.79,28.20 L22.83,29.58 L21.97,31.06 L21.59,31.84 L20.92,33.46 L20.38,35.17 L20.16,36.06 L19.82,37.91 L19.63,39.85 L19.59,41.87 L19.77,46.21 L20.03,48.76 L20.39,50.61 L20.88,52.29 L21.50,53.83 L21.85,54.54 L22.45,55.56 L23.36,56.80 L23.87,57.37 L24.68,58.19 L26.21,59.43 L27.93,60.53 L30.46,61.87 L32.66,62.82 L34.97,63.59 L37.28,64.14 L33.65,55.92 L33.60,55.54 L33.70,55.18 L33.93,54.88 L34.25,54.69 L34.53,54.64 L34.81,54.66 L57.46,60.31 L58.84,59.22 L60.01,58.10 L60.57,57.50 L61.61,56.22 L62.09,55.54 L63.08,53.91 L20.49,49.43 L21.27,41.63 L65.49,46.20Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M29.07,43.97 L39.99,45.53 L39.21,49.43 L29.07,47.87ZM50.91,46.31 L60.27,47.48 L59.49,50.21 L50.91,49.43Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36.27,57.04 L38.87,62.91 L83.36,74.00 L88.41,70.04ZM42.51,68.24 L45.65,74.25 L72.05,80.83 L77.65,77.00ZM47.81,79.21 L50.96,85.22 L62.22,88.02 L67.81,84.19Z" />
+</vector>

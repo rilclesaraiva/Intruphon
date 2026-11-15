@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- New app icon: an intruder peeking from behind a funnel of three bars, one color on a deep blue-black background, with a one-color layer for Android 13+ themed icons. The drawing is a little larger than the launcher's safe zone on purpose.
+- About: the icon is animated. The intruder looks left, right, then straight at you, and settles behind the funnel exactly as in the launcher icon (about 2 seconds). It plays every time About opens and again on every tap; with system animations turned off it just shows the final icon.
 - Settings → Appearance: theme choice (system default, light, dark, AMOLED with pure black backgrounds). The system bar icons follow the chosen theme.
 - README and About: a short, neutral note on sources (tested: YouTube and YouTube Music; other services the extractor knows are untested and may not work).
 - Settings: choose the download folder with Android's own folder picker (no storage permission). Audio and Video subfolders are created inside it; "Back to default folder" returns to Download/Intruphon. Files already saved stay where they are. If the folder permission is lost, the app falls back to the default folder.

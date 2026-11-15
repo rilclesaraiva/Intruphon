@@ -80,12 +80,7 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
 
         // Header: icon, name, version and build type (read from the build), one sentence.
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                Modifier.size(120.dp).clip(CircleShape).background(colorResource(R.color.ic_launcher_background)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize().scale(1.35f))
-            }
+            AboutIcon()
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Chip(versionName)
