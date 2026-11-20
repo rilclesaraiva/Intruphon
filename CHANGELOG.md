@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
+
 ### Added
 - Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.
 

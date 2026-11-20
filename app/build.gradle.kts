@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -15,7 +15,8 @@ android {
         // The CI run number, so every inspection build counts as an update and says which build it is.
         val buildNumber = System.getenv("GITHUB_RUN_NUMBER")
         versionCode = buildNumber?.toIntOrNull() ?: 1
-        versionName = "0.1.0"
+        // The only place the version lives is gradle.properties (APP_VERSION); the CI reads it from there too.
+        versionName = providers.gradleProperty("APP_VERSION").get()
         buildConfigField("String", "BUILD", "\"${buildNumber ?: "local"}\"")
     }
 
@@ -52,20 +53,19 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
-    implementation(composeBom)
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    testImplementation("junit:junit:4.13.2")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    testImplementation(libs.junit)
 
     // Link reading for supported sites (GPL-3.0, same license as this project)
-    implementation("com.github.teamnewpipe:NewPipeExtractor:v0.26.5")
+    implementation(libs.newpipe.extractor)
     // The extractor needs an HTTP client supplied by the app
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.coroutines.android)
+    coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 }
