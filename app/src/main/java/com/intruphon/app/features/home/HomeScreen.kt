@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.clearFocusWhenKeyboardCloses
 import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.ui.PageHeader
 import com.intruphon.app.data.download.DownloadEngine
@@ -131,7 +132,7 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses(),
         )
         Button(
             onClick = { url?.let(onDownload) },

@@ -121,6 +121,10 @@
     <string name="settings_dynamic_color">Use system colors</string>
     <string name="settings_dynamic_color_hint">Turn on to follow your wallpaper colors (Android 12+). Off: the app uses its own colors, taken from its icon.</string>
     <string name="settings_cat_appearance">Appearance</string>
+    <string name="settings_cat_system">System</string>
+    <string name="settings_cat_appearance_hint">Theme, colors, back gesture and language</string>
+    <string name="settings_cat_downloads_hint">Wi-Fi only, simultaneous downloads and folder</string>
+    <string name="settings_cat_system_hint">Updates and the speed log</string>
     <string name="settings_predictive_back">Predictive back</string>
     <string name="settings_predictive_back_hint">In pages opened from Home, the page follows your finger on the back gesture, and the page underneath shows through.</string>
     <string name="settings_about_hint">Version, license and source code</string>

@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Changed
+- Settings: the home page now lists only categories (Appearance, Downloads, System), each with its own colored icon and a one-line summary, with "About Intruphon" below. Appearance holds theme, system colors, predictive back and language; Downloads holds Wi-Fi only, simultaneous downloads and the folder; System holds updates and the speed log.
+- Settings: theme and update notices now open their choices right in the row (closed by default) instead of a bottom panel.
+- Bottom sheets: going back slides the sheet down with the normal closing animation instead of the system shrinking one. In the playlist sheet only the handle strip drags it, so scrolling the list and pulling on no longer closes it and loses your picks.
+- Home: the link field loses focus (no more blinking cursor) when the keyboard is closed.
+- Picture caches (thumbnails and covers) are now sized by memory (a sixteenth of what Android gives the app) instead of a fixed number of items.
+- Internals: named motion springs in one file, the selection state and the About icon frame are now pure and unit-tested, and the downloads list encoding is tested.
 - Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
 
 ### Added

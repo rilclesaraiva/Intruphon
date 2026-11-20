@@ -6,13 +6,17 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.LruCache
+import com.intruphon.app.core.ImageMemory
 import com.intruphon.app.data.media.Kind
 
 /** What the Downloads tab shows for a saved file: its length and a small square picture. */
 class MediaPreview(val durationMs: Long, val thumbnail: Bitmap?) {
     companion object {
         private const val SIZE = 160
-        private val cache = LruCache<String, MediaPreview>(64)
+        // Measured in KB of picture (a sixteenth of the app's memory), not in number of entries.
+        private val cache = object : LruCache<String, MediaPreview>(ImageMemory.budgetKb(16)) {
+            override fun sizeOf(key: String, value: MediaPreview): Int = ImageMemory.kb(value.thumbnail)
+        }
 
         /** The preview if it was already read, so a row can show it on its first frame without flashing the placeholder. */
         fun peek(uri: String): MediaPreview? = cache.get(uri)

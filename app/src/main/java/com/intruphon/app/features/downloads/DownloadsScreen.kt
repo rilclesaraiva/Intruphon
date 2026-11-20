@@ -48,11 +48,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -80,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.rememberSelection
 import com.intruphon.app.core.ui.BottomPanelFlow
 import com.intruphon.app.core.ui.PanelBody
 import com.intruphon.app.core.ui.PanelAction
@@ -123,16 +122,15 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     val pickable = (failed + rest).map { it.record.id }
 
     // Picking several: starts from a cover; the bar at the top shows how many and what to do.
-    var selected by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
-    val selecting = selected.isNotEmpty()
+    val selection = rememberSelection()
+    val selecting = selection.isActive
     LaunchedEffect(selecting) { onSelecting(selecting) }
     DisposableEffect(Unit) { onDispose { onSelecting(false) } }
     LaunchedEffect(all) {
         val ids = all.map { it.record.id }.toSet()
-        if (selected.any { it !in ids }) selected = selected.filter { it in ids }.toSet()
+        selection.retain(ids)
     }
-    BackHandler(enabled = selecting) { selected = emptySet() }
-    fun toggle(id: Long) { selected = if (id in selected) selected - id else selected + id }
+    BackHandler(enabled = selecting) { selection.clear() }
 
     // The panel with the other things to do with one download.
     // The one panel: which downloads it is about, and its step (0 actions, 1 delete question, 2 confirmation).
@@ -155,7 +153,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
             } else if (!gone) {
                 Toast.makeText(context, R.string.downloads_delete_failed, Toast.LENGTH_LONG).show()
             }
-            if (nextDelete == null) selected = emptySet()
+            if (nextDelete == null) selection.clear()
         }
     }
 
@@ -166,7 +164,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                 deletingIds = step.ids
                 deleteWindow.launch(IntentSenderRequest.Builder(step.sender).build())
             }
-            DownloadEngine.DeleteStep.Gone -> selected = emptySet()
+            DownloadEngine.DeleteStep.Gone -> selection.clear()
             is DownloadEngine.DeleteStep.Failed ->
                 Toast.makeText(context, context.getString(R.string.downloads_delete_failed) + (step.detail?.let { "\n$it" } ?: ""), Toast.LENGTH_LONG).show()
         }
@@ -201,7 +199,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     fun tap(item: DownloadItem) {
         val id = item.record.id
         when {
-            selecting -> toggle(id)
+            selecting -> selection.toggle(id)
             item.status.state == DownloadState.DONE -> open(item)
             item.status.state == DownloadState.FAILED -> onRetry(item.record.sourceLink)
             item.status.state == DownloadState.MISSING -> Toast.makeText(context, R.string.downloads_status_missing, Toast.LENGTH_LONG).show()
@@ -214,14 +212,14 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
             val present = DownloadEngine.stillOnDevice(ids)
             val gone = ids.filterNot { it in present }
             if (gone.isNotEmpty()) withContext(Dispatchers.IO) { gone.forEach { DownloadEngine.remove(it, deleteFile = false) } }
-            if (present.isEmpty()) { selected = emptySet(); panelIds = null } else { panelIds = present; panelStep = 1 }
+            if (present.isEmpty()) { selection.clear(); panelIds = null } else { panelIds = present; panelStep = 1 }
         }
     }
 
     @Composable
     fun ItemRow(item: DownloadItem) = DownloadRow(
         item = item,
-        picked = item.record.id in selected,
+        picked = selection.isSelected(item.record.id),
         onTap = { tap(item) },
         onHold = { panelIds = listOf(item.record.id); panelStep = 0 },
         onCover = { toggle(item.record.id) },
@@ -275,10 +273,10 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
 
         if (selecting) {
             SelectionBar(
-                count = selected.size,
-                onClose = { selected = emptySet() },
-                onSelectAll = { selected = if (selected.containsAll(pickable)) emptySet() else pickable.toSet() },
-                onMore = { panelIds = selected.toList(); panelStep = 0 },
+                count = selection.count,
+                onClose = { selection.clear() },
+                onSelectAll = { if (selection.allSelected(pickable)) selection.clear() else selection.selectAll(pickable) },
+                onMore = { panelIds = selection.selected.toList(); panelStep = 0 },
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
@@ -320,7 +318,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                     PanelAction(stringResource(R.string.downloads_delete_device), main = true, danger = true, onClick = { panelStep = 2 })
                     PanelAction(stringResource(R.string.downloads_remove_list), onClick = {
                         panelIds = null
-                        selected = emptySet()
+                        selection.clear()
                         scope.launch(Dispatchers.IO) { ids.forEach { DownloadEngine.remove(it, deleteFile = false) } }
                     })
                     PanelAction(stringResource(R.string.downloads_cancel), onClick = { panelIds = null })

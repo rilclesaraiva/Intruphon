@@ -57,7 +57,10 @@ import com.intruphon.app.features.download.DownloadSheet
 import com.intruphon.app.features.downloads.ActiveDownloadsScreen
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
+import com.intruphon.app.features.settings.AppearanceSettings
+import com.intruphon.app.features.settings.DownloadSettings
 import com.intruphon.app.features.settings.SettingsScreen
+import com.intruphon.app.features.settings.SystemSettings
 import com.intruphon.app.features.update.UpdatePrompt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
@@ -69,6 +72,9 @@ private const val DOWNLOADS = 1
 private const val SETTINGS = 2
 private const val ABOUT = 3
 private const val ACTIVE = 4
+private const val SETTINGS_APPEARANCE = 5
+private const val SETTINGS_DOWNLOADS = 6
+private const val SETTINGS_SYSTEM = 7
 
 // Entry point: registers the pages. Features never import each other.
 //
@@ -165,7 +171,15 @@ private fun App(versionName: String) {
             HOME -> HomeScreen(onDownload = { sheetLink = it }, onOpenDownloads = { open(DOWNLOADS) })
             DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) }, onSelecting = { picking = it })
             ACTIVE -> ActiveDownloadsScreen()
-            SETTINGS -> SettingsScreen(onOpenAbout = { open(ABOUT) })
+            SETTINGS -> SettingsScreen(
+                onOpenAppearance = { open(SETTINGS_APPEARANCE) },
+                onOpenDownloads = { open(SETTINGS_DOWNLOADS) },
+                onOpenSystem = { open(SETTINGS_SYSTEM) },
+                onOpenAbout = { open(ABOUT) },
+            )
+            SETTINGS_APPEARANCE -> AppearanceSettings()
+            SETTINGS_DOWNLOADS -> DownloadSettings()
+            SETTINGS_SYSTEM -> SystemSettings()
             else -> AboutScreen(versionName)
         }
     }

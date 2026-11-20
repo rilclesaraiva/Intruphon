@@ -3,8 +3,6 @@ package com.intruphon.app.core.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,13 +25,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -42,7 +37,6 @@ import androidx.compose.ui.unit.dp
  * The one way to ask or tell something: a panel that rises from the bottom, like every other pop-up
  * in the app. There are no windows in the middle of the screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomPanel(
     onDismiss: () -> Unit,
@@ -50,7 +44,7 @@ fun BottomPanel(
     message: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    AppSheet(onDismiss = onDismiss) {
         Column(
             Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -94,7 +88,6 @@ fun PanelBody(title: String? = null, message: String? = null, content: @Composab
  * button sits at the top left and goes back one step ([onBack]), also on the system back. The panel is as
  * tall as the step it shows and grows or shrinks with a spring when the step changes.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomPanelFlow(
     onDismiss: () -> Unit,
@@ -102,21 +95,22 @@ fun BottomPanelFlow(
     onBack: () -> Unit,
     content: @Composable ColumnScope.(Int) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    AppSheet(onDismiss = onDismiss) {
+        // Declared after the sheet's own back handler, so on step 1+ it wins: back goes one step, not out.
         BackHandler(enabled = step > 0, onBack = onBack)
         var shown by remember { mutableIntStateOf(step) }
         val away = remember { Animatable(0f) }   // 0 in place, 1 off to the right
         LaunchedEffect(step) {
             withContext(AppMotion.FixedScale) {
                 if (step != shown) {
-                    away.animateTo(1f, spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium))
+                    away.animateTo(1f, AppMotion.effects())
                     shown = step
                 }
-                away.animateTo(0f, spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow))
+                away.animateTo(0f, AppMotion.spatial())
             }
         }
         val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.7f
-        Column(Modifier.fillMaxWidth().animateContentSize(spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))) {
+        Column(Modifier.fillMaxWidth().animateContentSize(AppMotion.spatial())) {
             Column(
                 Modifier
                     .fillMaxWidth()

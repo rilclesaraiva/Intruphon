@@ -38,10 +38,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.AppSheet
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.media.FailReason
 import com.intruphon.app.data.media.MediaRepository
@@ -76,9 +75,9 @@ import java.util.Locale
 @Composable
 fun PlaylistSheet(link: String, onDismiss: () -> Unit) {
     val result by produceState<PlaylistResult?>(initialValue = null, link) { value = MediaRepository.loadPlaylist(link) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    // Only the handle strip drags this sheet: scrolling the list and pulling on must not lose the person's picks.
+    AppSheet(onDismiss = onDismiss, dragOnlyFromTop = true) {
         when (val r = result) {
             null -> Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.playlist_loading), style = MaterialTheme.typography.titleMedium)

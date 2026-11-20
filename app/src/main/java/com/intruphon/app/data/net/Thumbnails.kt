@@ -1,6 +1,7 @@
 package com.intruphon.app.data.net
 
 import android.graphics.Bitmap
+import com.intruphon.app.core.ImageMemory
 import android.graphics.BitmapFactory
 import android.util.LruCache
 import okhttp3.Request
@@ -8,7 +9,10 @@ import okhttp3.Request
 /** Small pictures from the web (playlist items), kept in memory only. */
 object Thumbnails {
     private const val TARGET = 320
-    private val cache = LruCache<String, Bitmap>(150)
+    // Measured in KB of picture (a sixteenth of the app's memory), not in number of entries.
+    private val cache = object : LruCache<String, Bitmap>(ImageMemory.budgetKb(16)) {
+        override fun sizeOf(key: String, value: Bitmap): Int = ImageMemory.kb(value)
+    }
 
     /** The picture if it was already loaded, so a row can show it on its first frame. */
     fun peek(url: String): Bitmap? = cache.get(url)

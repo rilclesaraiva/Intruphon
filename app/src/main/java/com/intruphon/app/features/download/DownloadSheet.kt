@@ -21,9 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.intruphon.app.R
+import com.intruphon.app.core.ui.AppSheet
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.media.DownloadOption
 import com.intruphon.app.data.media.FailReason
@@ -60,10 +59,8 @@ fun DownloadSheet(link: String, onDismiss: () -> Unit, onStarted: () -> Unit = {
         return
     }
     val result by produceState<LoadResult?>(initialValue = null, link) { value = MediaRepository.load(link) }
-    // Fully open from the start, so the Download button is never hidden below the fold.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    // AppSheet opens fully from the start, so the Download button is never hidden below the fold.
+    AppSheet(onDismiss = onDismiss) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

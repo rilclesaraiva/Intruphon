@@ -120,6 +120,10 @@
     <string name="settings_dynamic_color">Usar cores do sistema</string>
     <string name="settings_dynamic_color_hint">Ative para seguir as cores do papel de parede (Android 12+). Desligado: o app usa as próprias cores, tiradas do ícone.</string>
     <string name="settings_cat_appearance">Aparência</string>
+    <string name="settings_cat_system">Sistema</string>
+    <string name="settings_cat_appearance_hint">Tema, cores, gesto de voltar e idioma</string>
+    <string name="settings_cat_downloads_hint">Só Wi-Fi, downloads simultâneos e pasta</string>
+    <string name="settings_cat_system_hint">Atualizações e registro de velocidade</string>
     <string name="settings_predictive_back">Voltar preditivo</string>
     <string name="settings_predictive_back_hint">Nas páginas abertas a partir da Home, a página acompanha o dedo no gesto de voltar e a página de baixo aparece por trás.</string>
     <string name="settings_about_hint">Versão, licença e código-fonte</string>

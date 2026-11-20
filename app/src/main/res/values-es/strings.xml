@@ -120,6 +120,10 @@
     <string name="settings_dynamic_color">Usar colores del sistema</string>
     <string name="settings_dynamic_color_hint">Actívalo para seguir los colores del fondo de pantalla (Android 12+). Desactivado: la app usa sus propios colores, tomados de su icono.</string>
     <string name="settings_cat_appearance">Apariencia</string>
+    <string name="settings_cat_system">Sistema</string>
+    <string name="settings_cat_appearance_hint">Tema, colores, gesto de volver e idioma</string>
+    <string name="settings_cat_downloads_hint">Solo Wi-Fi, descargas simultáneas y carpeta</string>
+    <string name="settings_cat_system_hint">Actualizaciones y registro de velocidad</string>
     <string name="settings_predictive_back">Atrás predictivo</string>
     <string name="settings_predictive_back_hint">En las páginas abiertas desde Inicio, la página sigue tu dedo en el gesto de atrás y se ve la página anterior debajo.</string>
     <string name="settings_about_hint">Versión, licencia y código fuente</string>

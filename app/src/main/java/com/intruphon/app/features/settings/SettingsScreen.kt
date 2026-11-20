@@ -1,296 +1,56 @@
 package com.intruphon.app.features.settings
 
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import com.intruphon.app.data.download.SaveLocation
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
-import android.net.Uri
-import android.os.Build
-import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
-import com.intruphon.app.data.update.CheckResult
-import com.intruphon.app.data.update.UpdateRepository
-import java.text.DateFormat
-import java.util.Date
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import com.intruphon.app.R
 import com.intruphon.app.core.ui.IconRowGroup
 import com.intruphon.app.core.ui.IconRowItem
 import com.intruphon.app.core.ui.RowTone
-import com.intruphon.app.core.ui.PageHeader
-import com.intruphon.app.core.ui.SectionCard
 import com.intruphon.app.core.ui.SectionLabel
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import com.intruphon.app.BuildConfig
-import com.intruphon.app.R
-import com.intruphon.app.data.update.MONTH_MS
-import com.intruphon.app.data.update.WEEK_MS
-import androidx.compose.foundation.layout.fillMaxWidth
-import com.intruphon.app.core.ui.BottomPanel
-import com.intruphon.app.core.ui.PanelAction
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.intruphon.app.data.settings.AppSettings
-import com.intruphon.app.data.stats.SpeedLog
-import com.intruphon.app.data.stats.formatSpeed
-import com.intruphon.app.data.stats.summarize
-import com.intruphon.app.data.stats.toCsv
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
+/**
+ * Settings home: only the categories (each one a page of its own) and, below, the About entry. Nothing is loose
+ * here: every option lives in a category. The entry point opens each page.
+ */
 @Composable
-fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var wifiOnly by remember { mutableStateOf(AppSettings.wifiOnly(context)) }
-    var parallelWifi by remember { mutableIntStateOf(AppSettings.maxParallelWifi(context)) }
-    var parallelMobile by remember { mutableIntStateOf(AppSettings.maxParallelMobile(context)) }
-    var folder by remember { mutableStateOf(SaveLocation.label(context)) }
-    var folderLost by remember { mutableStateOf(SaveLocation.lost(context)) }
-    var folderPanel by rememberSaveable { mutableStateOf(false) }
-    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
-        if (tree != null) {
-            runCatching { SaveLocation.choose(context, tree) }
-                .onFailure { Toast.makeText(context, R.string.settings_folder_failed, Toast.LENGTH_LONG).show() }
-            folder = SaveLocation.label(context)
-            folderLost = SaveLocation.lost(context)
-        }
-    }
-    var reload by remember { mutableIntStateOf(0) }
-    val theme by AppSettings.themeFlow.collectAsState()
-    var themePanel by rememberSaveable { mutableStateOf(false) }
-    val entries by produceState(emptyList(), reload) { value = withContext(Dispatchers.IO) { SpeedLog.all(context) } }
-
-    Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PageHeader(stringResource(R.string.tab_settings), afterBack = true)
-
-        SectionLabel(stringResource(R.string.settings_cat_appearance))
-        SectionCard {
-            val predictive by AppSettings.predictiveBackFlow.collectAsState()
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.settings_predictive_back), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(R.string.settings_predictive_back_hint), style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(checked = predictive, onCheckedChange = { AppSettings.setPredictiveBack(context, it) })
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {   // wallpaper colors exist from Android 12
-                val systemColors by AppSettings.dynamicColorFlow.collectAsState()
-                Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.settings_dynamic_color), style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(R.string.settings_dynamic_color_hint), style = MaterialTheme.typography.bodySmall)
-                    }
-                    Switch(checked = systemColors, onCheckedChange = { AppSettings.setDynamicColor(context, it) })
-                }
-            }
-        }
-
-        // Language is chosen on Android's own screen (per-app language on Android 13+).
+fun SettingsScreen(
+    onOpenAppearance: () -> Unit,
+    onOpenDownloads: () -> Unit,
+    onOpenSystem: () -> Unit,
+    onOpenAbout: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsPage(stringResource(R.string.tab_settings), modifier) {
         IconRowGroup(
             listOf(
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_palette),
                     RowTone.PRIMARY,
-                    stringResource(R.string.settings_theme),
-                    themeName(theme),
-                    onClick = { themePanel = true },
-                ),
-                IconRowItem(
-                    ImageVector.vectorResource(R.drawable.ic_language),
-                    RowTone.SECONDARY,
-                    stringResource(R.string.settings_language),
-                    stringResource(R.string.settings_language_hint),
-                    onClick = {
-                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                        } else Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
-                        runCatching { context.startActivity(intent) }
-                    },
-                ),
-            ),
-        )
-
-        if (themePanel) {
-            BottomPanel(onDismiss = { themePanel = false }, title = stringResource(R.string.settings_theme)) {
-                AppSettings.ThemeMode.entries.forEach { mode ->
-                    PanelAction(themeName(mode), main = mode == theme, onClick = { themePanel = false; AppSettings.setTheme(context, mode) })
-                }
-            }
-        }
-
-        SectionLabel(stringResource(R.string.settings_cat_downloads))
-        SectionCard {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.settings_wifi_only), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(R.string.settings_wifi_only_hint), style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(checked = wifiOnly, onCheckedChange = { wifiOnly = it; AppSettings.setWifiOnly(context, it) })
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.settings_parallel_wifi, parallelWifi), style = MaterialTheme.typography.titleSmall)
-            Slider(
-                value = parallelWifi.toFloat(),
-                onValueChange = { parallelWifi = it.toInt() },
-                onValueChangeFinished = { AppSettings.setMaxParallelWifi(context, parallelWifi) },
-                valueRange = AppSettings.MIN_PARALLEL.toFloat()..AppSettings.MAX_PARALLEL.toFloat(),
-                steps = AppSettings.MAX_PARALLEL - AppSettings.MIN_PARALLEL - 1,
-            )
-            Text(stringResource(R.string.settings_parallel_mobile, parallelMobile), style = MaterialTheme.typography.titleSmall)
-            Slider(
-                value = parallelMobile.toFloat(),
-                onValueChange = { parallelMobile = it.toInt() },
-                onValueChangeFinished = { AppSettings.setMaxParallelMobile(context, parallelMobile) },
-                valueRange = AppSettings.MIN_PARALLEL.toFloat()..AppSettings.MAX_PARALLEL.toFloat(),
-                steps = AppSettings.MAX_PARALLEL - AppSettings.MIN_PARALLEL - 1,
-            )
-            Text(stringResource(R.string.settings_parallel_hint), style = MaterialTheme.typography.bodySmall)
-        }
-
-        IconRowGroup(
-            listOf(
-                IconRowItem(
-                    ImageVector.vectorResource(R.drawable.ic_folder),
-                    RowTone.SECONDARY,
-                    stringResource(R.string.settings_folder),
-                    if (folderLost) stringResource(R.string.settings_folder_lost) else folder ?: stringResource(R.string.settings_folder_default),
-                    onClick = { folderPanel = true },
-                ),
-            ),
-        )
-        if (folderPanel) {
-            BottomPanel(
-                onDismiss = { folderPanel = false },
-                title = stringResource(R.string.settings_folder),
-                message = if (folderLost) stringResource(R.string.settings_folder_lost) else stringResource(R.string.settings_folder_message, folder ?: stringResource(R.string.settings_folder_default)),
-            ) {
-                PanelAction(stringResource(R.string.settings_folder_choose), main = true, onClick = { folderPanel = false; folderPicker.launch(null) })
-                if (folder != null || folderLost) {
-                    PanelAction(stringResource(R.string.settings_folder_reset), onClick = {
-                        folderPanel = false
-                        SaveLocation.useDefault(context)
-                        folder = null
-                        folderLost = false
-                    })
-                }
-            }
-        }
-
-        SectionLabel(stringResource(R.string.settings_speed_title))
-        SectionCard {
-            Text(stringResource(R.string.settings_speed_hint), style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(8.dp))
-            val summary = summarize(entries)
-            if (summary.isEmpty()) {
-                Text(stringResource(R.string.settings_speed_empty), style = MaterialTheme.typography.bodyMedium)
-            } else {
-                summary.forEach {
-                    val quality = it.quality.ifEmpty { "-" }
-                    Text(stringResource(R.string.settings_speed_row, it.format, quality, formatSpeed(it.bytesPerSecond), it.count), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-            Row {
-                TextButton(
-                    enabled = entries.isNotEmpty(),
-                    onClick = {
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, toCsv(entries))
-                        context.startActivity(Intent.createChooser(send, null))
-                    },
-                ) { Text(stringResource(R.string.settings_speed_share)) }
-                TextButton(
-                    enabled = entries.isNotEmpty(),
-                    onClick = { SpeedLog.clear(context); reload++ },
-                ) { Text(stringResource(R.string.settings_speed_clear)) }
-            }
-        }
-
-        SectionLabel(stringResource(R.string.settings_cat_updates))
-        val choices by UpdateRepository.choices.collectAsState()
-        val now = System.currentTimeMillis()
-        val notices = when {
-            choices.skippedVersion != null -> stringResource(R.string.settings_updates_skipping, choices.skippedVersion.orEmpty())
-            choices.snoozed(now) -> stringResource(R.string.settings_updates_snoozed, DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(choices.snoozeUntilMs)))
-            else -> stringResource(R.string.settings_updates_on)
-        }
-        var checking by remember { mutableStateOf(false) }
-        var result by remember { mutableStateOf<CheckResult?>(null) }
-        var choosing by rememberSaveable { mutableStateOf(false) }
-        val scope = rememberCoroutineScope()
-        val checkHint = when {
-            checking -> stringResource(R.string.settings_updates_checking)
-            result == CheckResult.UP_TO_DATE -> stringResource(R.string.settings_updates_up_to_date)
-            result == CheckResult.AVAILABLE -> stringResource(R.string.settings_updates_available)
-            result == CheckResult.FAILED -> stringResource(R.string.settings_updates_failed)
-            else -> stringResource(R.string.settings_updates_check_hint, BuildConfig.VERSION_NAME)
-        }
-        IconRowGroup(
-            listOf(
-                IconRowItem(
-                    ImageVector.vectorResource(R.drawable.ic_download),
-                    RowTone.PRIMARY,
-                    stringResource(R.string.settings_updates_check),
-                    checkHint,
-                    onClick = {
-                        if (!checking) {
-                            checking = true
-                            scope.launch { result = UpdateRepository.checkNow(); checking = false }
-                        }
-                    },
+                    stringResource(R.string.settings_cat_appearance),
+                    stringResource(R.string.settings_cat_appearance_hint),
+                    onClick = onOpenAppearance,
                 ),
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_download),
-                    RowTone.PRIMARY,
-                    stringResource(R.string.settings_updates_title),
-                    notices,
-                    onClick = { choosing = true },
+                    RowTone.SECONDARY,
+                    stringResource(R.string.settings_cat_downloads),
+                    stringResource(R.string.settings_cat_downloads_hint),
+                    onClick = onOpenDownloads,
+                ),
+                IconRowItem(
+                    ImageVector.vectorResource(R.drawable.ic_tune),
+                    RowTone.TERTIARY,
+                    stringResource(R.string.settings_cat_system),
+                    stringResource(R.string.settings_cat_system_hint),
+                    onClick = onOpenSystem,
                 ),
             ),
         )
-        if (choosing) {
-            BottomPanel(onDismiss = { choosing = false }, title = stringResource(R.string.settings_updates_title)) {
-                PanelAction(stringResource(R.string.settings_updates_normal), onClick = { choosing = false; UpdateRepository.undoChoices() })
-                PanelAction(stringResource(R.string.settings_updates_week), onClick = { choosing = false; UpdateRepository.snooze(WEEK_MS) })
-                PanelAction(stringResource(R.string.settings_updates_month), onClick = { choosing = false; UpdateRepository.snooze(MONTH_MS) })
-            }
-        }
-
         SectionLabel(stringResource(R.string.settings_cat_about))
         IconRowGroup(
             listOf(
@@ -303,16 +63,5 @@ fun SettingsScreen(onOpenAbout: () -> Unit, modifier: Modifier = Modifier) {
                 ),
             ),
         )
-        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
-
-@Composable
-private fun themeName(mode: AppSettings.ThemeMode): String = stringResource(
-    when (mode) {
-        AppSettings.ThemeMode.SYSTEM -> R.string.settings_theme_system
-        AppSettings.ThemeMode.LIGHT -> R.string.settings_theme_light
-        AppSettings.ThemeMode.DARK -> R.string.settings_theme_dark
-        AppSettings.ThemeMode.AMOLED -> R.string.settings_theme_amoled
-    },
-)

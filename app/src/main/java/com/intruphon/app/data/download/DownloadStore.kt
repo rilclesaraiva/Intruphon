@@ -13,6 +13,11 @@ internal object DownloadStore {
     @Synchronized
     fun load(context: Context): List<DownloadItem> {
         val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null) ?: return emptyList()
+        return decode(raw)
+    }
+
+    /** The saved text back into the list; anything unreadable gives an empty list instead of a crash. */
+    fun decode(raw: String): List<DownloadItem> {
         return runCatching {
             val array = JSONArray(raw)
             (0 until array.length()).map { i ->
@@ -43,6 +48,10 @@ internal object DownloadStore {
 
     @Synchronized
     fun save(context: Context, items: List<DownloadItem>) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, encode(items)).apply()
+    }
+
+    fun encode(items: List<DownloadItem>): String {
         val array = JSONArray()
         items.forEach {
             array.put(
@@ -63,6 +72,6 @@ internal object DownloadStore {
                     .put("reason", it.status.reason),
             )
         }
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, array.toString()).apply()
+        return array.toString()
     }
 }
