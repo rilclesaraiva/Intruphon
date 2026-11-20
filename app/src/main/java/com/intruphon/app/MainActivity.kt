@@ -64,6 +64,7 @@ import com.intruphon.app.features.settings.SystemSettings
 import com.intruphon.app.features.update.UpdatePrompt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -113,54 +114,74 @@ private fun App(versionName: String) {
     // How far the top page is out of the way: 0 in place, 1 fully slid to the right. The same value drives
     // opening a page, the back gesture, the back button and the system back.
     val exit = remember { Animatable(0f) }
-    var busy by remember { mutableStateOf(false) }
+    // A tap never waits for the animation: it ends the one in flight on the spot and starts its own.
+    var navJob by remember { mutableStateOf<Job?>(null) }
+    var commit by remember { mutableStateOf<(() -> Unit)?>(null) }   // what a closing slide still has to do to the stack
+    var gesturing by remember { mutableStateOf(false) }               // the finger is dragging the back gesture
 
     suspend fun slide(to: Float) = withContext(AppMotion.FixedScale) {
         exit.animateTo(to, tween(AppMotion.SHORT, easing = FastOutSlowInEasing))
     }
 
-    fun open(page: Int) {
-        if (busy || page in stack) return
-        busy = true
-        focusManager.clearFocus()   // the link field must not keep blinking its cursor under the new page
-        scope.launch {
-            stack.add(page)
-            exit.snapTo(1f)
-            slide(0f)
-            busy = false
+    // Ends the running transition now: an opening one is simply cut (the page is already in the stack), a closing one
+    // takes its page off at once. The next transition snaps the offset to where it starts.
+    fun finishNow() {
+        navJob?.cancel()
+        navJob = null
+        commit?.invoke()
+        commit = null
+    }
+
+    fun startClose(fromCurrent: Boolean) {
+        commit = {
+            pages.removeState(stack.last())   // a page that is left for good forgets where it was
+            stack.removeAt(stack.lastIndex)
+        }
+        navJob = scope.launch {
+            if (!fromCurrent) exit.snapTo(0f)
+            slide(1f)
+            commit?.invoke()   // the page is swapped after the slide ends, without animating a second time
+            commit = null
+            exit.snapTo(0f)
         }
     }
 
-    // The page is swapped after the slide ends, without animating a second time.
-    fun close() {
-        if (busy || stack.size < 2) return
-        busy = true
-        scope.launch {
-            slide(1f)
-            pages.removeState(stack.last())   // a page that is left for good forgets where it was
-            stack.removeAt(stack.lastIndex)
-            exit.snapTo(0f)
-            busy = false
+    fun open(page: Int) {
+        if (gesturing) return
+        if (page in stack && commit == null) return   // already open (or opening): a double tap is ignored
+        finishNow()
+        if (page in stack) return
+        focusManager.clearFocus()   // the link field must not keep blinking its cursor under the new page
+        navJob = scope.launch {
+            stack.add(page)
+            exit.snapTo(1f)
+            slide(0f)
         }
+    }
+
+    fun close() {
+        if (gesturing) return
+        finishNow()
+        if (stack.size < 2) return
+        startClose(fromCurrent = false)
     }
 
     // Only for pages opened from Home; on Home the system closes the app as usual.
     PredictiveBackHandler(enabled = stack.size > 1 && predictive) { progress ->
-        if (busy) {
+        finishNow()
+        if (stack.size < 2) {
             progress.collect { }
             return@PredictiveBackHandler
         }
-        busy = true
+        gesturing = true
+        exit.snapTo(0f)
         try {
             progress.collect { exit.snapTo(it.progress) }
-            slide(1f)
-            pages.removeState(stack.last())
-            stack.removeAt(stack.lastIndex)
-            exit.snapTo(0f)
+            gesturing = false
+            startClose(fromCurrent = true)   // let go: the page finishes leaving, and a tap meanwhile is not lost
         } catch (e: CancellationException) {
+            gesturing = false
             withContext(NonCancellable) { slide(0f) }   // gesture cancelled: the page returns to its place
-        } finally {
-            busy = false
         }
     }
     BackHandler(enabled = stack.size > 1 && !predictive) { close() }

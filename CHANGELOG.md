@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Changed
+- Navigation no longer drops a tap while a page is sliding: opening a category right after Settings, or going back twice in a row, finishes the running slide at once and starts the new one, with the Back button, the system back and the back gesture alike.
+- Licenses now open a page in the browser (`docs/licenses.md`, published on GitHub Pages) instead of a panel inside the app.
 - Settings: the home page now lists only categories (Appearance, Downloads, System), each with its own colored icon and a one-line summary, with "About Intruphon" below. Appearance holds theme, system colors, predictive back and language; Downloads holds Wi-Fi only, simultaneous downloads and the folder; System holds updates and the speed log.
 - Settings: theme and update notices now open their choices right in the row (closed by default) instead of a bottom panel.
 - Bottom sheets: going back slides the sheet down with the normal closing animation instead of the system shrinking one. In the playlist sheet only the handle strip drags it, so scrolling the list and pulling on no longer closes it and loses your picks.

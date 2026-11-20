@@ -25,7 +25,7 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links. O
 - Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` (+ `ic_launcher_monochrome.xml` para o ícone temático) + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir. Desenho: intruso espiando atrás de um funil de 3 barras, uma cor (#C7DDE8) sobre #0C1620, um pouco maior que a zona segura de propósito. O Sobre desenha o mesmo ícone em Compose (`features/about/AboutIcon.kt`, formas em coordenadas da arte + `ART_K/ART_TX/ART_TY`) e o anima: olha esquerda, direita, para o usuário e assenta no funil; toca ao abrir o Sobre e a cada toque. Mudou o desenho, atualizar os dois
 - minSdk 29 (ícone vetorial adaptativo sem PNG de fallback; pasta pública sem permissão de armazenamento)
 - Sobre: entrada própria nos ajustes (versão e build lidos do build, código-fonte, novidades,
-  issues, privacidade, termos, licenças e convite de apoio ao repositório), conforme a seção 9.1
+  issues, privacidade, termos, licenças (as três abrem no navegador, nunca viram tela do app) e convite de apoio ao repositório), conforme a seção 9.1
   do estrutura-vibe-coding
 - Atualizações: sim, via Releases públicas (`GET /repos/rilclesaraiva/Intruphon/releases/latest`).
   Consulta ao abrir e no máximo a cada 10 min ao voltar, com ETag; "Agora não" só na
@@ -57,7 +57,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   direita com sombra e cantos que arredondam até 28 dp logo no começo; a anterior aparece por baixo,
   deslocada 20% para a esquerda, com véu escuro de 32% que clareia ao arrastar. Ao soltar, a página
   termina de sair (`AppMotion.SHORT`) e a troca acontece sem nova animação; ao cancelar, volta ao
-  lugar. O botão de voltar toca a mesma saída e ignora toque durante a animação. Com a opção desligada,
+  lugar. O botão de voltar toca a mesma saída. Toque durante uma animação nunca é descartado: conclui a anterior na hora e começa a nova (abrir depressa uma categoria logo após Ajustes, ou voltar duas vezes seguidas, funciona sem esperar); só o toque na mesma página que já está abrindo é ignorado, e nada abre enquanto o dedo arrasta o gesto. Com a opção desligada,
   o voltar comum faz a mesma saída sem acompanhar o dedo. A tela de aviso de atualização trata o voltar
   à parte ("Agora não"). A duração ignora a escala de animação do sistema.
 - Excluir um download pergunta: remover só da lista ou apagar também do aparelho. Apagar do aparelho
@@ -162,10 +162,10 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   apoio e contato com os dados de *Mantenedor*.
 - No app: nunca citar doação ou pagamento. Só "Quer apoiar o projeto? Entre no
   repositório do projeto" com link para o repo.
-- Páginas legais em `docs/` (privacidade, termos), publicadas no GitHub Pages e
+- Páginas legais em `docs/` (privacidade, termos, licenças), publicadas no GitHub Pages e
   linkadas no README e no app.
 - Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política
-  no mesmo commit.
+  no mesmo commit. Biblioteca nova → `docs/licenses.md` no mesmo commit.
 - Nenhuma afirmação sem respaldo: o que README, loja e páginas legais dizem
   precisa ser verdade no código. Na dúvida, não afirmar.
 - Uso do app: o mantenedor não definiu restrição de direitos autorais; README, loja e app não afirmam

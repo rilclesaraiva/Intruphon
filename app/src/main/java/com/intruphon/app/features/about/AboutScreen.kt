@@ -23,8 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import com.intruphon.app.core.ui.BottomPanel
-import com.intruphon.app.core.ui.PanelAction
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -65,7 +63,6 @@ import com.intruphon.app.core.ui.SectionLabel
 @Composable
 fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var licenses by rememberSaveable { mutableStateOf(false) }
     // The profile picture comes from GitHub and is cached; until it arrives (or when offline) an icon shows.
     val avatar by produceState<ImageBitmap?>(null) {
         value = withContext(Dispatchers.IO) { Avatar.load(context, Config.MAINTAINER)?.asImageBitmap() }
@@ -108,7 +105,7 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
             listOf(
                 IconRowItem(Icons.Default.Lock, RowTone.NEUTRAL, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_hint)) { open(Config.PRIVACY_URL) },
                 IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { licenses = true },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { open(Config.LICENSES_URL) },
             ),
         )
 
@@ -117,13 +114,6 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
             listOf(IconRowItem(Icons.Default.Favorite, RowTone.TERTIARY, stringResource(R.string.about_support_title), stringResource(R.string.about_support_hint)) { open(Config.REPO_URL) }),
         )
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
-    }
-
-    if (licenses) {
-        BottomPanel(onDismiss = { licenses = false }, title = stringResource(R.string.about_licenses)) {
-            Text(stringResource(R.string.about_licenses_body))
-            PanelAction(stringResource(R.string.download_close), onClick = { licenses = false })
-        }
     }
 }
 

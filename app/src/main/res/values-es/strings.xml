@@ -107,7 +107,6 @@
     <string name="about_privacy">Política de privacidad</string>
     <string name="about_terms">Términos de uso</string>
     <string name="about_licenses">Licencias y atribuciones</string>
-    <string name="about_licenses_body">Intruphon: GPL-3.0\n\nNewPipeExtractor: GPL-3.0\nOkHttp: Apache-2.0\nKotlin coroutines: Apache-2.0\nAndroidX y Jetpack Compose: Apache-2.0\nMozilla Rhino (usado por el extractor): MPL-2.0\njava-lame, un port en Java de LAME: LGPL (ver third_party/java-lame en el repositorio)\nAndroid desugar_jdk_libs: consulta su repositorio para ver la licencia\n\nEl extractor trae sus propias bibliotecas, cada una con su licencia.</string>
     <string name="home_recent">Descargas recientes</string>
     <string name="home_see_all">Ver todas</string>
     <string name="home_recent_done">Listo</string>
