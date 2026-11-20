@@ -222,7 +222,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
         picked = selection.isSelected(item.record.id),
         onTap = { tap(item) },
         onHold = { panelIds = listOf(item.record.id); panelStep = 0 },
-        onCover = { toggle(item.record.id) },
+        onCover = { selection.toggle(item.record.id) },
         onMore = { panelIds = listOf(item.record.id); panelStep = 0 },
     )
 
@@ -301,7 +301,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                         Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
                         if (state == DownloadState.DONE) PanelRow(Icons.Default.PlayArrow, R.string.downloads_open) { panelIds = null; open(item) }
                         if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { panelIds = null; onRetry(item.record.sourceLink) }
-                        PanelRow(Icons.Default.Check, R.string.downloads_select) { panelIds = null; toggle(id) }
+                        PanelRow(Icons.Default.Check, R.string.downloads_select) { panelIds = null; selection.toggle(id) }
                         if (state == DownloadState.DONE) {
                             PanelRow(Icons.Default.Delete, R.string.downloads_delete, danger = true) { askDelete(listOf(id)) }
                         } else {
