@@ -13,7 +13,7 @@ Achados de revisões: **hipóteses ou pendências, não fatos provados**, salvo 
 ## B. Diferenças contra o `estrutura-vibe-coding` (20/11/2026), para o mantenedor decidir
 
 6. *Corrigido em 20/11/2026 (licenças agora abrem `docs/licenses.md` no navegador).* **Licenças eram um painel dentro do app**, mas o documento diz que texto legal nunca vira tela do app: Sobre → Legal abre `docs/licenses.md` no GitHub Pages, e `docs/` deve ter `licenses.md` (licença do app, bibliotecas, serviços). O Intruphon tem só `docs/privacy.md` e `docs/terms.md`, e a linha Licenças abre um painel de baixo com texto. Precisa de decisão do mantenedor (hoje CLAUDE.md e código concordam entre si; o documento não).
-7. **Sem wrapper do Gradle**: `services.gradle.org` é bloqueado na sessão da IA. O mantenedor roda `gradle wrapper --gradle-version 8.9` uma vez e comita o resultado (ver CLAUDE.md, "Limitações desta sessão").
+7. *Corrigido em 20/11/2026: wrapper adicionado (arquivos copiados do repositório do BoomListener, Gradle 8.9 no `.properties`; o CI é a prova).* **Sem wrapper do Gradle**: `services.gradle.org` é bloqueado na sessão da IA.
 8. **`versionCode` é o número da execução do CI**, não calculado da versão. Mantido de propósito: o v0.1.0 saiu assim, e um valor calculado (100 para 0.1.0) seria menor que o número da execução e impediria a atualização.
 
 ## C. Não testado no aparelho (só compilado pelo CI)

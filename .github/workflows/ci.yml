@@ -12,11 +12,11 @@ env:
   # ── Project ──
   APP_NAME: Intruphon
   APP_SLUG: intruphon
-  # ── Stack (Android, Gradle without wrapper: setup-gradle pins 8.9) ──
+  # ── Stack (Android; the Gradle version comes from gradle/wrapper/gradle-wrapper.properties) ──
   VERSION_CMD: grep -m1 '^APP_VERSION=' gradle.properties | cut -d= -f2
-  TEST_CMD: gradle testDebugUnitTest assembleRelease   # release = R8 + signing
+  TEST_CMD: chmod +x gradlew && ./gradlew testDebugUnitTest assembleRelease   # release = R8 + signing
   TEST_ARTIFACTS: app/build/outputs/apk/release/*.apk
-  RELEASE_CMD: gradle assembleRelease
+  RELEASE_CMD: chmod +x gradlew && ./gradlew assembleRelease
   ARTIFACTS: |
     app/build/outputs/apk/release/*.apk
   # ── Signing ──
@@ -34,7 +34,6 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: '8.9' }
       - name: Signing (skipped if there are no secrets)
         if: env.KEYSTORE_B64 != ''
         run: |
@@ -115,7 +114,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         if: steps.v.outputs.publish == 'true'
-        with: { gradle-version: '8.9' }
 
       - name: Signing
         if: steps.v.outputs.publish == 'true'

@@ -14,13 +14,14 @@ Intruphon — app Android leve e sem rastreamento para baixar mídia de links. O
 
 ## Stack
 - Stack: Kotlin + Jetpack Compose (Material 3)
-- Build: `gradle assembleRelease` · Testes: `gradle testDebugUnitTest`
-  (sem wrapper por enquanto: o CI usa `gradle/actions/setup-gradle` com Gradle 8.9;
-  adicionar o wrapper quando a sessão ou o mantenedor puder gerá-lo)
+- Build: `./gradlew assembleRelease` · Testes: `./gradlew testDebugUnitTest`
+  (wrapper no repositório; a versão do Gradle, 8.9, mora só em `gradle/wrapper/gradle-wrapper.properties`;
+  os arquivos do wrapper vieram do repositório do BoomListener, do mesmo mantenedor, porque o proxy da
+  sessão bloqueia `services.gradle.org`)
 - Mapa: core → `app/src/main/java/com/intruphon/app/core` · data → `.../data` · features → `.../features`
 - Versão: `gradle.properties` (`APP_VERSION`, único lugar; `versionName` lê dali) · lida no CI por `VERSION_CMD` · versões das libs só em `gradle/libs.versions.toml` · `versionCode` = número da execução do CI (`GITHUB_RUN_NUMBER`) e `BuildConfig.BUILD` mostra o build na tela Sobre e nas notas de download
 - Versionamento: SemVer (regra; o número é calculado pelo [Unreleased], nunca escolhido)
-- Release: `gradle assembleRelease` → `app/build/outputs/apk/release/*.apk`
+- Release: `./gradlew assembleRelease` → `app/build/outputs/apk/release/*.apk`
 - Pacote (Android): `com.intruphon.app`, fixo · R8 ativo no release (sem ofuscação), nunca desligar
 - Ícone: `app/src/main/res/drawable/ic_launcher_foreground.xml` (+ `ic_launcher_monochrome.xml` para o ícone temático) + `values/ic_launcher_background.xml`, só muda se o mantenedor pedir. Desenho: intruso espiando atrás de um funil de 3 barras, uma cor (#C7DDE8) sobre #0C1620, um pouco maior que a zona segura de propósito. O Sobre desenha o mesmo ícone em Compose (`features/about/AboutIcon.kt`, formas em coordenadas da arte + `ART_K/ART_TX/ART_TY`) e o anima: olha esquerda, direita, para o usuário e assenta no funil; toca ao abrir o Sobre e a cada toque. Mudou o desenho, atualizar os dois
 - minSdk 29 (ícone vetorial adaptativo sem PNG de fallback; pasta pública sem permissão de armazenamento)
@@ -179,9 +180,9 @@ Toda ideia recusada (da IA ou de usuário) entra aqui no mesmo commit, com data 
 - Estrutura multimódulo do Gradle com `build-logic` (2026-11-20): não adotada; peso demais para um app deste tamanho.
 
 ## Limitações desta sessão
-- A rede da sessão bloqueia `services.gradle.org`: o wrapper do Gradle não pode ser gerado aqui. O mantenedor roda `gradle wrapper --gradle-version 8.9` e comita `gradlew`, `gradlew.bat` e `gradle/wrapper/`; depois disso o CI passa a usar `./gradlew` (trocar `TEST_CMD`/`RELEASE_CMD` e tirar o `setup-gradle` com versão fixa).
+- A rede da sessão bloqueia `services.gradle.org`: nada que baixe o Gradle roda aqui (o wrapper só foi provado pelo CI).
 - Sem acesso às dependências, a sessão não compila: o CI é a única prova. Nada novo foi testado no aparelho pela IA.
 
 ## Contexto atual
-- Foco: v0.1.0 publicada (Release no GitHub). Próximos: wrapper do Gradle (precisa do mantenedor, ver Limitações) e novas fontes além do YouTube. Cores: o app usa as próprias, tiradas do ícone; "Usar cores do sistema" (Android 12+) vem desligado por padrão.
-- Problemas conhecidos: sem wrapper do Gradle; Ajustes em categorias, painel recolhível, `AppSheet`, `Selection`, caches por KB e o quadro puro do ícone só compilados pelo CI; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); a interface nova vem sendo vistoriada pelo mantenedor no aparelho a cada build (o que ele não comentou, a IA não dá como testado); exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.
+- Foco: v0.1.0 publicada (Release no GitHub). Próximos: novas fontes além do YouTube. Cores: o app usa as próprias, tiradas do ícone; "Usar cores do sistema" (Android 12+) vem desligado por padrão.
+- Problemas conhecidos: Ajustes em categorias, painel recolhível, `AppSheet`, `Selection`, caches por KB e o quadro puro do ícone só compilados pelo CI; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); a interface nova vem sendo vistoriada pelo mantenedor no aparelho a cada build (o que ele não comentou, a IA não dá como testado); exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.

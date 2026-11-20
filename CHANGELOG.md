@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- Build: the Gradle wrapper (`gradlew`, Gradle 8.9) is now in the repository and the CI uses it, so the Gradle version lives in one place.
 - Navigation no longer drops a tap while a page is sliding: opening a category right after Settings, or going back twice in a row, finishes the running slide at once and starts the new one, with the Back button, the system back and the back gesture alike.
 - Licenses now open a page in the browser (`docs/licenses.md`, published on GitHub Pages) instead of a panel inside the app.
 - Settings: the home page now lists only categories (Appearance, Downloads, System), each with its own colored icon and a one-line summary, with "About Intruphon" below. Appearance holds theme, system colors, predictive back and language; Downloads holds Wi-Fi only, simultaneous downloads and the folder; System holds updates and the speed log.
