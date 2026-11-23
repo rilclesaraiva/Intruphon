@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Lido no início de cada sessão. Em conflito entre uma instrução antiga do chat e este arquivo, vale este arquivo. Decisão nova que mude algo aqui entra neste arquivo no mesmo commit. Segue o documento de estrutura de 20/11/2026.
+
 ## Projeto
 Intruphon — app Android leve e sem rastreamento para baixar mídia de links. O app é livre: o usuário decide o que baixa.
 - Tipo: público · Público-alvo: global
@@ -100,7 +102,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 - Feature não importa outra feature; o compartilhado sobe para core/data.
 - Navegação entre features passa pela entrada (rotas registradas lá).
 - Banco, APIs e arquivos só via data. Core sem regra de negócio.
-- Seguir as convenções da stack. Nenhuma dependência nova sem justificar.
+- Seguir as convenções da stack. Nenhuma dependência nova sem justificar; antes de usar uma versão nova, conferir na documentação oficial que ela existe e o que exige.
+- Dados da pessoa já guardados (lista de downloads, ajustes): mudança de formato sempre com migração escrita e testada; nunca apagar dados para "começar limpo".
 
 ## Fluxo de trabalho
 - Uma tarefa por vez, mudanças pequenas. Não refatorar fora do escopo.
@@ -110,7 +113,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   consegue compilar (ex: nuvem sem SDK ou sem acesso às dependências), o CI é a
   única prova, e a IA diz isso em vez de afirmar que testou.
 - Só dizer que terminou quando o CI daquele commit passar no GitHub.
-  CI vermelho é corrigido antes de qualquer tarefa nova.
+  CI vermelho é corrigido antes de qualquer tarefa nova. Quando falha, o CI posta o erro como
+  comentário no commit: `gh api repos/rilclesaraiva/Intruphon/commits/<sha>/comments`.
 - Todo pedido vira tarefa na lista de tarefas da sessão (a ferramenta de tarefas, não a memória), antes
   de começar: um item por pedido, mesmo pequeno. Antes de dizer que terminou, reler a mensagem original e
   conferir item por item. O que ficar pendente vai para *Contexto atual* (ou vira issue).
@@ -120,7 +124,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   de registrar) antes de mexer no código; só chamar de causa o que o log sustentar, o resto é hipótese e é
   dito como hipótese. Perguntar se outro app tem o mesmo sintoma (pode ser do sistema).
 - Achados de revisão ficam em `ACHADOS.md` (fora deste arquivo), com o resultado ao lado quando provados
-  ("provado / refutado / corrigido", data e commit), sem apagar.
+  ("provado / refutado / corrigido", data e commit), sem apagar. Não agir sobre eles sem o mantenedor pedir.
 - Lógica de `data/` e estados de tela com regra própria ganham teste unitário; o que só se prova no aparelho
   é dito como não testado.
 - Preferir remover a acumular: o que não é usado sai.
@@ -137,8 +141,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 - Passos após a confirmação: (0) revisão com contexto limpo: um subagente lê só este arquivo e o diff desde o
   último release e aponta falhas de segurança, quebra das regras de estrutura e itens do CHANGELOG que não
   estão no código; o mantenedor decide entre lançar assim ou corrigir antes (o que exige novo build e nova
-  vistoria). (1) mover [Unreleased] para `## [X.Y.Z] - data`. (2) se o CHANGELOG.md passar de 300 linhas,
-  mover as versões anteriores (menos a nova) para `changelog/vA-vB.md`, que nunca mais muda. (3) subir
+  vistoria); o que ficar sem correção e sem prova vai para `ACHADOS.md`. (1) mover [Unreleased] para `## [X.Y.Z] - data`. (2) se o CHANGELOG.md passar de 300 linhas,
+  mover as versões anteriores (menos a nova) para `changelog/vA-vB.md`, que nunca mais muda, e terminar o CHANGELOG.md com `## [Earlier versions]` e o link para `changelog/` (o título impede o link de entrar nas notas da Release); deixar um `[Unreleased]` vazio. (3) subir
   `APP_VERSION` em `gradle.properties` (o `versionCode` vem do número da execução do CI e só sobe; não passar
   a calculá-lo da versão, porque o v0.1.0 já saiu com o número da execução e um valor menor impediria a
   atualização). (4) commit `chore(release): vX.Y.Z` na main.
@@ -146,7 +150,8 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 - A IA nunca cria tag nem Release: o commit `chore(release): vX.Y.Z` na main basta,
   e o CI cria a tag e publica quando vê versão nova com seção no CHANGELOG.
 - Toda atualização vai para os artefatos do Actions (build para vistoria) e a IA
-  avisa com o link. O mantenedor vistoria e só então pede o release público.
+  avisa com o link da execução do workflow `CI` **daquele commit**: conferir o nome e o commit antes de mandar, nunca a do "pages build and deployment", que também aparece na lista quando `docs/` muda. O mantenedor vistoria e só então pede o release público.
+- Ferramenta temporária de teste ou diagnóstico (registro de log, botão de teste) nunca sai em release pública: antes do commit de release ela é removida por inteiro, o que gera nova build e nova vistoria.
 - Entre a vistoria e o commit de release, só mudam versão e CHANGELOG; mudou código, nova vistoria.
 
 ## Segredos
@@ -158,6 +163,7 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
 
 ## Idioma
 - README e CHANGELOG: inglês (global).
+- Textos visíveis do app sempre nos arquivos de idioma, nunca escritos no código.
 
 ## Projeto público
 - README com a seção de transparência sobre IA (nunca remover) e, no fim, a de
@@ -174,6 +180,12 @@ Sem SDKs de anúncio ou analytics. Chamadas de rede do app além do link do usu�
   que o uso é só para conteúdo próprio, livre ou com permissão. Nunca prometer ou sugerir contornar
   proteções de terceiros.
 
+## Limites do produto (não mudam)
+- Sem SDKs de anúncio ou analytics. Sem permissão de armazenamento (pasta pública via MediaStore ou seletor de pastas). Chamadas de rede além do link do usuário: só as Releases do GitHub (atualização) e a foto de perfil do GitHub (Sobre). Mudar algo aqui só com o mantenedor.
+
+## Decisões mantidas (não propor mudar sem o mantenedor pedir)
+- `versionCode` = número da execução do CI (2026-11-15): o v0.1.0 já saiu assim, e um valor menor impediria a atualização; não passar a derivá-lo da versão.
+
 ## Decisões recusadas (não propor de novo sem o mantenedor pedir)
 Toda ideia recusada (da IA ou de usuário) entra aqui no mesmo commit, com data e motivo. Antes de propor algo, conferir esta lista.
 - Cabeçalho fixo de lista e barra de rolagem rápida, do BoomListener (2026-11-20): o mantenedor não os escolheu entre os itens de UI.
@@ -186,4 +198,4 @@ Toda ideia recusada (da IA ou de usuário) entra aqui no mesmo commit, com data 
 
 ## Contexto atual
 - Foco: v0.1.0 publicada (Release no GitHub). Próximos: novas fontes além do YouTube. Cores: o app usa as próprias, tiradas do ícone; "Usar cores do sistema" (Android 12+) vem desligado por padrão.
-- Problemas conhecidos: Ajustes em categorias, painel recolhível, `AppSheet`, `Selection`, caches por KB e o quadro puro do ícone só compilados pelo CI; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); a interface nova vem sendo vistoriada pelo mantenedor no aparelho a cada build (o que ele não comentou, a IA não dá como testado); exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; sem Release pública ainda, então o aviso de atualização não achou nada para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.
+- Problemas conhecidos: Ajustes em categorias, painel recolhível, `AppSheet`, `Selection`, caches por KB e o quadro puro do ícone só compilados pelo CI; testado no aparelho só com YouTube (áudio M4A/MP3, vídeo 1080p, tags, capa, biblioteca); a interface nova vem sendo vistoriada pelo mantenedor no aparelho a cada build (o que ele não comentou, a IA não dá como testado); exclusão pelo sistema, Sobre e aviso de atualização só compilados pelo CI; a v0.1.0 é a última Release pública, então o aviso de atualização ainda não teve versão nova para mostrar; a conversão MP3 em Java pode ser lenta em músicas longas.
