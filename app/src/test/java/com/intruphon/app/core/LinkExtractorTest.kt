@@ -32,4 +32,21 @@ class LinkExtractorTest {
         assertFalse(LinkExtractor.isPlaylist("https://www.youtube.com/watch?v=abc&list=PL123"))
         assertFalse(LinkExtractor.isPlaylist("https://example.com/playlist?list=1"))
     }
+
+    @Test fun searchQueryIsTidiedText() {
+        assertEquals("daft punk one more time", LinkExtractor.searchQuery("  daft   punk\none more time "))
+    }
+
+    @Test fun searchQueryIsNullWhenThereIsNothingToSearch() {
+        assertNull(LinkExtractor.searchQuery(null))
+        assertNull(LinkExtractor.searchQuery("   \n "))
+    }
+
+    @Test fun searchQueryIsNullWhenTheTextHasALink() {
+        assertNull(LinkExtractor.searchQuery("listen https://example.com/x now"))
+    }
+
+    @Test fun searchQueryIsCutToALimit() {
+        assertEquals(200, LinkExtractor.searchQuery("a".repeat(500))!!.length)
+    }
 }

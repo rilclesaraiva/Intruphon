@@ -4,11 +4,13 @@ import com.intruphon.app.data.net.OkHttpDownloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
+import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.VideoStream
@@ -84,15 +86,7 @@ object MediaRepository {
                 items.addAll(more.items)
                 page = if (more.hasNextPage()) more.nextPage else null
             }
-            val entries = items.filter { it.url.isNotEmpty() }.map {
-                PlaylistEntry(
-                    url = it.url,
-                    title = it.name,
-                    artist = it.uploaderName?.takeIf { name -> name.isNotBlank() },
-                    durationSeconds = it.duration,
-                    thumbnailUrl = it.thumbnails.maxByOrNull { image -> maxOf(image.height, 0) * maxOf(image.width, 0) }?.url,
-                )
-            }
+            val entries = items.filter { it.url.isNotEmpty() }.map(::entryOf)
             if (entries.isEmpty()) PlaylistResult.Failed(FailReason.UNREADABLE)
             else PlaylistResult.Ready(PlaylistData(info.name, entries))
         } catch (e: CancellationException) {
@@ -101,6 +95,38 @@ object MediaRepository {
             PlaylistResult.Failed(FailReason.NETWORK)
         } catch (e: Exception) {
             PlaylistResult.Failed(FailReason.UNREADABLE)
+        }
+    }
+
+    private fun entryOf(item: StreamInfoItem) = PlaylistEntry(
+        url = item.url,
+        title = item.name,
+        artist = item.uploaderName?.takeIf { name -> name.isNotBlank() },
+        durationSeconds = item.duration,
+        thumbnailUrl = item.thumbnails.maxByOrNull { image -> maxOf(image.height, 0) * maxOf(image.width, 0) }?.url,
+    )
+
+    /**
+     * Searches YouTube by name (first page of results). [SearchFilter.VIDEOS] lists videos, [SearchFilter.SONGS] the
+     * songs of YouTube Music. Each result is read in full only when the person picks it for download.
+     */
+    suspend fun search(query: String, filter: SearchFilter): SearchResult = withContext(Dispatchers.IO) {
+        try {
+            ensureInit()
+            val contentFilter = when (filter) {
+                SearchFilter.VIDEOS -> YoutubeSearchQueryHandlerFactory.VIDEOS
+                SearchFilter.SONGS -> YoutubeSearchQueryHandlerFactory.MUSIC_SONGS
+            }
+            val extractor = ServiceList.YouTube.getSearchExtractor(query, listOf(contentFilter), "")
+            extractor.fetchPage()
+            val entries = extractor.initialPage.items.filterIsInstance<StreamInfoItem>().filter { it.url.isNotEmpty() }.map(::entryOf)
+            if (entries.isEmpty()) SearchResult.Empty else SearchResult.Ready(entries)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IOException) {
+            SearchResult.Failed(FailReason.NETWORK)
+        } catch (e: Exception) {
+            SearchResult.Failed(FailReason.UNREADABLE)
         }
     }
 

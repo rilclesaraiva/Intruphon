@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Intruphon</string>
     <string name="home_title">Intruphon</string>
-    <string name="home_link_label">Cole um link</string>
+    <string name="home_link_label">Cole um link ou o nome de uma música</string>
+    <string name="home_search">Buscar</string>
     <string name="home_download">Baixar</string>
     <string name="home_paste">Colar</string>
     <string name="home_clear">Limpar</string>
@@ -174,4 +175,9 @@
     <string name="downloads_allow_many">Permitir que o Intruphon exclua estes %1$d arquivos?</string>
     <string name="downloads_allow">Permitir</string>
     <string name="downloads_deny">Negar</string>
+    <string name="search_title">Resultados para %1$s</string>
+    <string name="search_videos">Vídeos</string>
+    <string name="search_songs">Músicas</string>
+    <string name="search_loading">Buscando…</string>
+    <string name="search_empty">Nada encontrado.</string>
 </resources>

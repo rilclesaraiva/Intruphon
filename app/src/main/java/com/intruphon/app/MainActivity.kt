@@ -54,6 +54,7 @@ import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.data.update.UpdateRepository
 import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
+import com.intruphon.app.features.download.SearchSheet
 import com.intruphon.app.features.downloads.ActiveDownloadsScreen
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
@@ -104,6 +105,7 @@ private fun App(versionName: String) {
         saver = listSaver<SnapshotStateList<Int>, Int>(save = { it.toList() }, restore = { it.toMutableStateList() }),
     ) { mutableStateListOf(HOME) }
     var sheetLink by rememberSaveable { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf<String?>(null) }
     // True while the Downloads page shows its picking bar, which takes the place of the Back button.
     var picking by rememberSaveable { mutableStateOf(false) }
     val predictive by AppSettings.predictiveBackFlow.collectAsState()
@@ -189,7 +191,7 @@ private fun App(versionName: String) {
     @Composable
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
-            HOME -> HomeScreen(onDownload = { sheetLink = it }, onOpenDownloads = { open(DOWNLOADS) })
+            HOME -> HomeScreen(onDownload = { sheetLink = it }, onSearch = { searchQuery = it }, onOpenDownloads = { open(DOWNLOADS) })
             DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) }, onSelecting = { picking = it })
             ACTIVE -> ActiveDownloadsScreen()
             SETTINGS -> SettingsScreen(
@@ -261,6 +263,9 @@ private fun App(versionName: String) {
         }
     }
     UpdatePrompt()
+    searchQuery?.let {
+        SearchSheet(query = it, onDismiss = { searchQuery = null })
+    }
     sheetLink?.let {
         DownloadSheet(link = it, onDismiss = { sheetLink = null })
     }

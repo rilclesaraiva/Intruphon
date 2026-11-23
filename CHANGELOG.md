@@ -15,6 +15,7 @@
 - Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
 
 ### Added
+- Search by name: type a song or video name on the home screen (the button becomes Search), or share plain text with no link to Intruphon, and a sheet lists the YouTube results with cover, title, channel and length, with a Videos / Songs choice. Tapping a result opens the usual format sheet. Only the first page of results is shown.
 - Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.
 
 ## [0.1.0] - 2026-11-15

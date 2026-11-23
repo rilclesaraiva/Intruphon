@@ -59,3 +59,12 @@ sealed interface PlaylistResult {
     data class Ready(val playlist: PlaylistData) : PlaylistResult
     data class Failed(val reason: FailReason) : PlaylistResult
 }
+
+/** Which kind of results a name search lists. */
+enum class SearchFilter { VIDEOS, SONGS }
+
+sealed interface SearchResult {
+    data class Ready(val entries: List<PlaylistEntry>) : SearchResult
+    data object Empty : SearchResult
+    data class Failed(val reason: FailReason) : SearchResult
+}

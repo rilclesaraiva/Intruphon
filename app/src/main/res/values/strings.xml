@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Intruphon</string>
     <string name="home_title">Intruphon</string>
-    <string name="home_link_label">Paste a link</string>
+    <string name="home_link_label">Paste a link or a song name</string>
+    <string name="home_search">Search</string>
     <string name="home_download">Download</string>
     <string name="home_paste">Paste</string>
     <string name="home_clear">Clear</string>
@@ -175,4 +176,9 @@
     <string name="downloads_allow_many">Allow Intruphon to delete these %1$d files?</string>
     <string name="downloads_allow">Allow</string>
     <string name="downloads_deny">Deny</string>
+    <string name="search_title">Results for %1$s</string>
+    <string name="search_videos">Videos</string>
+    <string name="search_songs">Songs</string>
+    <string name="search_loading">Searching…</string>
+    <string name="search_empty">Nothing found.</string>
 </resources>

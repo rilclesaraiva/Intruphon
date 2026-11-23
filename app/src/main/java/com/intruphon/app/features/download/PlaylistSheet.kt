@@ -194,7 +194,7 @@ private fun PlaylistRow(number: Int, entry: PlaylistEntry, checked: Boolean, ava
     }
 }
 
-private fun formatClock(seconds: Long): String {
+internal fun formatClock(seconds: Long): String {
     val h = seconds / 3600
     val m = seconds % 3600 / 60
     val s = seconds % 60

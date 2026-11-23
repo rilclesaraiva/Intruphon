@@ -79,11 +79,13 @@ private const val MIN_RECENT = 3
 
 /** Home: paste a link, press Download, and see the latest downloads below. The wiring comes from the entry point. */
 @Composable
-fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenDownloads: () -> Unit, modifier: Modifier = Modifier) {
     var link by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val url = LinkExtractor.firstUrl(link)
+    // Text with no link in it is a name to search for: the same button then searches instead of downloading.
+    val query = LinkExtractor.searchQuery(link)
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
     // The recent list fills the screen to the bottom: how many rows fit depends on the device, so it is measured.
@@ -135,10 +137,13 @@ fun HomeScreen(onDownload: (String) -> Unit, onOpenDownloads: () -> Unit, modifi
             modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses(),
         )
         Button(
-            onClick = { url?.let(onDownload) },
-            enabled = url != null,
+            onClick = {
+                focusManager.clearFocus()
+                if (url != null) onDownload(url) else query?.let(onSearch)
+            },
+            enabled = url != null || query != null,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-        ) { Text(stringResource(R.string.home_download), style = MaterialTheme.typography.titleMedium) }
+        ) { Text(stringResource(if (url == null && query != null) R.string.home_search else R.string.home_download), style = MaterialTheme.typography.titleMedium) }
 
         Row(
             Modifier.fillMaxWidth().onGloballyPositioned { headerBottom = (it.positionInParent().y + it.size.height).toInt() },

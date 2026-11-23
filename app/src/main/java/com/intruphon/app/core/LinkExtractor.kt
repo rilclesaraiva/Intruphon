@@ -11,4 +11,16 @@ object LinkExtractor {
 
     /** True for a link that points at a whole playlist (not a video that merely carries a list id). */
     fun isPlaylist(link: String): Boolean = playlist.containsMatchIn(link)
+
+    private const val MAX_QUERY = 200
+
+    /**
+     * The text to search for when [text] has no link in it (a song name typed or shared): spaces tidied and cut to a
+     * sane length; null if there is nothing to search or the text holds a link (that goes to the downloader).
+     */
+    fun searchQuery(text: String?): String? {
+        if (text == null || firstUrl(text) != null) return null
+        val tidy = text.trim().replace(Regex("""\s+"""), " ").take(MAX_QUERY).trim()
+        return tidy.ifEmpty { null }
+    }
 }
