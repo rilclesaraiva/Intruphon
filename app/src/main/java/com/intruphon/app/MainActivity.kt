@@ -223,7 +223,7 @@ private fun App(versionName: String) {
     @Composable
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
-            HOME -> HomeScreen(onDownload = { sheetLink = it }, onSearch = { searchQuery = it; open(SEARCH) }, onOpenDownloads = { open(DOWNLOADS) })
+            HOME -> HomeScreen(onDownload = { sheetLink = it }, onSearch = { searchQuery = it; open(SEARCH) }, onOpenDownloads = { open(DOWNLOADS) }, onOpenActive = { open(ACTIVE) })
             DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) }, onSelecting = { picking = it })
             ACTIVE -> ActiveDownloadsScreen()
             SETTINGS -> SettingsScreen(

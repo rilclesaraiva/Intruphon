@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- Home: the link field and its action button are now one rounded capsule (the button is a round Search or Download icon inside it); the old wide button is gone.
 - Search and Downloads: swiping between tabs is now a carousel: the next page follows your finger and you see it coming in; letting go finishes the move (or goes back) with a spring, and tapping a pill slides the same way. Each tab keeps its own scroll position.
 - Search: results now have an All tab (the default) that mixes videos and songs and marks each result Audio or Video, next to the Videos and Songs tabs. Swiping sideways switches tab, here and in Downloads.
 - Downloads: a finished download says just "Done" (no "Saved in Download/Intruphon" and no note about tags and cover).
@@ -21,6 +22,8 @@
 - Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
 
 ### Added
+- Home: a "Paste what you copied" chip appears under the field when something is on the clipboard; one tap brings it in, and a link goes straight to the format sheet. The app only checks that the clipboard holds text; it reads the content when you tap the chip or the paste button.
+- Home: while something is downloading, a strip with the icon's three bars as a progress indicator shows above the recent list and opens the Downloading page.
 - Downloads: "Details" in the ⋮ panel of a saved file shows its location, format, size, length, bitrate, sample rate (audio), resolution and frame rate (video), modified date and source link.
 - Search by name: type a song or video name on the home screen (the button becomes Search), or share plain text with no link to Intruphon, and the app opens a Search page, laid out like YouTube's. While you edit the field it lists similar searches to pick from; sending a search lists the YouTube results with cover, title, channel and length, with a Videos / Songs choice. Tapping a result opens the usual format sheet. Only the first page of results is shown.
 - Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.

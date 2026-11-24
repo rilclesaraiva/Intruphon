@@ -25,7 +25,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalWindowInfo
+import com.intruphon.app.core.ui.FunnelProgress
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -83,7 +90,7 @@ private const val MIN_RECENT = 3
 
 /** Home: paste a link, press Download, and see the latest downloads below. The wiring comes from the entry point. */
 @Composable
-fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenDownloads: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenDownloads: () -> Unit, onOpenActive: () -> Unit, modifier: Modifier = Modifier) {
     var link by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -97,6 +104,27 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
         else if (query != null) onSearch(query)
     }
     val density = LocalDensity.current
+    // Is there text on the clipboard? Only its type is looked at, never its content, until the person taps the chip.
+    val systemClipboard = remember { context.getSystemService(android.content.ClipboardManager::class.java) }
+    var hasCopied by remember { mutableStateOf(false) }
+    val windowFocused = LocalWindowInfo.current.isWindowFocused
+    LaunchedEffect(windowFocused) {
+        if (windowFocused) hasCopied = systemClipboard?.primaryClipDescription?.hasMimeType("text/*") == true
+    }
+    DisposableEffect(systemClipboard) {
+        val listener = android.content.ClipboardManager.OnPrimaryClipChangedListener {
+            hasCopied = systemClipboard?.primaryClipDescription?.hasMimeType("text/*") == true
+        }
+        systemClipboard?.addPrimaryClipChangedListener(listener)
+        onDispose { systemClipboard?.removePrimaryClipChangedListener(listener) }
+    }
+    fun useCopied() {
+        val pasted = clipboard.getText()?.text.orEmpty()
+        if (pasted.isBlank()) { hasCopied = false; Toast.makeText(context, R.string.home_clipboard_empty, Toast.LENGTH_SHORT).show(); return }
+        link = pasted
+        val copiedUrl = LinkExtractor.firstUrl(pasted)
+        if (copiedUrl != null) onDownload(copiedUrl)
+    }
     // The recent list fills the screen to the bottom: how many rows fit depends on the device, so it is measured.
     var viewport by remember { mutableIntStateOf(0) }
     var headerBottom by remember { mutableIntStateOf(0) }
@@ -106,7 +134,9 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
     val navigationBar = WindowInsets.navigationBars.getBottom(density)
     val room = viewport - headerBottom - gap - with(density) { 24.dp.roundToPx() } - navigationBar
     val fit = if (viewport > 0 && headerBottom > 0) maxOf(MIN_RECENT, (room + gap) / (rowEstimate + gap)) else MIN_RECENT
-    val recent = DownloadEngine.items.collectAsState().value.take(fit)
+    val items = DownloadEngine.items.collectAsState().value
+    val recent = items.take(fit)
+    val running = items.filter { it.status.state.active }
 
     // Files deleted outside the app are marked when Home shows, like in the Downloads page.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -124,36 +154,72 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PageHeader(stringResource(R.string.home_title))
+        // One capsule: the field with its round action button inside, the same height with or without focus.
         OutlinedTextField(
             value = link,
             onValueChange = { link = it },
-            // One small line that never wraps: the field keeps the same height with or without focus.
+            // One small line that never wraps.
             label = { Text(stringResource(R.string.home_link_label), style = MaterialTheme.typography.bodySmall, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) },
             singleLine = true,
-            // The Enter key of the keyboard does what the button below does (search or download).
+            // The Enter key of the keyboard does what the round button does (search or download).
             keyboardOptions = KeyboardOptions(imeAction = if (url == null) ImeAction.Search else ImeAction.Go),
             keyboardActions = KeyboardActions(onAny = { act() }),
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = CircleShape,
             trailingIcon = {
-                if (link.isEmpty()) {
-                    IconButton(onClick = {
-                        val pasted = clipboard.getText()?.text.orEmpty()
-                        if (pasted.isBlank()) Toast.makeText(context, R.string.home_clipboard_empty, Toast.LENGTH_SHORT).show()
-                        else link = pasted
-                    }) { Icon(ImageVector.vectorResource(R.drawable.ic_content_paste), contentDescription = stringResource(R.string.home_paste)) }
-                } else {
-                    IconButton(onClick = { link = "" }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.home_clear))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (link.isEmpty()) {
+                        IconButton(onClick = {
+                            val pasted = clipboard.getText()?.text.orEmpty()
+                            if (pasted.isBlank()) Toast.makeText(context, R.string.home_clipboard_empty, Toast.LENGTH_SHORT).show()
+                            else link = pasted
+                        }) { Icon(ImageVector.vectorResource(R.drawable.ic_content_paste), contentDescription = stringResource(R.string.home_paste)) }
+                    } else {
+                        IconButton(onClick = { link = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.home_clear))
+                        }
+                    }
+                    val searching = url == null && query != null
+                    FilledIconButton(onClick = act, enabled = url != null || query != null, modifier = Modifier.padding(end = 6.dp).size(44.dp)) {
+                        Icon(
+                            if (searching) Icons.Default.Search else Icons.Default.ArrowDownward,
+                            contentDescription = stringResource(if (searching) R.string.home_search else R.string.home_download),
+                        )
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses(),
         )
-        Button(
-            onClick = act,
-            enabled = url != null || query != null,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-        ) { Text(stringResource(if (url == null && query != null) R.string.home_search else R.string.home_download), style = MaterialTheme.typography.titleMedium) }
+        // Something was copied: one tap brings it in (a link goes straight to the format sheet).
+        if (hasCopied && link.isEmpty()) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.fillMaxWidth().clip(CircleShape).clickable { useCopied() },
+            ) {
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(ImageVector.vectorResource(R.drawable.ic_content_paste), contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.home_use_copied), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        // Something is downloading: the funnel shows how far along, and the strip opens the page to manage them.
+        if (running.isNotEmpty()) {
+            val known = running.mapNotNull { r -> r.status.takeIf { it.state == DownloadState.RUNNING && it.totalBytes > 0 }?.let { it.downloadedBytes.toFloat() / it.totalBytes } }
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = onOpenActive),
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    FunnelProgress(known.takeIf { it.isNotEmpty() }?.average()?.toFloat())
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.active_count, running.size), style = MaterialTheme.typography.titleMedium)
+                        Text(running.first().record.title, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                }
+            }
+        }
 
         Row(
             Modifier.fillMaxWidth().onGloballyPositioned { headerBottom = (it.positionInParent().y + it.size.height).toInt() },

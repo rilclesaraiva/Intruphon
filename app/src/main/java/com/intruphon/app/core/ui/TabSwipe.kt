@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,7 +34,7 @@ import kotlin.math.floor
 fun TabPager(selected: Int, count: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, page: @Composable (Int) -> Unit) {
     // Where the pages are, in pages: 1.0 is the second one; between two numbers is a move in progress.
     val position = remember { Animatable(selected.toFloat()) }
-    var width by remember { androidx.compose.runtime.mutableIntStateOf(1) }
+    var width by remember { mutableIntStateOf(1) }
     val scope = rememberCoroutineScope()
     val current by rememberUpdatedState(selected)
     val select by rememberUpdatedState(onSelect)

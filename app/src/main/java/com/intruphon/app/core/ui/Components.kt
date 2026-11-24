@@ -1,6 +1,10 @@
 package com.intruphon.app.core.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.ImageBitmap
@@ -140,6 +144,28 @@ fun IconRowGroup(items: List<IconRowItem>, modifier: Modifier = Modifier) {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The three bars of the app icon as a progress indicator: each one fills to [fraction] (0 to 1), the shortest at the
+ * bottom. With no known progress ([fraction] null) the bars stay empty.
+ */
+@Composable
+fun FunnelProgress(fraction: Float?, modifier: Modifier = Modifier) {
+    val track = MaterialTheme.colorScheme.outlineVariant
+    val fill = MaterialTheme.colorScheme.primary
+    Canvas(modifier.size(36.dp, 23.dp)) {
+        val bar = 5.dp.toPx()
+        val gap = 4.dp.toPx()
+        val done = (fraction ?: 0f).coerceIn(0f, 1f)
+        listOf(1f, 0.8f, 0.6f).forEachIndexed { row, share ->
+            val top = Offset(0f, row * (bar + gap))
+            val length = size.width * share
+            val corner = CornerRadius(bar / 2)
+            drawRoundRect(track, top, Size(length, bar), corner)
+            if (done > 0f) drawRoundRect(fill, top, Size(maxOf(length * done, bar), bar), corner)
         }
     }
 }

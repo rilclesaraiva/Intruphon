@@ -4,6 +4,7 @@
     <string name="home_link_label">Paste the link here or a song name</string>
     <string name="home_search">Search</string>
     <string name="home_download">Download</string>
+    <string name="home_use_copied">Paste what you copied</string>
     <string name="home_paste">Paste</string>
     <string name="home_clear">Clear</string>
     <string name="home_clipboard_empty">Nothing copied yet</string>
