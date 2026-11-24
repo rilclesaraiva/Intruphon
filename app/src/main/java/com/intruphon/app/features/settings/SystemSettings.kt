@@ -75,7 +75,7 @@ fun SystemSettings(modifier: Modifier = Modifier) {
             listOf(
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_download),
-                    RowTone.PRIMARY,
+                    RowTone.TEAL,
                     stringResource(R.string.settings_updates_check),
                     checkHint,
                     onClick = {
@@ -89,7 +89,7 @@ fun SystemSettings(modifier: Modifier = Modifier) {
         )
         ExpandableOptionRow(
             icon = ImageVector.vectorResource(R.drawable.ic_download),
-            tone = RowTone.PRIMARY,
+            tone = RowTone.TEAL,
             title = stringResource(R.string.settings_updates_title),
             summary = notices,
         ) {

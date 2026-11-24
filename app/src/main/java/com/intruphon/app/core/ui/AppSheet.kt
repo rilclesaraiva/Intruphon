@@ -1,6 +1,7 @@
 package com.intruphon.app.core.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.heightIn
@@ -60,7 +61,7 @@ fun AppSheet(
     ) {
         BackHandler(onBack = hideThenDismiss)
         val maxHeight = LocalConfiguration.current.screenHeightDp.dp * MAX_SHEET_FRACTION
-        Column(Modifier.heightIn(max = maxHeight).then(if (dragOnlyFromTop) Modifier.nestedScroll(KeepScrollInside) else Modifier)) {
+        Column(Modifier.animateContentSize(AppMotion.spatial()).heightIn(max = maxHeight).then(if (dragOnlyFromTop) Modifier.nestedScroll(KeepScrollInside) else Modifier)) {
             val sheetScope = remember(this) { AppSheetScopeImpl(this, hideThenDismiss) }
             sheetScope.content()
         }

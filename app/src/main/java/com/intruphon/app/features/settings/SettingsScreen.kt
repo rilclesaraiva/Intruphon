@@ -30,21 +30,21 @@ fun SettingsScreen(
             listOf(
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_palette),
-                    RowTone.PRIMARY,
+                    RowTone.PURPLE,
                     stringResource(R.string.settings_cat_appearance),
                     stringResource(R.string.settings_cat_appearance_hint),
                     onClick = onOpenAppearance,
                 ),
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_download),
-                    RowTone.SECONDARY,
+                    RowTone.BLUE,
                     stringResource(R.string.settings_cat_downloads),
                     stringResource(R.string.settings_cat_downloads_hint),
                     onClick = onOpenDownloads,
                 ),
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_tune),
-                    RowTone.TERTIARY,
+                    RowTone.TEAL,
                     stringResource(R.string.settings_cat_system),
                     stringResource(R.string.settings_cat_system_hint),
                     onClick = onOpenSystem,
@@ -56,7 +56,7 @@ fun SettingsScreen(
             listOf(
                 IconRowItem(
                     Icons.Default.Info,
-                    RowTone.NEUTRAL,
+                    RowTone.PINK,
                     stringResource(R.string.settings_about_entry),
                     stringResource(R.string.settings_about_hint),
                     onClick = onOpenAbout,

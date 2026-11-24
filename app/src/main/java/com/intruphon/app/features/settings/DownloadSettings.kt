@@ -88,7 +88,7 @@ fun DownloadSettings(modifier: Modifier = Modifier) {
             listOf(
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_folder),
-                    RowTone.SECONDARY,
+                    RowTone.AMBER,
                     stringResource(R.string.settings_folder),
                     if (folderLost) stringResource(R.string.settings_folder_lost) else folder ?: stringResource(R.string.settings_folder_default),
                     onClick = { folderPanel = true },

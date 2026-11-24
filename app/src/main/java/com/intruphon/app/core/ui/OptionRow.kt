@@ -56,12 +56,7 @@ fun ExpandableOptionRow(
     var open by rememberSaveable { mutableStateOf(false) }
     val rotation by animateFloatAsState(if (open) 180f else 0f, AppMotion.spatial(), label = "optionArrow")
     val scheme = MaterialTheme.colorScheme
-    val (container, onContainer) = when (tone) {
-        RowTone.PRIMARY -> scheme.primaryContainer to scheme.onPrimaryContainer
-        RowTone.SECONDARY -> scheme.secondaryContainer to scheme.onSecondaryContainer
-        RowTone.TERTIARY -> scheme.tertiaryContainer to scheme.onTertiaryContainer
-        RowTone.NEUTRAL -> scheme.surfaceContainerHighest to scheme.onSurfaceVariant
-    }
+    val (container, onContainer) = tone.colors()
     Surface(modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, color = scheme.surfaceContainerLow) {
         Column {
             Row(

@@ -2,7 +2,6 @@ package com.intruphon.app.core.ui
 
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
-import androidx.compose.ui.MotionDurationScale
 
 /**
  * The app's motion in one place. Everything that moves uses these named specs instead of a number written on the spot.
@@ -12,16 +11,12 @@ import androidx.compose.ui.MotionDurationScale
  * pinned Material 3 has no `MotionScheme` yet; when it does, only this file changes.
  *
  * The one documented exception is the page slide ([SHORT]): it is a fixed-time tween so that letting go of the back
- * gesture, the Back button and the system back all end in exactly the same time, whatever the system animation scale.
+ * gesture, the Back button and the system back all end in exactly the same time. Like every animation here it follows
+ * the system animation scale (and jumps to the end when the person turned animations off).
  */
 object AppMotion {
     /** Duration of a page slide, in milliseconds. */
     const val SHORT = 280
-
-    /** Ignores the system animation scale: the app's own durations always apply (use with withContext). */
-    val FixedScale = object : MotionDurationScale {
-        override val scaleFactor: Float = 1f
-    }
 
     /** Things that move or change size (panels growing, content arriving). */
     fun <T> spatial(): SpringSpec<T> = spring(dampingRatio = 0.8f, stiffness = 380f)

@@ -77,23 +77,24 @@ fun IntruphonTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colors, shapes = ExpressiveShapes, typography = ExpressiveTypography, content = content)
 }
 
-// The app's own colors, taken from the icon: pale ice blue (#C7DDE8) and deep blue-black (#0C1620).
+// The app's own colors: neutral near-black surfaces (no blue cast, so nothing turns blue) with the icon's pale ice blue
+// (#C7DDE8) only as the accent.
 private val IntruphonDark = darkColorScheme(
-    primary = Color(0xFFC7DDE8), onPrimary = Color(0xFF0C1620),
-    primaryContainer = Color(0xFF1F3A4D), onPrimaryContainer = Color(0xFFD9ECF2),
-    secondary = Color(0xFF8FB7C9), onSecondary = Color(0xFF0C1620),
-    secondaryContainer = Color(0xFF1A3342), onSecondaryContainer = Color(0xFFCFE5EE),
-    tertiary = Color(0xFF6FA8DC), onTertiary = Color(0xFF0C1620),
-    tertiaryContainer = Color(0xFF22405E), onTertiaryContainer = Color(0xFFD2E4F7),
-    background = Color(0xFF0C1620), onBackground = Color(0xFFE3EEF3),
-    surface = Color(0xFF0C1620), onSurface = Color(0xFFE3EEF3),
-    surfaceVariant = Color(0xFF1B2A36), onSurfaceVariant = Color(0xFFA9BEC9),
-    outline = Color(0xFF6B8494), outlineVariant = Color(0xFF2A3B48),
-    inverseSurface = Color(0xFFDCE8EE), inverseOnSurface = Color(0xFF0C1620), inversePrimary = Color(0xFF2F5F7A),
+    primary = Color(0xFFC7DDE8), onPrimary = Color(0xFF101417),
+    primaryContainer = Color(0xFF2C3438), onPrimaryContainer = Color(0xFFDCE6EB),
+    secondary = Color(0xFFB4C4CC), onSecondary = Color(0xFF101417),
+    secondaryContainer = Color(0xFF2B3136), onSecondaryContainer = Color(0xFFDDE5E9),
+    tertiary = Color(0xFFA9C0D4), onTertiary = Color(0xFF101417),
+    tertiaryContainer = Color(0xFF2D343A), onTertiaryContainer = Color(0xFFDCE4EB),
+    background = Color(0xFF0E0F10), onBackground = Color(0xFFE6E8EA),
+    surface = Color(0xFF0E0F10), onSurface = Color(0xFFE6E8EA),
+    surfaceVariant = Color(0xFF24282B), onSurfaceVariant = Color(0xFFB4BABF),
+    outline = Color(0xFF70777C), outlineVariant = Color(0xFF33383C),
+    inverseSurface = Color(0xFFE3E6E8), inverseOnSurface = Color(0xFF0E0F10), inversePrimary = Color(0xFF2F5F7A),
     surfaceTint = Color(0xFFC7DDE8),
-    surfaceDim = Color(0xFF09121A),
-    surfaceContainerLowest = Color(0xFF09121A), surfaceContainerLow = Color(0xFF101C26),
-    surfaceContainer = Color(0xFF142330), surfaceContainerHigh = Color(0xFF1A2B39), surfaceContainerHighest = Color(0xFF213445),
+    surfaceDim = Color(0xFF0B0C0D),
+    surfaceContainerLowest = Color(0xFF0B0C0D), surfaceContainerLow = Color(0xFF141516),
+    surfaceContainer = Color(0xFF191B1D), surfaceContainerHigh = Color(0xFF202325), surfaceContainerHighest = Color(0xFF272B2E),
 )
 
 private val IntruphonLight = lightColorScheme(

@@ -7,7 +7,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +88,22 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.
     }
 }
 
-enum class RowTone { PRIMARY, SECONDARY, TERTIARY, NEUTRAL }
+/** Each icon has its own color, like the settings of the maintainer's other app: a dark tint behind a light icon (the other way round in the light theme). */
+enum class RowTone(private val darkContainer: Long, private val darkContent: Long, private val lightContainer: Long, private val lightContent: Long) {
+    PURPLE(0xFF3D2A6B, 0xFFD0BCFF, 0xFFE8DDFF, 0xFF4A2F8A),
+    BLUE(0xFF1E3A5F, 0xFFAECBFA, 0xFFD3E3FD, 0xFF1F4B8E),
+    GREEN(0xFF1E4D2B, 0xFFA8DAB5, 0xFFC7EDD1, 0xFF1B5E2F),
+    AMBER(0xFF5A3F00, 0xFFFFC857, 0xFFFFE2A8, 0xFF6B4A00),
+    TEAL(0xFF0F4F4A, 0xFF84D8CF, 0xFFBFEFEA, 0xFF0D5A54),
+    PINK(0xFF5B1A44, 0xFFFFADD9, 0xFFFFD8EC, 0xFF7A1E55),
+    RED(0xFF6B1A1A, 0xFFF8B4B4, 0xFFFFD9D6, 0xFF8C1D18);
+
+    /** The circle's color and the icon's color for the current theme. */
+    @Composable
+    fun colors(): Pair<Color, Color> =
+        if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color(darkContainer) to Color(darkContent)
+        else Color(lightContainer) to Color(lightContent)
+}
 
 /** One tappable row: round colored icon, title and an optional line under it. */
 data class IconRowItem(
@@ -125,12 +142,7 @@ fun IconRowGroup(items: List<IconRowItem>, modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     val scheme = MaterialTheme.colorScheme
-                    val (container, content) = when (item.tone) {
-                        RowTone.PRIMARY -> scheme.primaryContainer to scheme.onPrimaryContainer
-                        RowTone.SECONDARY -> scheme.secondaryContainer to scheme.onSecondaryContainer
-                        RowTone.TERTIARY -> scheme.tertiaryContainer to scheme.onTertiaryContainer
-                        RowTone.NEUTRAL -> scheme.surfaceContainerHighest to scheme.onSurfaceVariant
-                    }
+                    val (container, content) = item.tone.colors()
                     Box(Modifier.size(52.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
                         if (item.image != null) {
                             Image(item.image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())

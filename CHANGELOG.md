@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Changed
+- Sheets: the download sheet ("Reading the link…", then the formats, then "More formats") and every other bottom panel now change height with a spring instead of jumping when their content changes.
+- Dark theme: the surfaces are neutral near-black grey instead of blue-black, so the app no longer looks blue all over; the pale ice blue of the icon stays only as the accent.
+- Settings and About: each row icon has its own color (purple, blue, green, amber, teal, pink, red), like the maintainer's other app, instead of all being blue.
+- Animations now follow the system animation scale (the page slide and the panel steps used to ignore it); with animations turned off in Android they end at once.
 - Home: the link field and its action button are now one rounded capsule (the button is a round Search or Download icon inside it); the old wide button is gone.
 - Search and Downloads: swiping between tabs now slides only the lists (the next one follows your finger and is seen coming in); the title and pills stay put and scroll away with the list as before. The pills have a filled highlight that slides to the new tab, following the swipe, and the labels fade with it. Each tab keeps its own scroll position.
 - Search: results now have an All tab (the default) that mixes videos and songs and marks each result Audio or Video, next to the Videos and Songs tabs. Swiping sideways switches tab, here and in Downloads.

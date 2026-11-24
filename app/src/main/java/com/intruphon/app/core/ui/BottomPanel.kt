@@ -101,16 +101,14 @@ fun BottomPanelFlow(
         var shown by remember { mutableIntStateOf(step) }
         val away = remember { Animatable(0f) }   // 0 in place, 1 off to the right
         LaunchedEffect(step) {
-            withContext(AppMotion.FixedScale) {
-                if (step != shown) {
-                    away.animateTo(1f, AppMotion.effects())
-                    shown = step
-                }
-                away.animateTo(0f, AppMotion.spatial())
+            if (step != shown) {
+                away.animateTo(1f, AppMotion.effects())
+                shown = step
             }
+            away.animateTo(0f, AppMotion.spatial())
         }
         val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.7f
-        Column(Modifier.fillMaxWidth().animateContentSize(AppMotion.spatial())) {
+        Column(Modifier.fillMaxWidth()) {
             Column(
                 Modifier
                     .fillMaxWidth()

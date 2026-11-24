@@ -143,7 +143,7 @@ private fun App(versionName: String) {
     var commit by remember { mutableStateOf<(() -> Unit)?>(null) }   // what a closing slide still has to do to the stack
     var gesturing by remember { mutableStateOf(false) }               // the finger is dragging the back gesture
 
-    suspend fun slide(to: Float) = withContext(AppMotion.FixedScale) {
+    suspend fun slide(to: Float) {
         exit.animateTo(to, tween(AppMotion.SHORT, easing = FastOutSlowInEasing))
     }
 

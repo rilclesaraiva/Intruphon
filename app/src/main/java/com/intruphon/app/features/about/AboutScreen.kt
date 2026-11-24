@@ -89,29 +89,29 @@ fun AboutScreen(versionName: String, modifier: Modifier = Modifier) {
         }
 
         SectionLabel(stringResource(R.string.about_developer))
-        IconRowGroup(listOf(IconRowItem(Icons.Default.Person, RowTone.PRIMARY, Config.MAINTAINER, Config.PROFILE_URL.removePrefix("https://"), avatar) { open(Config.PROFILE_URL) }))
+        IconRowGroup(listOf(IconRowItem(Icons.Default.Person, RowTone.PURPLE, Config.MAINTAINER, Config.PROFILE_URL.removePrefix("https://"), avatar) { open(Config.PROFILE_URL) }))
 
         SectionLabel(stringResource(R.string.about_project))
         IconRowGroup(
             listOf(
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_code), RowTone.SECONDARY, stringResource(R.string.about_source), Config.REPO_URL.removePrefix("https://")) { open(Config.REPO_URL) },
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_verified), RowTone.TERTIARY, stringResource(R.string.about_news), stringResource(R.string.about_news_hint)) { open(Config.CHANGELOG_URL) },
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_bug_report), RowTone.PRIMARY, stringResource(R.string.about_report), stringResource(R.string.about_report_hint)) { open(Config.ISSUES_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_code), RowTone.BLUE, stringResource(R.string.about_source), Config.REPO_URL.removePrefix("https://")) { open(Config.REPO_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_verified), RowTone.AMBER, stringResource(R.string.about_news), stringResource(R.string.about_news_hint)) { open(Config.CHANGELOG_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_bug_report), RowTone.RED, stringResource(R.string.about_report), stringResource(R.string.about_report_hint)) { open(Config.ISSUES_URL) },
             ),
         )
 
         SectionLabel(stringResource(R.string.about_legal))
         IconRowGroup(
             listOf(
-                IconRowItem(Icons.Default.Lock, RowTone.NEUTRAL, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_hint)) { open(Config.PRIVACY_URL) },
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
-                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.NEUTRAL, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { open(Config.LICENSES_URL) },
+                IconRowItem(Icons.Default.Lock, RowTone.GREEN, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_hint)) { open(Config.PRIVACY_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.BLUE, stringResource(R.string.about_terms), stringResource(R.string.about_terms_hint)) { open(Config.TERMS_URL) },
+                IconRowItem(ImageVector.vectorResource(R.drawable.ic_article), RowTone.BLUE, stringResource(R.string.about_licenses), stringResource(R.string.about_licenses_hint)) { open(Config.LICENSES_URL) },
             ),
         )
 
         // Only an invitation that leads to the repository: no donation or payment wording in the app.
         IconRowGroup(
-            listOf(IconRowItem(Icons.Default.Favorite, RowTone.TERTIARY, stringResource(R.string.about_support_title), stringResource(R.string.about_support_hint)) { open(Config.REPO_URL) }),
+            listOf(IconRowItem(Icons.Default.Favorite, RowTone.RED, stringResource(R.string.about_support_title), stringResource(R.string.about_support_hint)) { open(Config.REPO_URL) }),
         )
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }

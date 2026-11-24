@@ -39,7 +39,7 @@ fun AppearanceSettings(modifier: Modifier = Modifier) {
     SettingsPage(stringResource(R.string.settings_cat_appearance), modifier) {
         ExpandableOptionRow(
             icon = ImageVector.vectorResource(R.drawable.ic_palette),
-            tone = RowTone.PRIMARY,
+            tone = RowTone.PURPLE,
             title = stringResource(R.string.settings_theme),
             summary = themeName(theme),
         ) {
@@ -75,7 +75,7 @@ fun AppearanceSettings(modifier: Modifier = Modifier) {
             listOf(
                 IconRowItem(
                     ImageVector.vectorResource(R.drawable.ic_language),
-                    RowTone.SECONDARY,
+                    RowTone.BLUE,
                     stringResource(R.string.settings_language),
                     stringResource(R.string.settings_language_hint),
                     onClick = {
