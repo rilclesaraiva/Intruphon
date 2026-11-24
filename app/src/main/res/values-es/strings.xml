@@ -44,7 +44,7 @@
     <string name="downloads_status_running_unknown">Descargando…</string>
     <string name="downloads_status_needs_wifi">Solo Wi-Fi está activado y el teléfono no está en Wi-Fi.</string>
     <string name="downloads_status_processing">Procesando: uniendo, convirtiendo y etiquetando…</string>
-    <string name="downloads_status_done">Listo. Guardado en Download/Intruphon.</string>
+    <string name="downloads_status_done">Listo</string>
     <string name="downloads_status_failed_http">Error (HTTP %1$d)</string>
     <string name="downloads_status_failed">Error (desconocido)</string>
     <string name="downloads_status_failed_io">Error (de conexión o de almacenamiento)</string>
@@ -58,8 +58,6 @@
     <string name="downloads_open">Abrir</string>
     <string name="downloads_delete">Eliminar archivo</string>
     <string name="downloads_status_missing">Este archivo ya no está en el dispositivo.</string>
-    <string name="downloads_tags_ok">Etiquetas y carátula guardadas en el archivo.</string>
-    <string name="downloads_tags_failed">El archivo se guardó, pero no se pudieron escribir sus etiquetas.</string>
     <string name="downloads_retry">Reintentar</string>
     <string name="downloads_remove">Quitar</string>
     <string name="downloads_filter_all">Todas</string>
@@ -180,4 +178,15 @@
     <string name="search_songs">Canciones</string>
     <string name="search_loading">Buscando…</string>
     <string name="search_empty">No se encontró nada.</string>
+    <string name="downloads_details">Detalles</string>
+    <string name="details_path">Ubicación</string>
+    <string name="details_format">Formato</string>
+    <string name="details_size">Tamaño</string>
+    <string name="details_duration">Duración</string>
+    <string name="details_bitrate">Tasa de bits</string>
+    <string name="details_samplerate">Frecuencia de muestreo</string>
+    <string name="details_resolution">Resolución</string>
+    <string name="details_framerate">Fotogramas por segundo</string>
+    <string name="details_modified">Modificado el</string>
+    <string name="details_link">Enlace de origen</string>
 </resources>

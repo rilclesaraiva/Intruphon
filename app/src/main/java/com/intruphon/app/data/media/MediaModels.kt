@@ -60,11 +60,14 @@ sealed interface PlaylistResult {
     data class Failed(val reason: FailReason) : PlaylistResult
 }
 
-/** Which kind of results a name search lists. */
-enum class SearchFilter { VIDEOS, SONGS }
+/** Which results a name search lists: ALL mixes the two others. The order is the order of the tabs. */
+enum class SearchFilter { ALL, VIDEOS, SONGS }
+
+/** One search result; [music] says it came from the songs search (so it is shown as audio), otherwise as video. */
+data class SearchHit(val entry: PlaylistEntry, val music: Boolean)
 
 sealed interface SearchResult {
-    data class Ready(val entries: List<PlaylistEntry>) : SearchResult
+    data class Ready(val hits: List<SearchHit>) : SearchResult
     data object Empty : SearchResult
     data class Failed(val reason: FailReason) : SearchResult
 }

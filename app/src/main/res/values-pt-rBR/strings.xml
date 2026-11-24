@@ -44,7 +44,7 @@
     <string name="downloads_status_running_unknown">Baixando…</string>
     <string name="downloads_status_needs_wifi">\"Só no Wi-Fi\" está ativado e o celular não está no Wi-Fi.</string>
     <string name="downloads_status_processing">Processando: juntando, convertendo e gravando tags…</string>
-    <string name="downloads_status_done">Concluído. Salvo em Download/Intruphon.</string>
+    <string name="downloads_status_done">Concluído</string>
     <string name="downloads_status_failed_http">Falhou (HTTP %1$d)</string>
     <string name="downloads_status_failed">Falhou (erro desconhecido)</string>
     <string name="downloads_status_failed_io">Falhou (erro de conexão ou de armazenamento)</string>
@@ -58,8 +58,6 @@
     <string name="downloads_open">Abrir</string>
     <string name="downloads_delete">Excluir arquivo</string>
     <string name="downloads_status_missing">Este arquivo não está mais no aparelho.</string>
-    <string name="downloads_tags_ok">Tags e capa gravadas no arquivo.</string>
-    <string name="downloads_tags_failed">O arquivo foi salvo, mas não foi possível gravar as tags.</string>
     <string name="downloads_retry">Tentar de novo</string>
     <string name="downloads_remove">Remover</string>
     <string name="downloads_filter_all">Todos</string>
@@ -180,4 +178,15 @@
     <string name="search_songs">Músicas</string>
     <string name="search_loading">Buscando…</string>
     <string name="search_empty">Nada encontrado.</string>
+    <string name="downloads_details">Detalhes</string>
+    <string name="details_path">Local</string>
+    <string name="details_format">Formato</string>
+    <string name="details_size">Tamanho</string>
+    <string name="details_duration">Duração</string>
+    <string name="details_bitrate">Taxa de bits</string>
+    <string name="details_samplerate">Taxa de amostragem</string>
+    <string name="details_resolution">Resolução</string>
+    <string name="details_framerate">Quadros por segundo</string>
+    <string name="details_modified">Modificado em</string>
+    <string name="details_link">Link de origem</string>
 </resources>

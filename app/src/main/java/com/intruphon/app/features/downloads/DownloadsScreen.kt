@@ -37,6 +37,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -83,6 +84,7 @@ import com.intruphon.app.core.ui.BottomPanelFlow
 import com.intruphon.app.core.ui.PanelBody
 import com.intruphon.app.core.ui.PanelAction
 import com.intruphon.app.core.ui.PageHeader
+import com.intruphon.app.core.ui.swipeBetweenTabs
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.DownloadItem
 import com.intruphon.app.data.download.DownloadState
@@ -97,6 +99,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+
+/** The step of the download panel that shows the file's details (steps 0 to 2 are actions, delete question, confirmation). */
+private const val STEP_DETAILS = 3
 
 /**
  * Library of started downloads. Tap a row to open it; hold it (or tap its dots) for more; tap a cover to start picking
@@ -228,7 +233,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().swipeBetweenTabs(filter, 3) { filter = it },
             state = listState,
             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -290,7 +295,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
         if (chosen.isEmpty()) panelIds = null else BottomPanelFlow(
             onDismiss = { panelIds = null },
             step = panelStep,
-            onBack = { if (panelStep > 0) panelStep -= 1 },
+            onBack = { if (panelStep == STEP_DETAILS) panelStep = 0 else if (panelStep > 0) panelStep -= 1 },
         ) { shown ->
             when (shown) {
                 0 -> {
@@ -300,6 +305,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                         val state = item.status.state
                         Text(item.record.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
                         if (state == DownloadState.DONE) PanelRow(Icons.Default.PlayArrow, R.string.downloads_open) { panelIds = null; open(item) }
+                        if (state == DownloadState.DONE) PanelRow(Icons.Default.Info, R.string.downloads_details) { panelStep = STEP_DETAILS }
                         if (state == DownloadState.FAILED) PanelRow(Icons.Default.Refresh, R.string.downloads_retry) { panelIds = null; onRetry(item.record.sourceLink) }
                         PanelRow(Icons.Default.Check, R.string.downloads_select) { panelIds = null; selection.toggle(id) }
                         if (state == DownloadState.DONE) {
@@ -323,6 +329,7 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
                     })
                     PanelAction(stringResource(R.string.downloads_cancel), onClick = { panelIds = null })
                 }
+                STEP_DETAILS -> DetailsStep(chosen.first())
                 else -> {
                     // For deleting from the device: a panel like the system window, with the cover.
                     val first = chosen.first()
@@ -452,12 +459,6 @@ private fun DownloadRow(item: DownloadItem, picked: Boolean, onTap: () -> Unit, 
                     },
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                if (status.state == DownloadState.DONE && record.tags != null) {
-                    Text(
-                        stringResource(if (record.tags) R.string.downloads_tags_ok else R.string.downloads_tags_failed),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
                 if (record.note.isNotEmpty() && (status.state == DownloadState.DONE || status.state == DownloadState.FAILED)) {
                     Text(record.note, style = MaterialTheme.typography.bodySmall)
                 }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,9 +33,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -55,7 +58,9 @@ import com.intruphon.app.R
 import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.formatClock
 import com.intruphon.app.core.ui.clearFocusWhenKeyboardCloses
+import com.intruphon.app.core.ui.swipeBetweenTabs
 import com.intruphon.app.data.media.FailReason
+import com.intruphon.app.data.media.Kind
 import com.intruphon.app.data.media.MediaRepository
 import com.intruphon.app.data.media.PlaylistEntry
 import com.intruphon.app.data.media.SearchFilter
@@ -75,7 +80,8 @@ import kotlinx.coroutines.withContext
 fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modifier = Modifier) {
     var text by rememberSaveable(initialQuery) { mutableStateOf(initialQuery) }
     var submitted by rememberSaveable(initialQuery) { mutableStateOf(LinkExtractor.searchQuery(initialQuery)) }
-    var filter by rememberSaveable { mutableStateOf(SearchFilter.VIDEOS) }
+    // Tabs: All (the default), Videos, Songs.
+    var filter by rememberSaveable { mutableStateOf(SearchFilter.ALL) }
     var focused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
@@ -99,10 +105,14 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
         delay(250)
         value = MediaRepository.suggestions(q)
     }
-    val result by produceState<SearchResult?>(null, submitted, filter) {
-        value = null
+    // What each tab already loaded, so swiping back does not ask again.
+    val loaded = remember(submitted) { mutableStateMapOf<SearchFilter, SearchResult>() }
+    val result by produceState<SearchResult?>(loaded[filter], submitted, filter) {
         val q = submitted
-        if (q != null) value = MediaRepository.search(q, filter)
+        if (value != null || q == null) return@produceState
+        val fresh = MediaRepository.search(q, filter)
+        if (fresh !is SearchResult.Failed) loaded[filter] = fresh
+        value = fresh
     }
 
     Column(modifier.fillMaxSize()) {
@@ -126,7 +136,7 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
     }
     LazyColumn(
         state = listState,
-        modifier = Modifier.weight(1f).fillMaxWidth(),
+        modifier = Modifier.weight(1f).fillMaxWidth().swipeBetweenTabs(filter.ordinal, SearchFilter.entries.size) { filter = SearchFilter.entries[it] },
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -144,8 +154,13 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
         } else if (submitted != null) {
             item {
                 Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = filter == SearchFilter.VIDEOS, onClick = { filter = SearchFilter.VIDEOS }, label = { Text(stringResource(R.string.search_videos)) })
-                    FilterChip(selected = filter == SearchFilter.SONGS, onClick = { filter = SearchFilter.SONGS }, label = { Text(stringResource(R.string.search_songs)) })
+                    listOf(
+                        SearchFilter.ALL to R.string.downloads_filter_all,
+                        SearchFilter.VIDEOS to R.string.search_videos,
+                        SearchFilter.SONGS to R.string.search_songs,
+                    ).forEach { (tab, label) ->
+                        FilterChip(selected = filter == tab, onClick = { filter = tab }, label = { Text(stringResource(label)) }, shape = CircleShape)
+                    }
                 }
             }
             when (val r = result) {
@@ -162,7 +177,10 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
                         Modifier.padding(vertical = 16.dp),
                     )
                 }
-                is SearchResult.Ready -> items(r.entries.distinctBy { it.url }, key = { it.url }) { entry -> ResultRow(entry) { onPick(entry.url) } }
+                is SearchResult.Ready -> items(r.hits, key = { it.entry.url }) { hit ->
+                    // Only the All tab mixes the two kinds, so only it says which is which.
+                    ResultRow(hit.entry, kind = if (filter == SearchFilter.ALL) (if (hit.music) Kind.AUDIO else Kind.VIDEO) else null) { onPick(hit.entry.url) }
+                }
             }
         }
     }
@@ -170,7 +188,7 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
 }
 
 @Composable
-private fun ResultRow(entry: PlaylistEntry, onClick: () -> Unit) {
+private fun ResultRow(entry: PlaylistEntry, kind: Kind?, onClick: () -> Unit) {
     val picture by produceState(entry.thumbnailUrl?.let { Thumbnails.peek(it) }, entry.thumbnailUrl) {
         val url = entry.thumbnailUrl
         if (url != null && value == null) value = withContext(Dispatchers.IO) { Thumbnails.load(url) }
@@ -186,7 +204,20 @@ private fun ResultRow(entry: PlaylistEntry, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text(entry.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val details = listOfNotNull(entry.artist, entry.durationSeconds.takeIf { it > 0 }?.let(::formatClock)).joinToString(" · ")
-            if (details.isNotEmpty()) Text(details, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (details.isNotEmpty() || kind != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (kind != null) {
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
+                            Text(
+                                stringResource(if (kind == Kind.AUDIO) R.string.download_section_audio else R.string.download_section_video),
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                    Text(details, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
         }
     }
 }

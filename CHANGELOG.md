@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Changed
+- Search: results now have an All tab (the default) that mixes videos and songs and marks each result Audio or Video, next to the Videos and Songs tabs. Swiping sideways switches tab, here and in Downloads.
+- Downloads: a finished download says just "Done" (no "Saved in Download/Intruphon" and no note about tags and cover).
 - Home: the Enter key of the keyboard now does what the button does (searches a name or downloads a link) without having to tap the button.
 - Search: the search field stays fixed at the top of the page, as in YouTube.
 - Home: the link field keeps the same height with or without focus; its label is now one small line ("Paste the link here or a song name") that never wraps.
@@ -18,6 +20,7 @@
 - Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
 
 ### Added
+- Downloads: "Details" in the ⋮ panel of a saved file shows its location, format, size, length, bitrate, sample rate (audio), resolution and frame rate (video), modified date and source link.
 - Search by name: type a song or video name on the home screen (the button becomes Search), or share plain text with no link to Intruphon, and the app opens a Search page, laid out like YouTube's. While you edit the field it lists similar searches to pick from; sending a search lists the YouTube results with cover, title, channel and length, with a Videos / Songs choice. Tapping a result opens the usual format sheet. Only the first page of results is shown.
 - Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.
 

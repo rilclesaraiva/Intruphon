@@ -45,7 +45,7 @@
     <string name="downloads_status_running_unknown">Downloading…</string>
     <string name="downloads_status_needs_wifi">Wi-Fi only is on, and the phone is not on Wi-Fi.</string>
     <string name="downloads_status_processing">Processing: joining, converting and tagging…</string>
-    <string name="downloads_status_done">Done. Saved in Download/Intruphon.</string>
+    <string name="downloads_status_done">Done</string>
     <string name="downloads_status_failed_http">Failed (HTTP %1$d)</string>
     <string name="downloads_status_failed">Failed (unknown error)</string>
     <string name="downloads_status_failed_io">Failed (connection or storage error)</string>
@@ -59,8 +59,6 @@
     <string name="downloads_open">Open</string>
     <string name="downloads_delete">Delete file</string>
     <string name="downloads_status_missing">This file is no longer on the device.</string>
-    <string name="downloads_tags_ok">Tags and cover saved in the file.</string>
-    <string name="downloads_tags_failed">The file was saved, but its tags could not be written.</string>
     <string name="downloads_retry">Try again</string>
     <string name="downloads_remove">Remove</string>
     <string name="downloads_filter_all">All</string>
@@ -181,4 +179,15 @@
     <string name="search_songs">Songs</string>
     <string name="search_loading">Searching…</string>
     <string name="search_empty">Nothing found.</string>
+    <string name="downloads_details">Details</string>
+    <string name="details_path">Location</string>
+    <string name="details_format">Format</string>
+    <string name="details_size">Size</string>
+    <string name="details_duration">Duration</string>
+    <string name="details_bitrate">Bitrate</string>
+    <string name="details_samplerate">Sample rate</string>
+    <string name="details_resolution">Resolution</string>
+    <string name="details_framerate">Frame rate</string>
+    <string name="details_modified">Modified</string>
+    <string name="details_link">Source link</string>
 </resources>

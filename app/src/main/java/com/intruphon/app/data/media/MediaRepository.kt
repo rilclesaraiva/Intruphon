@@ -2,6 +2,9 @@ package com.intruphon.app.data.media
 
 import com.intruphon.app.data.net.OkHttpDownloader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
@@ -122,17 +125,43 @@ object MediaRepository {
         }
     }
 
+    private sealed interface SearchPage {
+        data class Items(val list: List<PlaylistEntry>) : SearchPage
+        data class Error(val reason: FailReason) : SearchPage
+    }
+
+    // One request to YouTube's search: [music] picks the songs filter, otherwise the videos one. Blocking: call off the main thread.
+    private fun searchPage(query: String, music: Boolean): SearchPage = try {
+        val contentFilter = if (music) YoutubeSearchQueryHandlerFactory.MUSIC_SONGS else YoutubeSearchQueryHandlerFactory.VIDEOS
+        val extractor = ServiceList.YouTube.getSearchExtractor(query, listOf(contentFilter), "")
+        extractor.fetchPage()
+        SearchPage.Items(extractor.initialPage.items.filterIsInstance<StreamInfoItem>().filter { it.url.isNotEmpty() }.map(::entryOf))
+    } catch (e: IOException) {
+        SearchPage.Error(FailReason.NETWORK)
+    } catch (e: Exception) {
+        SearchPage.Error(FailReason.UNREADABLE)
+    }
+
+    /** First page of results. "All" asks for videos and songs together and mixes them; if only one of them answers, that one is shown. */
     suspend fun search(query: String, filter: SearchFilter): SearchResult = withContext(Dispatchers.IO) {
         try {
             ensureInit()
-            val contentFilter = when (filter) {
-                SearchFilter.VIDEOS -> YoutubeSearchQueryHandlerFactory.VIDEOS
-                SearchFilter.SONGS -> YoutubeSearchQueryHandlerFactory.MUSIC_SONGS
+            val parts = when (filter) {
+                SearchFilter.ALL -> listOf(false, true)
+                SearchFilter.VIDEOS -> listOf(false)
+                SearchFilter.SONGS -> listOf(true)
             }
-            val extractor = ServiceList.YouTube.getSearchExtractor(query, listOf(contentFilter), "")
-            extractor.fetchPage()
-            val entries = extractor.initialPage.items.filterIsInstance<StreamInfoItem>().filter { it.url.isNotEmpty() }.map(::entryOf)
-            if (entries.isEmpty()) SearchResult.Empty else SearchResult.Ready(entries)
+            val pages = coroutineScope { parts.map { music -> async { searchPage(query, music) } }.awaitAll() }
+            val byPart = parts.zip(pages).toMap()
+            val videos = (byPart[false] as? SearchPage.Items)?.list.orEmpty()
+            val songs = (byPart[true] as? SearchPage.Items)?.list.orEmpty()
+            val hits = SearchMerge.merge(videos, songs)
+            val error = pages.filterIsInstance<SearchPage.Error>().firstOrNull()
+            when {
+                hits.isNotEmpty() -> SearchResult.Ready(hits)
+                error != null -> SearchResult.Failed(error.reason)
+                else -> SearchResult.Empty
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
