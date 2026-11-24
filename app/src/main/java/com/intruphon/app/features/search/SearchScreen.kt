@@ -58,7 +58,7 @@ import com.intruphon.app.R
 import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.formatClock
 import com.intruphon.app.core.ui.clearFocusWhenKeyboardCloses
-import com.intruphon.app.core.ui.swipeBetweenTabs
+import com.intruphon.app.core.ui.TabPager
 import com.intruphon.app.data.media.FailReason
 import com.intruphon.app.data.media.Kind
 import com.intruphon.app.data.media.MediaRepository
@@ -84,7 +84,6 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
     var filter by rememberSaveable { mutableStateOf(SearchFilter.ALL) }
     var focused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    val listState = rememberLazyListState()
 
     fun submit(typed: String) {
         // A link typed here goes to the format sheet, like on Home.
@@ -107,14 +106,6 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
     }
     // What each tab already loaded, so swiping back does not ask again.
     val loaded = remember(submitted) { mutableStateMapOf<SearchFilter, SearchResult>() }
-    val result by produceState<SearchResult?>(loaded[filter], submitted, filter) {
-        val q = submitted
-        if (value != null || q == null) return@produceState
-        val fresh = MediaRepository.search(q, filter)
-        if (fresh !is SearchResult.Failed) loaded[filter] = fresh
-        value = fresh
-    }
-
     Column(modifier.fillMaxSize()) {
     // Fixed at the top, like YouTube's (the one exception to "no fixed top bar"): beside the floating Back button.
     Box(Modifier.fillMaxWidth().statusBarsPadding().height(80.dp).padding(start = 76.dp, end = 24.dp), contentAlignment = Alignment.CenterStart) {
@@ -134,13 +125,12 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
             modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses().onFocusChanged { focused = it.isFocused },
         )
     }
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.weight(1f).fillMaxWidth().swipeBetweenTabs(filter.ordinal, SearchFilter.entries.size) { filter = SearchFilter.entries[it] },
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        if (focused) {
+    if (focused) {
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             items(suggestions, key = { "s$it" }) { suggestion ->
                 Row(
                     Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable { submit(suggestion) }.padding(horizontal = 8.dp, vertical = 14.dp),
@@ -151,35 +141,53 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
                     Text(suggestion, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-        } else if (submitted != null) {
-            item {
-                Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(
-                        SearchFilter.ALL to R.string.downloads_filter_all,
-                        SearchFilter.VIDEOS to R.string.search_videos,
-                        SearchFilter.SONGS to R.string.search_songs,
-                    ).forEach { (tab, label) ->
-                        FilterChip(selected = filter == tab, onClick = { filter = tab }, label = { Text(stringResource(label)) }, shape = CircleShape)
-                    }
-                }
+        }
+    } else if (submitted != null) {
+        // One page per tab (All, Videos, Songs); the next one follows the finger when swiping.
+        TabPager(selected = filter.ordinal, count = SearchFilter.entries.size, onSelect = { filter = SearchFilter.entries[it] }, modifier = Modifier.weight(1f)) { index ->
+            val tab = SearchFilter.entries[index]
+            val result by produceState<SearchResult?>(loaded[tab], submitted, tab) {
+                val q = submitted
+                if (value != null || q == null) return@produceState
+                val fresh = MediaRepository.search(q, tab)
+                if (fresh !is SearchResult.Failed) loaded[tab] = fresh
+                value = fresh
             }
-            when (val r = result) {
-                null -> item {
-                    Row(Modifier.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 3.dp)
-                        Text(stringResource(R.string.search_loading), style = MaterialTheme.typography.titleMedium)
+            LazyColumn(
+                state = rememberLazyListState(),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                item {
+                    Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            SearchFilter.ALL to R.string.downloads_filter_all,
+                            SearchFilter.VIDEOS to R.string.search_videos,
+                            SearchFilter.SONGS to R.string.search_songs,
+                        ).forEach { (option, label) ->
+                            FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(stringResource(label)) }, shape = CircleShape)
+                        }
                     }
                 }
-                SearchResult.Empty -> item { Text(stringResource(R.string.search_empty), Modifier.padding(vertical = 16.dp)) }
-                is SearchResult.Failed -> item {
-                    Text(
-                        stringResource(if (r.reason == FailReason.NETWORK) R.string.download_error_network else R.string.download_error_unreadable),
-                        Modifier.padding(vertical = 16.dp),
-                    )
-                }
-                is SearchResult.Ready -> items(r.hits, key = { it.entry.url }) { hit ->
-                    // Only the All tab mixes the two kinds, so only it says which is which.
-                    ResultRow(hit.entry, kind = if (filter == SearchFilter.ALL) (if (hit.music) Kind.AUDIO else Kind.VIDEO) else null) { onPick(hit.entry.url) }
+                when (val r = result) {
+                    null -> item {
+                        Row(Modifier.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 3.dp)
+                            Text(stringResource(R.string.search_loading), style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    SearchResult.Empty -> item { Text(stringResource(R.string.search_empty), Modifier.padding(vertical = 16.dp)) }
+                    is SearchResult.Failed -> item {
+                        Text(
+                            stringResource(if (r.reason == FailReason.NETWORK) R.string.download_error_network else R.string.download_error_unreadable),
+                            Modifier.padding(vertical = 16.dp),
+                        )
+                    }
+                    is SearchResult.Ready -> items(r.hits, key = { it.entry.url }) { hit ->
+                        // Only the All tab mixes the two kinds, so only it says which is which.
+                        ResultRow(hit.entry, kind = if (tab == SearchFilter.ALL) (if (hit.music) Kind.AUDIO else Kind.VIDEO) else null) { onPick(hit.entry.url) }
+                    }
                 }
             }
         }

@@ -84,7 +84,7 @@ import com.intruphon.app.core.ui.BottomPanelFlow
 import com.intruphon.app.core.ui.PanelBody
 import com.intruphon.app.core.ui.PanelAction
 import com.intruphon.app.core.ui.PageHeader
-import com.intruphon.app.core.ui.swipeBetweenTabs
+import com.intruphon.app.core.ui.TabPager
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.DownloadItem
 import com.intruphon.app.data.download.DownloadState
@@ -111,7 +111,6 @@ private const val STEP_DETAILS = 3
 @Composable
 fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelecting: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val all by DownloadEngine.items.collectAsState()
     // Tabs: 0 = all (default), 1 = audio, 2 = video.
@@ -232,47 +231,58 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
     )
 
     Box(modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().swipeBetweenTabs(filter, 3) { filter = it },
-            state = listState,
-            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
-            item(key = "filters") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
-                        FilterChip(
-                            selected = filter == index,
-                            onClick = { filter = index },
-                            label = { Text(stringResource(label)) },
-                            shape = CircleShape,
-                        )
-                    }
-                }
+        // One page per tab: each has its own title, pills and list, and the next one follows the finger.
+        TabPager(selected = filter, count = 3, onSelect = { filter = it }) { tab ->
+            val tabList = when (tab) {
+                1 -> all.filter { it.record.kind == Kind.AUDIO }
+                2 -> all.filter { it.record.kind == Kind.VIDEO }
+                else -> all
             }
-            if (list.isEmpty()) {
-                item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
-            }
-            // Everything that is running sits in one card; it opens the page where each one can be cancelled.
-            if (active.isNotEmpty()) item(key = "active") { ActiveCard(active, onOpenActive) }
-            // Failures pile up here, at the top, until they are retried or removed.
-            if (failed.isNotEmpty()) {
-                item(key = "failed-head") {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.downloads_failed_title, failed.size), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { scope.launch(Dispatchers.IO) { failed.forEach { DownloadEngine.remove(it.record.id) } } }) {
-                            Text(stringResource(R.string.downloads_failed_remove_all))
+            val tabActive = tabList.filter { it.status.state.active }
+            val tabFailed = tabList.filter { it.status.state == DownloadState.FAILED }
+            val tabRest = tabList.filter { !it.status.state.active && it.status.state != DownloadState.FAILED }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = rememberLazyListState(),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
+                item(key = "filters") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
+                            FilterChip(
+                                selected = filter == index,
+                                onClick = { filter = index },
+                                label = { Text(stringResource(label)) },
+                                shape = CircleShape,
+                            )
                         }
                     }
                 }
-                items(failed, key = { it.record.id }) { ItemRow(it) }
-            }
-            if (rest.isNotEmpty()) {
-                if (active.isNotEmpty() || failed.isNotEmpty()) {
-                    item(key = "done-head") { Text(stringResource(R.string.downloads_done_title), style = MaterialTheme.typography.titleMedium) }
+                if (tabList.isEmpty()) {
+                    item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
                 }
-                items(rest, key = { it.record.id }) { ItemRow(it) }
+                // Everything that is running sits in one card; it opens the page where each one can be cancelled.
+                if (tabActive.isNotEmpty()) item(key = "active") { ActiveCard(tabActive, onOpenActive) }
+                // Failures pile up here, at the top, until they are retried or removed.
+                if (tabFailed.isNotEmpty()) {
+                    item(key = "failed-head") {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.downloads_failed_title, tabFailed.size), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { scope.launch(Dispatchers.IO) { tabFailed.forEach { DownloadEngine.remove(it.record.id) } } }) {
+                                Text(stringResource(R.string.downloads_failed_remove_all))
+                            }
+                        }
+                    }
+                    items(tabFailed, key = { it.record.id }) { ItemRow(it) }
+                }
+                if (tabRest.isNotEmpty()) {
+                    if (tabActive.isNotEmpty() || tabFailed.isNotEmpty()) {
+                        item(key = "done-head") { Text(stringResource(R.string.downloads_done_title), style = MaterialTheme.typography.titleMedium) }
+                    }
+                    items(tabRest, key = { it.record.id }) { ItemRow(it) }
+                }
             }
         }
 

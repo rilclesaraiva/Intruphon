@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- Search and Downloads: swiping between tabs is now a carousel: the next page follows your finger and you see it coming in; letting go finishes the move (or goes back) with a spring, and tapping a pill slides the same way. Each tab keeps its own scroll position.
 - Search: results now have an All tab (the default) that mixes videos and songs and marks each result Audio or Video, next to the Videos and Songs tabs. Swiping sideways switches tab, here and in Downloads.
 - Downloads: a finished download says just "Done" (no "Saved in Download/Intruphon" and no note about tags and cover).
 - Home: the Enter key of the keyboard now does what the button does (searches a name or downloads a link) without having to tap the button.
