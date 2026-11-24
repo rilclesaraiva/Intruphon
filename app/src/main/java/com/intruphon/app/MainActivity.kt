@@ -1,5 +1,6 @@
 package com.intruphon.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -54,7 +56,7 @@ import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.data.update.UpdateRepository
 import com.intruphon.app.features.about.AboutScreen
 import com.intruphon.app.features.download.DownloadSheet
-import com.intruphon.app.features.download.SearchSheet
+import com.intruphon.app.features.search.SearchScreen
 import com.intruphon.app.features.downloads.ActiveDownloadsScreen
 import com.intruphon.app.features.downloads.DownloadsScreen
 import com.intruphon.app.features.home.HomeScreen
@@ -66,6 +68,7 @@ import com.intruphon.app.features.update.UpdatePrompt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -77,6 +80,12 @@ private const val ACTIVE = 4
 private const val SETTINGS_APPEARANCE = 5
 private const val SETTINGS_DOWNLOADS = 6
 private const val SETTINGS_SYSTEM = 7
+private const val SEARCH = 8
+
+/** A name shared to the app as plain text, waiting for the app to open its search page. */
+internal object ShareSearch {
+    val pending = MutableStateFlow<String?>(null)
+}
 
 // Entry point: registers the pages. Features never import each other.
 //
@@ -94,7 +103,20 @@ class MainActivity : ComponentActivity() {
         // Opening the app from scratch always looks for an update; coming back does it at most every 10 minutes.
         UpdateRepository.start(applicationContext, versionName, fresh = savedInstanceState == null)
         lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) UpdateRepository.onResume() })
+        if (savedInstanceState == null) intent?.getStringExtra(EXTRA_SEARCH)?.let { ShareSearch.pending.value = it }
         setContent { IntruphonTheme { App(versionName) } }
+    }
+
+    // The app was already running when a name was shared to it (launchMode singleTask).
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_SEARCH)?.let { ShareSearch.pending.value = it }
+    }
+
+    companion object {
+        /** Extra with the name to search for, set by ShareActivity. */
+        const val EXTRA_SEARCH = "intruphon.search"
     }
 }
 
@@ -188,10 +210,20 @@ private fun App(versionName: String) {
     }
     BackHandler(enabled = stack.size > 1 && !predictive) { close() }
 
+    // A name shared to the app opens the search page (or, if it is already open, searches the new name there).
+    val shared by ShareSearch.pending.collectAsState()
+    LaunchedEffect(shared) {
+        shared?.let {
+            ShareSearch.pending.value = null
+            searchQuery = it
+            open(SEARCH)
+        }
+    }
+
     @Composable
     fun Page(page: Int) = pages.SaveableStateProvider(page) {
         when (page) {
-            HOME -> HomeScreen(onDownload = { sheetLink = it }, onSearch = { searchQuery = it }, onOpenDownloads = { open(DOWNLOADS) })
+            HOME -> HomeScreen(onDownload = { sheetLink = it }, onSearch = { searchQuery = it; open(SEARCH) }, onOpenDownloads = { open(DOWNLOADS) })
             DOWNLOADS -> DownloadsScreen(onRetry = { sheetLink = it }, onOpenActive = { open(ACTIVE) }, onSelecting = { picking = it })
             ACTIVE -> ActiveDownloadsScreen()
             SETTINGS -> SettingsScreen(
@@ -203,6 +235,7 @@ private fun App(versionName: String) {
             SETTINGS_APPEARANCE -> AppearanceSettings()
             SETTINGS_DOWNLOADS -> DownloadSettings()
             SETTINGS_SYSTEM -> SystemSettings()
+            SEARCH -> SearchScreen(initialQuery = searchQuery.orEmpty(), onPick = { sheetLink = it })
             else -> AboutScreen(versionName)
         }
     }
@@ -263,9 +296,6 @@ private fun App(versionName: String) {
         }
     }
     UpdatePrompt()
-    searchQuery?.let {
-        SearchSheet(query = it, onDismiss = { searchQuery = null })
-    }
     sheetLink?.let {
         DownloadSheet(link = it, onDismiss = { sheetLink = null })
     }

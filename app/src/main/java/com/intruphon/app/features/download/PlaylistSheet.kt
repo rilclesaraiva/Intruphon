@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.intruphon.app.R
+import com.intruphon.app.core.formatClock
 import com.intruphon.app.core.ui.AppSheet
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.media.FailReason
@@ -68,7 +69,6 @@ import com.intruphon.app.data.media.PlaylistResult
 import com.intruphon.app.data.net.Thumbnails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 /** Bottom sheet for a playlist link: pick the items and one format for all of them, then queue them. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -192,11 +192,4 @@ private fun PlaylistRow(number: Int, entry: PlaylistEntry, checked: Boolean, ava
             if (details.isNotEmpty()) Text(details, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
-}
-
-internal fun formatClock(seconds: Long): String {
-    val h = seconds / 3600
-    val m = seconds % 3600 / 60
-    val s = seconds % 60
-    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s) else String.format(Locale.US, "%d:%02d", m, s)
 }

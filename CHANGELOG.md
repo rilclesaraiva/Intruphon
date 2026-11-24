@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- Home: the link field keeps the same height with or without focus; its label is now one small line ("Paste the link here or a song name") that never wraps.
 - Build: the Gradle wrapper (`gradlew`, Gradle 8.9) is now in the repository and the CI uses it, so the Gradle version lives in one place.
 - Navigation no longer drops a tap while a page is sliding: opening a category right after Settings, or going back twice in a row, finishes the running slide at once and starts the new one, with the Back button, the system back and the back gesture alike.
 - Licenses now open a page in the browser (`docs/licenses.md`, published on GitHub Pages) instead of a panel inside the app.
@@ -15,7 +16,7 @@
 - Build: all dependency and plugin versions now live in `gradle/libs.versions.toml`, and the app version lives only in `gradle.properties` (`APP_VERSION`). The CI posts the error summary as a commit comment when a build fails.
 
 ### Added
-- Search by name: type a song or video name on the home screen (the button becomes Search), or share plain text with no link to Intruphon, and a sheet lists the YouTube results with cover, title, channel and length, with a Videos / Songs choice. Tapping a result opens the usual format sheet. Only the first page of results is shown.
+- Search by name: type a song or video name on the home screen (the button becomes Search), or share plain text with no link to Intruphon, and the app opens a Search page, laid out like YouTube's. While you edit the field it lists similar searches to pick from; sending a search lists the YouTube results with cover, title, channel and length, with a Videos / Songs choice. Tapping a result opens the usual format sheet. Only the first page of results is shown.
 - Settings → Appearance: "Use system colors" (Android 12+), off by default. By default the app now uses its own colors, taken from the icon (pale ice blue on deep blue-black, with a light variant); turn it on to follow the wallpaper colors.
 
 ## [0.1.0] - 2026-11-15

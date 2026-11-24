@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -118,7 +119,8 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
         OutlinedTextField(
             value = link,
             onValueChange = { link = it },
-            label = { Text(stringResource(R.string.home_link_label)) },
+            // One small line that never wraps: the field keeps the same height with or without focus.
+            label = { Text(stringResource(R.string.home_link_label), style = MaterialTheme.typography.bodySmall, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) },
             singleLine = true,
             shape = MaterialTheme.shapes.extraLarge,
             trailingIcon = {

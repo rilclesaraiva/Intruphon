@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Intruphon</string>
     <string name="home_title">Intruphon</string>
-    <string name="home_link_label">Pega un enlace o el nombre de una canción</string>
+    <string name="home_link_label">Pega el enlace aquí o el nombre de una canción</string>
     <string name="home_search">Buscar</string>
     <string name="home_download">Descargar</string>
     <string name="home_paste">Pegar</string>
@@ -175,7 +175,7 @@
     <string name="downloads_allow_many">¿Permitir que Intruphon elimine estos %1$d archivos?</string>
     <string name="downloads_allow">Permitir</string>
     <string name="downloads_deny">Denegar</string>
-    <string name="search_title">Resultados para %1$s</string>
+    <string name="search_hint">Buscar vídeos y canciones</string>
     <string name="search_videos">Vídeos</string>
     <string name="search_songs">Canciones</string>
     <string name="search_loading">Buscando…</string>

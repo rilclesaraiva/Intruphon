@@ -9,9 +9,8 @@ import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.ui.IntruphonTheme
 import com.intruphon.app.data.settings.AppSettings
 import com.intruphon.app.features.download.DownloadSheet
-import com.intruphon.app.features.download.SearchSheet
 
-// Entry point for the Android share sheet: shows the format sheet (for a link) or the search results (for a name) over the app that shared it.
+// Entry point for the Android share sheet: shows the format sheet over the app that shared a link; a shared name opens the search page of the main app.
 class ShareActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,7 +18,13 @@ class ShareActivity : ComponentActivity() {
         val link = LinkExtractor.firstUrl(text)
         // Shared text with no link in it (a song name) is searched instead.
         val query = if (link == null) LinkExtractor.searchQuery(text) else null
-        if (link == null && query == null) {
+        if (query != null) {
+            // A name opens the search page of the app itself, not a pop-up.
+            startActivity(Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_SEARCH, query).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            finish()
+            return
+        }
+        if (link == null) {
             Toast.makeText(this, R.string.share_no_link, Toast.LENGTH_LONG).show()
             finish()
             return
@@ -27,8 +32,7 @@ class ShareActivity : ComponentActivity() {
         AppSettings.loadTheme(applicationContext)
         setContent {
             IntruphonTheme {
-                if (link != null) DownloadSheet(link = link, onDismiss = { finish() })
-                else if (query != null) SearchSheet(query = query, onDismiss = { finish() })
+                DownloadSheet(link = link, onDismiss = { finish() })
             }
         }
     }

@@ -110,6 +110,18 @@ object MediaRepository {
      * Searches YouTube by name (first page of results). [SearchFilter.VIDEOS] lists videos, [SearchFilter.SONGS] the
      * songs of YouTube Music. Each result is read in full only when the person picks it for download.
      */
+    /** Similar searches YouTube offers for what is being typed; empty when it cannot be reached (they are only a help). */
+    suspend fun suggestions(query: String): List<String> = withContext(Dispatchers.IO) {
+        try {
+            ensureInit()
+            ServiceList.YouTube.suggestionExtractor.suggestionList(query).filter { it.isNotBlank() }.distinct().take(10)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun search(query: String, filter: SearchFilter): SearchResult = withContext(Dispatchers.IO) {
         try {
             ensureInit()
