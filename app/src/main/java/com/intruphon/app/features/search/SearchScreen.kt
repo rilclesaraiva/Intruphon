@@ -69,7 +69,7 @@ import kotlinx.coroutines.withContext
  * Search page, laid out like YouTube's: the field on top; while it is being edited the list shows similar searches
  * to pick from, and once a search is sent the list shows the results (Videos or Songs). Opening it with a name
  * already typed on Home goes straight to the results. A result goes to [onPick], which opens the format sheet.
- * The field scrolls away with the list, as the app has no fixed top bar.
+ * The field stays fixed at the top: search bars are an exception to the rule of no fixed top bar.
  */
 @Composable
 fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -105,32 +105,31 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
         if (q != null) value = MediaRepository.search(q, filter)
     }
 
+    Column(modifier.fillMaxSize()) {
+    // Fixed at the top, like YouTube's (the one exception to "no fixed top bar"): beside the floating Back button.
+    Box(Modifier.fillMaxWidth().statusBarsPadding().height(80.dp).padding(start = 76.dp, end = 24.dp), contentAlignment = Alignment.CenterStart) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            placeholder = { Text(stringResource(R.string.search_hint), maxLines = 1) },
+            singleLine = true,
+            shape = MaterialTheme.shapes.extraLarge,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { submit(text) }),
+            trailingIcon = {
+                if (text.isNotEmpty()) {
+                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.home_clear)) }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses().onFocusChanged { focused = it.isFocused },
+        )
+    }
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+        modifier = Modifier.weight(1f).fillMaxWidth(),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        item {
-            // Beside the floating Back button, at the height of the other pages' titles.
-            Box(Modifier.fillMaxWidth().statusBarsPadding().height(80.dp).padding(start = 52.dp), contentAlignment = Alignment.CenterStart) {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text(stringResource(R.string.search_hint), maxLines = 1) },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.extraLarge,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { submit(text) }),
-                    trailingIcon = {
-                        if (text.isNotEmpty()) {
-                            IconButton(onClick = { text = "" }) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.home_clear)) }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses().onFocusChanged { focused = it.isFocused },
-                )
-            }
-        }
         if (focused) {
             items(suggestions, key = { "s$it" }) { suggestion ->
                 Row(
@@ -166,6 +165,7 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
                 is SearchResult.Ready -> items(r.entries.distinctBy { it.url }, key = { it.url }) { entry -> ResultRow(entry) { onPick(entry.url) } }
             }
         }
+    }
     }
 }
 

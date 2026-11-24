@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -88,6 +91,10 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
     // Text with no link in it is a name to search for: the same button then searches instead of downloading.
     val query = LinkExtractor.searchQuery(link)
     val focusManager = LocalFocusManager.current
+    val act = {
+        focusManager.clearFocus()
+        if (url != null) onDownload(url) else query?.let(onSearch)
+    }
     val density = LocalDensity.current
     // The recent list fills the screen to the bottom: how many rows fit depends on the device, so it is measured.
     var viewport by remember { mutableIntStateOf(0) }
@@ -122,6 +129,9 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
             // One small line that never wraps: the field keeps the same height with or without focus.
             label = { Text(stringResource(R.string.home_link_label), style = MaterialTheme.typography.bodySmall, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) },
             singleLine = true,
+            // The Enter key of the keyboard does what the button below does (search or download).
+            keyboardOptions = KeyboardOptions(imeAction = if (url == null) ImeAction.Search else ImeAction.Go),
+            keyboardActions = KeyboardActions(onAny = { act() }),
             shape = MaterialTheme.shapes.extraLarge,
             trailingIcon = {
                 if (link.isEmpty()) {
@@ -139,10 +149,7 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
             modifier = Modifier.fillMaxWidth().clearFocusWhenKeyboardCloses(),
         )
         Button(
-            onClick = {
-                focusManager.clearFocus()
-                if (url != null) onDownload(url) else query?.let(onSearch)
-            },
+            onClick = act,
             enabled = url != null || query != null,
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) { Text(stringResource(if (url == null && query != null) R.string.home_search else R.string.home_download), style = MaterialTheme.typography.titleMedium) }

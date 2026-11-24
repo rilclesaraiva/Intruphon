@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Changed
+- Home: the Enter key of the keyboard now does what the button does (searches a name or downloads a link) without having to tap the button.
+- Search: the search field stays fixed at the top of the page, as in YouTube.
 - Home: the link field keeps the same height with or without focus; its label is now one small line ("Paste the link here or a song name") that never wraps.
 - Build: the Gradle wrapper (`gradlew`, Gradle 8.9) is now in the repository and the CI uses it, so the Gradle version lives in one place.
 - Navigation no longer drops a tap while a page is sliding: opening a category right after Settings, or going back twice in a row, finishes the running slide at once and starts the new one, with the Back button, the system back and the back gesture alike.
