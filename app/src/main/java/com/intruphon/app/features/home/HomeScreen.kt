@@ -91,9 +91,10 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
     // Text with no link in it is a name to search for: the same button then searches instead of downloading.
     val query = LinkExtractor.searchQuery(link)
     val focusManager = LocalFocusManager.current
-    val act = {
+    val act: () -> Unit = {
         focusManager.clearFocus()
-        if (url != null) onDownload(url) else query?.let(onSearch)
+        if (url != null) onDownload(url)
+        else if (query != null) onSearch(query)
     }
     val density = LocalDensity.current
     // The recent list fills the screen to the bottom: how many rows fit depends on the device, so it is measured.
