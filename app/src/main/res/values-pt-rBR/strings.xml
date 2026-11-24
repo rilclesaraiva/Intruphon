@@ -4,7 +4,6 @@
     <string name="home_link_label">Cole o link aqui ou o nome de uma música</string>
     <string name="home_search">Buscar</string>
     <string name="home_download">Baixar</string>
-    <string name="home_use_copied">Colar o que foi copiado</string>
     <string name="home_paste">Colar</string>
     <string name="home_clear">Limpar</string>
     <string name="home_clipboard_empty">Nada copiado ainda</string>

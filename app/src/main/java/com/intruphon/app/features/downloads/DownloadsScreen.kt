@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -85,6 +86,7 @@ import com.intruphon.app.core.ui.PanelBody
 import com.intruphon.app.core.ui.PanelAction
 import com.intruphon.app.core.ui.PageHeader
 import com.intruphon.app.core.ui.TabPager
+import com.intruphon.app.core.ui.TabPills
 import com.intruphon.app.data.download.DownloadEngine
 import com.intruphon.app.data.download.DownloadItem
 import com.intruphon.app.data.download.DownloadState
@@ -232,7 +234,21 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
 
     Box(modifier.fillMaxSize()) {
         // One page per tab: each has its own title, pills and list, and the next one follows the finger.
-        TabPager(selected = filter, count = 3, onSelect = { filter = it }) { tab ->
+        TabPager(
+            selected = filter,
+            count = 3,
+            onSelect = { filter = it },
+            header = { position ->
+                Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    PageHeader(stringResource(R.string.tab_downloads), afterBack = true)
+                    TabPills(
+                        labels = listOf(stringResource(R.string.downloads_filter_all), stringResource(R.string.download_section_audio), stringResource(R.string.download_section_video)),
+                        position = position,
+                        onSelect = { filter = it },
+                    )
+                }
+            },
+        ) { tab, listState, headerSpace ->
             val tabList = when (tab) {
                 1 -> all.filter { it.record.kind == Kind.AUDIO }
                 2 -> all.filter { it.record.kind == Kind.VIDEO }
@@ -243,23 +259,11 @@ fun DownloadsScreen(onRetry: (String) -> Unit, onOpenActive: () -> Unit, onSelec
             val tabRest = tabList.filter { !it.status.state.active && it.status.state != DownloadState.FAILED }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                state = rememberLazyListState(),
+                state = listState,
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item(key = "header") { PageHeader(stringResource(R.string.tab_downloads), afterBack = true) }
-                item(key = "filters") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(R.string.downloads_filter_all, R.string.download_section_audio, R.string.download_section_video).forEachIndexed { index, label ->
-                            FilterChip(
-                                selected = filter == index,
-                                onClick = { filter = index },
-                                label = { Text(stringResource(label)) },
-                                shape = CircleShape,
-                            )
-                        }
-                    }
-                }
+                item(key = "header-space") { Spacer(Modifier.height(headerSpace)) }
                 if (tabList.isEmpty()) {
                     item(key = "empty") { Text(stringResource(R.string.downloads_empty), style = MaterialTheme.typography.bodyLarge) }
                 }

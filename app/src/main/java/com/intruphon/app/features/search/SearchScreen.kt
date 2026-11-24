@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -59,6 +60,7 @@ import com.intruphon.app.core.LinkExtractor
 import com.intruphon.app.core.formatClock
 import com.intruphon.app.core.ui.clearFocusWhenKeyboardCloses
 import com.intruphon.app.core.ui.TabPager
+import com.intruphon.app.core.ui.TabPills
 import com.intruphon.app.data.media.FailReason
 import com.intruphon.app.data.media.Kind
 import com.intruphon.app.data.media.MediaRepository
@@ -144,7 +146,20 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
         }
     } else if (submitted != null) {
         // One page per tab (All, Videos, Songs); the next one follows the finger when swiping.
-        TabPager(selected = filter.ordinal, count = SearchFilter.entries.size, onSelect = { filter = SearchFilter.entries[it] }, modifier = Modifier.weight(1f)) { index ->
+        TabPager(
+            selected = filter.ordinal,
+            count = SearchFilter.entries.size,
+            onSelect = { filter = SearchFilter.entries[it] },
+            header = { position ->
+                TabPills(
+                    labels = listOf(stringResource(R.string.downloads_filter_all), stringResource(R.string.search_videos), stringResource(R.string.search_songs)),
+                    position = position,
+                    onSelect = { filter = SearchFilter.entries[it] },
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
+                )
+            },
+            modifier = Modifier.weight(1f),
+        ) { index, listState, headerSpace ->
             val tab = SearchFilter.entries[index]
             val result by produceState<SearchResult?>(loaded[tab], submitted, tab) {
                 val q = submitted
@@ -154,22 +169,12 @@ fun SearchScreen(initialQuery: String, onPick: (String) -> Unit, modifier: Modif
                 value = fresh
             }
             LazyColumn(
-                state = rememberLazyListState(),
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 0.dp, bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                item {
-                    Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(
-                            SearchFilter.ALL to R.string.downloads_filter_all,
-                            SearchFilter.VIDEOS to R.string.search_videos,
-                            SearchFilter.SONGS to R.string.search_songs,
-                        ).forEach { (option, label) ->
-                            FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(stringResource(label)) }, shape = CircleShape)
-                        }
-                    }
-                }
+                item(key = "header-space") { Spacer(Modifier.height(headerSpace)) }
                 when (val r = result) {
                     null -> item {
                         Row(Modifier.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
