@@ -26,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.FilledIconButton
@@ -181,7 +180,7 @@ fun HomeScreen(onDownload: (String) -> Unit, onSearch: (String) -> Unit, onOpenD
                     val searching = url == null && query != null
                     FilledIconButton(onClick = act, enabled = url != null || query != null, modifier = Modifier.padding(end = 6.dp).size(44.dp)) {
                         Icon(
-                            if (searching) Icons.Default.Search else Icons.Default.ArrowDownward,
+                            if (searching) Icons.Default.Search else ImageVector.vectorResource(R.drawable.ic_download),
                             contentDescription = stringResource(if (searching) R.string.home_search else R.string.home_download),
                         )
                     }
